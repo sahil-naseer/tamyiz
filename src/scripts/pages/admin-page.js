@@ -172,6 +172,7 @@ export class AdminController {
           { id: 'products', label: 'E-Books & Catalog' },
           { id: 'orders', label: 'Orders & Payments' },
           { id: 'coupons', label: 'Coupons & Discounts' },
+          { id: 'leads', label: 'Sample Leads' },
           { id: 'announcement', label: 'Store Banner' },
           { id: 'customers', label: 'Customers' },
           { id: 'analytics', label: 'Visitor Analytics' },
@@ -233,6 +234,9 @@ export class AdminController {
         break;
       case 'coupons':
         await this.renderCouponsTab(tabBody);
+        break;
+      case 'leads':
+        await this.renderLeadsTab(tabBody);
         break;
       case 'announcement':
         await this.renderAnnouncementTab(tabBody);
@@ -490,6 +494,25 @@ export class AdminController {
           <textarea id="tmz-f-contents" rows="3" style="width: 100%; box-sizing: border-box; font-size: 15px; padding: 12px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 12px; resize: vertical;">${b && b.contents ? b.contents.join('\n') : ''}</textarea>
         </div>
 
+        <div style="margin-bottom: 18px; background: #F7F7F5; border: 1.5px solid rgba(11,11,11,0.12); border-radius: 12px; padding: 16px;">
+          <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 4px; color: #0B0B0B;">Free Sample Excerpt (Chapter 1 Lead Magnet)</label>
+          <p style="font-size: 12px; color: #5E5E59; margin: 0 0 10px;">Storefront visitors can read this Chapter 1 preview immediately after entering their email.</p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+            <div>
+              <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Chapter Label</label>
+              <input type="text" id="tmz-f-sample-chapter" maxlength="100" value="${b && b.sampleExcerpt && b.sampleExcerpt.chapter ? escapeText(b.sampleExcerpt.chapter) : 'Chapter 01'}" placeholder="Chapter 01" style="width: 100%; box-sizing: border-box; font-size: 14px; padding: 10px 12px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF;" />
+            </div>
+            <div>
+              <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Chapter Subtitle</label>
+              <input type="text" id="tmz-f-sample-subtitle" maxlength="150" value="${b && b.sampleExcerpt && b.sampleExcerpt.subtitle ? escapeText(b.sampleExcerpt.subtitle) : ''}" placeholder="Foundations & Principles" style="width: 100%; box-sizing: border-box; font-size: 14px; padding: 10px 12px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF;" />
+            </div>
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Chapter 1 Text</label>
+            <textarea id="tmz-f-sample-text" rows="4" placeholder="Paste the introductory chapter or excerpt text here..." style="width: 100%; box-sizing: border-box; font-size: 14px; padding: 10px 12px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF; resize: vertical;">${b && b.sampleExcerpt && b.sampleExcerpt.text ? escapeText(b.sampleExcerpt.text) : ''}</textarea>
+          </div>
+        </div>
+
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 22px;">
           <div style="border: 1.5px dashed rgba(11,11,11,0.2); border-radius: 14px; padding: 16px; background: #F7F7F5;">
             <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Cover Image (Portrait 2:3 JPG/PNG/WebP)</label>
@@ -625,6 +648,15 @@ export class AdminController {
       formData.append('description', document.getElementById('tmz-f-desc').value);
       formData.append('contents', document.getElementById('tmz-f-contents').value);
       formData.append('status', status);
+
+      const sampleText = document.getElementById('tmz-f-sample-text')?.value.trim();
+      const sampleChap = document.getElementById('tmz-f-sample-chapter')?.value.trim();
+      const sampleSub = document.getElementById('tmz-f-sample-subtitle')?.value.trim();
+      if (sampleText) {
+        formData.append('sample', sampleText);
+        formData.append('sampleChapter', sampleChap || 'Chapter 01');
+        formData.append('sampleSubtitle', sampleSub || '');
+      }
 
       if (this.coverBlob) formData.append('cover', this.coverBlob, 'cover.jpg');
       if (this.coverBlob && this.thumbBlob) formData.append('thumb', this.thumbBlob, 'thumb.jpg');
@@ -956,6 +988,149 @@ export class AdminController {
         if (!confirm(`Delete coupon "${code}"?`)) return;
         const res = await this.api(`coupons/${code}`, { method: 'DELETE' });
         if (res.ok) this.renderCouponsTab(mount);
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------- LEADS TAB
+  async renderLeadsTab(mount) {
+    const res = await this.api('leads');
+    const leads = res.ok && Array.isArray(res.data?.leads) ? res.data.leads : [];
+
+    const totalLeads = leads.length;
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const todayLeads = leads.filter(l => l.createdAt && l.createdAt.startsWith(todayStr)).length;
+    const uniqueEmails = [...new Set(leads.map(l => (l.email || '').toLowerCase()))].filter(Boolean);
+
+    mount.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <p style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #5E5E59; margin: 0 0 4px;">Audience & Lead Generation</p>
+          <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 24px; margin: 0; color: #0B0B0B;">Free Sample Chapter Leads</h2>
+          <p style="font-size: 14px; color: #5E5E59; margin: 4px 0 0;">Prospective readers who unlocked Chapter 1 previews on your storefront.</p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button id="tmz-copy-leads-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: #FFFFFF; color: #0B0B0B; cursor: pointer; transition: all 0.15s ease;">
+            📋 Copy All Emails (${uniqueEmails.length})
+          </button>
+          <button id="tmz-export-leads-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid #0B0B0B; background: #0B0B0B; color: #FFFFFF; cursor: pointer; transition: all 0.15s ease;">
+            📥 Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
+          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Total Samples Unlocked</span>
+          <strong style="font-size: 28px; font-weight: 700; color: #0B0B0B; font-family: var(--font-head);">${totalLeads}</strong>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
+          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Unique Prospective Buyers</span>
+          <strong style="font-size: 28px; font-weight: 700; color: #0B0B0B; font-family: var(--font-head);">${uniqueEmails.length}</strong>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
+          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">New Leads Today</span>
+          <strong style="font-size: 28px; font-weight: 700; color: #0B0B0B; font-family: var(--font-head);">${todayLeads}</strong>
+        </div>
+      </div>
+
+      <!-- Leads Table -->
+      <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; overflow: hidden;">
+        ${leads.length === 0 ? `
+          <div style="padding: 48px 24px; text-align: center; color: #5E5E59;">
+            <p style="font-size: 16px; font-weight: 600; color: #0B0B0B; margin: 0 0 4px;">No sample leads recorded yet</p>
+            <p style="font-size: 14px; margin: 0;">When visitors enter their email on a book page to read Chapter 1, they will appear here in real-time.</p>
+          </div>
+        ` : `
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+              <thead>
+                <tr style="border-bottom: 1.5px solid rgba(11,11,11,0.08); background: #FAF9F6; font-size: 12px; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.06em;">
+                  <th style="padding: 14px 16px; font-weight: 600;">Date</th>
+                  <th style="padding: 14px 16px; font-weight: 600;">Email</th>
+                  <th style="padding: 14px 16px; font-weight: 600;">Phone / WhatsApp</th>
+                  <th style="padding: 14px 16px; font-weight: 600;">Book Sample</th>
+                  <th style="padding: 14px 16px; font-weight: 600; text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${leads.map(l => {
+                  const dateStr = l.createdAt ? new Date(l.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+                  const cleanPhone = (l.phone || '').replace(/[^0-9+]/g, '');
+                  const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}` : null;
+                  return `
+                    <tr style="border-bottom: 1px solid rgba(11,11,11,0.06);">
+                      <td style="padding: 14px 16px; color: #5E5E59; font-size: 13px; white-space: nowrap;">${dateStr}</td>
+                      <td style="padding: 14px 16px; font-weight: 600; color: #0B0B0B;">
+                        <a href="mailto:${escapeText(l.email)}" style="color: #0B0B0B; text-decoration: none;">${escapeText(l.email)}</a>
+                      </td>
+                      <td style="padding: 14px 16px; font-size: 13px; color: #5E5E59;">
+                        ${cleanPhone ? `
+                          <a href="${waUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 4px; color: #0B0B0B; text-decoration: underline;">
+                            ${escapeText(l.phone)} ↗
+                          </a>
+                        ` : `<span style="color: #999;">—</span>`}
+                      </td>
+                      <td style="padding: 14px 16px; font-size: 13px; color: #0B0B0B; font-weight: 500;">
+                        ${escapeText(l.productName || l.productId || 'E-Book')}
+                      </td>
+                      <td style="padding: 14px 16px; text-align: right;">
+                        <button type="button" class="tmz-del-lead-btn" data-id="${l.id}" style="background: none; border: none; color: #B3261E; font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 8px; border-radius: 4px;">
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `}
+      </div>
+    `;
+
+    // Copy all emails
+    document.getElementById('tmz-copy-leads-btn')?.addEventListener('click', () => {
+      if (uniqueEmails.length === 0) return alert('No emails to copy.');
+      navigator.clipboard.writeText(uniqueEmails.join(', ')).then(() => {
+        alert(`Copied ${uniqueEmails.length} unique emails to clipboard!`);
+      });
+    });
+
+    // Export CSV
+    document.getElementById('tmz-export-leads-btn')?.addEventListener('click', () => {
+      if (leads.length === 0) return alert('No leads to export.');
+      const headers = ['Date', 'Email', 'Phone', 'Product Name', 'Product ID'];
+      const rows = leads.map(l => [
+        `"${l.createdAt || ''}"`,
+        `"${(l.email || '').replace(/"/g, '""')}"`,
+        `"${(l.phone || '').replace(/"/g, '""')}"`,
+        `"${(l.productName || '').replace(/"/g, '""')}"`,
+        `"${(l.productId || '').replace(/"/g, '""')}"`,
+      ]);
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `tamyiz-sample-leads-${todayStr}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // Delete lead
+    mount.querySelectorAll('.tmz-del-lead-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = e.currentTarget.dataset.id;
+        if (!confirm('Remove this lead from the list?')) return;
+        const res = await this.api(`leads/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          this.renderLeadsTab(mount);
+        } else {
+          alert(res.error || 'Failed to remove lead');
+        }
       });
     });
   }

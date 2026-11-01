@@ -477,6 +477,33 @@ async function saveAnnouncement(request, env) {
   return json({ ok: true, announcement });
 }
 
+async function getLeads(request, env) {
+  let leads = [];
+  if (env.TAMYIZ_STORE && env.TAMYIZ_STORE.get) {
+    try {
+      const raw = await env.TAMYIZ_STORE.get('store:leads:index');
+      if (raw) leads = JSON.parse(raw);
+    } catch {}
+  }
+  return json({ ok: true, leads: Array.isArray(leads) ? leads : [] });
+}
+
+async function deleteLead(env, id) {
+  if (!env.TAMYIZ_STORE) return json({ ok: true });
+  try {
+    await env.TAMYIZ_STORE.delete(`store:lead:${id}`);
+    const raw = await env.TAMYIZ_STORE.get('store:leads:index');
+    if (raw) {
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) {
+        const filtered = list.filter((l) => l.id !== id);
+        await env.TAMYIZ_STORE.put('store:leads:index', JSON.stringify(filtered));
+      }
+    }
+  } catch {}
+  return json({ ok: true });
+}
+
 function getSettings(env) {
   return json({
     storeConfig: {
@@ -517,6 +544,9 @@ export async function handleAdmin(request, env, rest) {
     if (cp && method === 'DELETE') return await deleteCoupon(env, cp[1]);
     if (rest === 'announcement' && method === 'GET') return await getAnnouncement(env);
     if (rest === 'announcement' && method === 'POST') return await saveAnnouncement(request, env);
+    if (rest === 'leads' && method === 'GET') return await getLeads(request, env);
+    const ld = rest.match(/^leads\/([A-Za-z0-9_-]{5,60})$/);
+    if (ld && method === 'DELETE') return await deleteLead(env, ld[1]);
     if (rest === 'customers' && method === 'GET') return await getCustomers(request, env);
     if (rest === 'settings' && method === 'GET') return getSettings(env);
     if (rest === 'products' && method === 'GET') return json({ products: (await loadCatalog(env)).map(adminView) });

@@ -1483,6 +1483,235 @@ class TamyizUnifiedApp {
     }
   }
 
+  openSampleModal(productId) {
+    const product = findProductBySlugOrId(productId);
+    if (!product) return;
+
+    // Check if unlocked previously
+    const isUnlocked = localStorage.getItem('tmz_sample_unlocked_' + product.id) === 'true';
+    if (isUnlocked && product.sampleExcerpt) {
+      this.renderSampleReader(product, product.sampleExcerpt);
+      return;
+    }
+
+    const html = `
+      <div class="tamyiz-sample-capture-card" style="padding: 1.5rem 1rem; max-width: 480px; margin: 0 auto; text-align: left;">
+        <div style="margin-bottom: 1.25rem;">
+          <span style="display: inline-block; font-family: var(--font-sub); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-red-ink); margin-bottom: 0.35rem;">
+            Complimentary Preview
+          </span>
+          <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 1.35rem; line-height: 1.25; margin: 0 0 0.5rem; color: #0B0B0B;">
+            Read Free Sample (Chapter 1)
+          </h3>
+          <p style="font-size: 0.88rem; color: #5E5E59; line-height: 1.5; margin: 0;">
+            Enter your email to unlock the complete Chapter 1 excerpt and curriculum architecture of <strong>${escapeText(product.name)}</strong> instantly.
+          </p>
+        </div>
+
+        <form id="tmz-sample-form" onsubmit="window.tamyizApp.submitSampleLead(event, '${product.id}')" style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <div>
+            <label for="sample-lead-email" style="display: block; font-family: var(--font-head); font-size: 0.8rem; font-weight: 600; margin-bottom: 0.35rem; color: #0B0B0B;">
+              Email Address *
+            </label>
+            <input
+              type="email"
+              id="sample-lead-email"
+              required
+              placeholder="name@domain.com"
+              style="width: 100%; box-sizing: border-box; padding: 0.75rem 0.9rem; font-size: 0.92rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF; outline: none; transition: border-color 0.2s;"
+              onfocus="this.style.borderColor='#0B0B0B'"
+              onblur="this.style.borderColor='rgba(11,11,11,0.2)'"
+            />
+          </div>
+
+          <div>
+            <label for="sample-lead-phone" style="display: block; font-family: var(--font-head); font-size: 0.8rem; font-weight: 600; margin-bottom: 0.35rem; color: #0B0B0B;">
+              WhatsApp / Mobile <span style="font-weight: 400; color: #767670;">(Optional)</span>
+            </label>
+            <input
+              type="tel"
+              id="sample-lead-phone"
+              placeholder="+91 98765 43210"
+              style="width: 100%; box-sizing: border-box; padding: 0.75rem 0.9rem; font-size: 0.92rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF; outline: none; transition: border-color 0.2s;"
+              onfocus="this.style.borderColor='#0B0B0B'"
+              onblur="this.style.borderColor='rgba(11,11,11,0.2)'"
+            />
+          </div>
+
+          <div id="sample-form-error" style="display: none; padding: 0.6rem 0.8rem; font-size: 0.8rem; background: #FEE; color: #C00; border-radius: 6px;"></div>
+
+          <button
+            type="submit"
+            id="sample-submit-btn"
+            style="width: 100%; padding: 0.85rem 1.25rem; font-family: var(--font-head); font-weight: 700; font-size: 0.9rem; letter-spacing: 0.04em; text-transform: uppercase; background: #0B0B0B; color: #FFF; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: background 0.2s;"
+            onmouseover="this.style.background='#222'"
+            onmouseout="this.style.background='#0B0B0B'"
+          >
+            <span>Unlock &amp; Read Chapter 1</span>
+            <span>→</span>
+          </button>
+
+          <div style="display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.74rem; color: #888; margin-top: 0.25rem;">
+            <span>✓ Instant access</span>
+            <span>✓ No spam guarantee</span>
+            <span>✓ DRM-free PDF ready</span>
+          </div>
+        </form>
+      </div>
+    `;
+
+    this.openModalContent(html);
+    setTimeout(() => {
+      document.getElementById('sample-lead-email')?.focus();
+    }, 100);
+  }
+
+  async submitSampleLead(event, productId) {
+    if (event) event.preventDefault();
+    const product = findProductBySlugOrId(productId);
+    if (!product) return;
+
+    const emailInput = document.getElementById('sample-lead-email');
+    const phoneInput = document.getElementById('sample-lead-phone');
+    const btn = document.getElementById('sample-submit-btn');
+    const errBox = document.getElementById('sample-form-error');
+
+    const email = emailInput ? emailInput.value.trim() : '';
+    const phone = phoneInput ? phoneInput.value.trim() : '';
+
+    if (!email) {
+      if (errBox) {
+        errBox.textContent = 'Please enter your email address.';
+        errBox.style.display = 'block';
+      }
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span>Unlocking Chapter 1…</span>`;
+    }
+
+    try {
+      const res = await fetch('/api/sample', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, email, phone })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'Could not unlock sample. Please try again.');
+      }
+
+      localStorage.setItem('tmz_sample_unlocked_' + product.id, 'true');
+      localStorage.setItem('tmz_user_email', email);
+
+      this.showToast('Chapter 1 unlocked! Enjoy reading.', 'success');
+      this.renderSampleReader(product, data.sample);
+    } catch (err) {
+      if (errBox) {
+        errBox.textContent = err.message;
+        errBox.style.display = 'block';
+      }
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Unlock &amp; Read Chapter 1 →</span>`;
+      }
+    }
+  }
+
+  renderSampleReader(product, sample) {
+    const chapterLabel = sample?.chapter || (product.sampleExcerpt && product.sampleExcerpt.chapter) || 'Chapter 01';
+    const subtitle = sample?.subtitle || (product.sampleExcerpt && product.sampleExcerpt.subtitle) || 'Foundations & Principles';
+    const text = sample?.text || (product.sampleExcerpt && product.sampleExcerpt.text) || product.description;
+    const toc = sample?.tableOfContents || product.tableOfContents || [];
+
+    const html = `
+      <div class="tamyiz-reader-modal" style="max-width: 680px; margin: 0 auto; text-align: left; max-height: 80vh; overflow-y: auto; padding: 1.5rem 1rem;">
+        <!-- Reader Header -->
+        <div style="border-bottom: 1.5px solid rgba(11,11,11,0.1); padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+              <span style="font-family: var(--font-sub); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; background: #0B0B0B; color: #FFF; padding: 2px 8px; border-radius: 4px;">
+                Verified Reader
+              </span>
+              <span style="font-family: var(--font-sub); font-size: 0.72rem; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.05em;">
+                ${chapterLabel}
+              </span>
+            </div>
+            <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 1.35rem; line-height: 1.25; margin: 0 0 0.25rem; color: #0B0B0B;">
+              ${escapeText(product.name)}
+            </h3>
+            <p style="font-size: 0.85rem; color: #5E5E59; margin: 0;">
+              ${subtitle}
+            </p>
+          </div>
+          <button
+            onclick="window.tamyizApp.closeModal()"
+            style="background: transparent; border: 1.5px solid rgba(11,11,11,0.15); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: #0B0B0B; flex-shrink: 0;"
+            aria-label="Close reader"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Book Reading Paper Body -->
+        <div class="tamyiz-reader-paper" style="background: #FAFAF8; border: 1px solid rgba(11,11,11,0.08); border-radius: 10px; padding: 2rem 1.75rem; margin-bottom: 1.5rem; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);">
+          <div style="font-family: var(--font-mono, monospace); font-size: 0.72rem; color: var(--color-red-ink, #c00); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; margin-bottom: 0.75rem;">
+            § 01 / Selected Excerpt
+          </div>
+          <h4 style="font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; margin: 0 0 1.25rem; color: #0B0B0B;">
+            ${subtitle}
+          </h4>
+          <div class="tamyiz-excerpt-dropcap" style="font-family: var(--font-serif, 'Georgia', serif); font-size: 1.05rem; line-height: 1.85; color: #1D1D1D; text-align: justify; white-space: pre-line;">
+            ${text}
+          </div>
+          <div style="margin-top: 1.75rem; padding: 1rem 1.25rem; border-left: 3px solid #0B0B0B; background: #F1F1EE; font-family: var(--font-serif, 'Georgia', serif); font-style: italic; font-size: 0.95rem; color: #333;">
+            "Distinction is not loud; it is undeniable weight and proportion."
+          </div>
+        </div>
+
+        ${toc && toc.length > 0 ? `
+          <div style="border: 1px solid rgba(11,11,11,0.08); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; background: #FFF;">
+            <div style="font-family: var(--font-head); font-weight: 700; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; color: #0B0B0B;">
+              Full Table of Contents &amp; Modules
+            </div>
+            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; color: #444;">
+              ${toc.map((item, idx) => `
+                <li style="display: flex; gap: 0.75rem; align-items: baseline;">
+                  <span style="font-family: var(--font-mono, monospace); font-size: 0.75rem; color: #888; font-weight: 600;">0${idx + 1}</span>
+                  <span style="color: #111; font-weight: 500;">${item}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        ` : ''}
+
+        <!-- Sticky Bottom Conversion Bar -->
+        <div style="position: sticky; bottom: -1.5rem; margin: 1.5rem -1rem -1.5rem; padding: 1.25rem 1.5rem; background: #0B0B0B; color: #FFF; border-radius: 0 0 16px 16px; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+          <div>
+            <div style="font-family: var(--font-head); font-weight: 700; font-size: 1.05rem; margin-bottom: 0.2rem;">
+              Unlock Full ${product.pages ? `${product.pages}-Page ` : ''}E-Book
+            </div>
+            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">
+              Instant DRM-free PDF download • ₹${product.price.toLocaleString('en-IN')}
+            </div>
+          </div>
+          <button
+            onclick="window.tamyizApp.quickAddToCart('${product.id}'); window.tamyizApp.closeModal(); window.tamyizApp.openCart();"
+            style="background: #FFFFFF; color: #0B0B0B; font-family: var(--font-head); font-weight: 700; font-size: 0.88rem; padding: 0.75rem 1.4rem; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; transition: opacity 0.2s;"
+            onmouseover="this.style.opacity='0.9'"
+            onmouseout="this.style.opacity='1'"
+          >
+            Buy Full Edition →
+          </button>
+        </div>
+      </div>
+    `;
+
+    this.openModalContent(html);
+  }
+
   toggleAccordion(id) {
     const item = document.getElementById(id);
     if (item) {

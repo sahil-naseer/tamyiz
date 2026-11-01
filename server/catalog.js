@@ -62,6 +62,31 @@ export function publicProduct(p) {
   const specs = [{ label: 'Format', value: 'PDF e-book, instant download after payment' }];
   if (p.pages) specs.push({ label: 'Pages', value: `${p.pages}` });
   specs.push({ label: 'Reads on', value: 'Phone, tablet, laptop, Kindle (send-to-Kindle), Apple Books' });
+
+  // Sample excerpt for the lead-capture sample reader
+  let sampleExcerpt = null;
+  if (p.sampleExcerpt) {
+    if (typeof p.sampleExcerpt === 'object') {
+      sampleExcerpt = {
+        chapter: esc(p.sampleExcerpt.chapter || 'Chapter 01'),
+        subtitle: esc(p.sampleExcerpt.subtitle || 'Foundations & Architecture'),
+        text: esc(p.sampleExcerpt.text || ''),
+      };
+    } else if (typeof p.sampleExcerpt === 'string' && p.sampleExcerpt.trim()) {
+      sampleExcerpt = {
+        chapter: 'Chapter 01',
+        subtitle: esc(p.tagline || 'Essential Principles'),
+        text: esc(p.sampleExcerpt),
+      };
+    }
+  } else if (p.description) {
+    sampleExcerpt = {
+      chapter: 'Chapter 01 (Preview)',
+      subtitle: esc(p.tagline || 'Essential Principles'),
+      text: esc(p.description),
+    };
+  }
+
   return {
     id: p.id,
     slug: p.slug,
@@ -78,6 +103,7 @@ export function publicProduct(p) {
     images: [cover],
     thumb,
     tableOfContents: Array.isArray(p.contents) ? p.contents.map(esc) : [],
+    sampleExcerpt,
     specifications: specs,
     fileSpecs: `PDF e-book${p.pages ? ` • ${p.pages} pages` : ''} • Instant download`,
     highlights: [],
@@ -113,7 +139,7 @@ export function readFields(form) {
   const status = clean(form.get('status'), 10) || 'draft';
   if (!STATUSES.includes(status)) throw new Error('Unknown status.');
   const contents = clean(form.get('contents'), 4000).split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 40);
-  return {
+  const fields = {
     name,
     tagline: clean(form.get('tagline'), 200),
     description: clean(form.get('description'), 5000),
@@ -122,6 +148,16 @@ export function readFields(form) {
     contents,
     status,
   };
+  const hasSampleField = form.has('sampleExcerpt') || form.has('sample');
+  if (hasSampleField) {
+    const sampleText = clean(form.get('sampleExcerpt') || form.get('sample') || '', 10000);
+    fields.sampleExcerpt = sampleText ? {
+      chapter: clean(form.get('sampleChapter') || 'Chapter 01', 100),
+      subtitle: clean(form.get('sampleSubtitle') || form.get('tagline') || 'Introduction', 150),
+      text: sampleText,
+    } : null;
+  }
+  return fields;
 }
 
 /** Real file type from the first bytes (never trust the file name or the browser's claim). */

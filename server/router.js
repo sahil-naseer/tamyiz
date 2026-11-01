@@ -5,6 +5,7 @@
 import { json, handleCreateOrder, handleVerifyPayment, handleDownload, handleRazorpayWebhook } from './payments.js';
 import { handleAdmin } from './admin.js';
 import { publicCatalog } from './catalog.js';
+import { handleSampleLead } from './sample.js';
 
 async function cover(env, id, request) {
   if (!env.TAMYIZ_STORE) return new Response('Not found', { status: 404 });
@@ -53,6 +54,10 @@ export async function route(request, env, fetchImpl = fetch) {
   if (m && method === 'GET') return cover(env, m[1], request);
   m = rest.match(/^download\/([a-z0-9-]{3,40})$/);
   if (m && method === 'GET') return handleDownload(request, env, m[1]);
+
+  if (rest === 'sample' && method === 'POST') {
+    return handleSampleLead(request, env);
+  }
 
   if (rest === 'create-order' || rest === 'verify-payment' || rest === 'webhook/razorpay' || rest === 'razorpay-webhook') {
     if (method !== 'POST') return json({ error: 'Method Not Allowed. Use POST.' }, 405);

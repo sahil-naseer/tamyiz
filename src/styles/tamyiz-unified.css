@@ -4096,6 +4096,34 @@ img {
   background: #222222;
 }
 
+.tamyiz-pdp-btn-sample {
+  width: 100%;
+  padding: 0.9rem 1.1rem;
+  background: transparent;
+  color: var(--color-black);
+  border: 1.5px solid rgba(11, 11, 11, 0.25);
+  border-radius: 4px;
+  font-family: var(--font-sub);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  transition: all 0.2s ease;
+  margin-top: 0.35rem;
+}
+
+.tamyiz-pdp-btn-sample:hover {
+  background: var(--color-black);
+  color: #FFFFFF;
+  border-color: var(--color-black);
+  transform: translateY(-1px);
+}
+
 .tamyiz-pdp-guarantee-list {
   display: flex;
   flex-direction: column;
