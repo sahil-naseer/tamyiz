@@ -84,10 +84,29 @@ class TamyizUnifiedApp {
 
     // 6. Check deep-link query parameter: ?category=... or ?cat=...
     const params = new URLSearchParams(window.location.search);
-    const catParam = params.get('category') || params.get('cat');
-    if (catParam) {
-      this.activeCategory = 'all';
-    }
+    // 7. Load store announcement banner
+    this.loadAnnouncement();
+  }
+
+  async loadAnnouncement() {
+    try {
+      const res = await fetch('/api/announcement');
+      if (!res.ok) return;
+      const data = await res.json();
+      const ann = data.announcement;
+      const banner = document.getElementById('tmz-announcement-banner');
+      if (!banner || !ann || !ann.enabled || !ann.text) return;
+
+      banner.style.display = 'block';
+      banner.innerHTML = `
+        <span>${escapeText(ann.text)}</span>
+        ${ann.link ? `
+          <a href="${escapeText(ann.link)}" style="color: #FFFFFF; font-weight: 700; text-decoration: underline; margin-left: 8px;">
+            ${escapeText(ann.linkText || 'Learn more ↗')}
+          </a>
+        ` : ''}
+      `;
+    } catch {}
   }
 
   // Parse path & hash for zero-crash routing
@@ -297,6 +316,9 @@ class TamyizUnifiedApp {
     if (!app) return;
 
     app.innerHTML = `
+      <!-- TOP ANNOUNCEMENT BANNER MOUNT -->
+      <div id="tmz-announcement-banner" style="display: none; background: #0B0B0B; color: #FFFFFF; font-size: 13px; font-weight: 500; text-align: center; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.12); position: relative; z-index: 100;"></div>
+
       <!-- 1. FULL-WIDTH STICKY GLASSMORPHISM HEADER -->
       <header class="tamyiz-header is-home-page" id="navbar">
         <div class="tamyiz-header-inner">

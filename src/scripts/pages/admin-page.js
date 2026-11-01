@@ -4,7 +4,9 @@
  * Handles:
  *   - Overview (Live KPIs, revenue, real orders, Cloudflare visitor insights)
  *   - Products (CRUD, auto thumbnail generator, PDF upload, status controls)
- *   - Orders (Searchable, filterable order table, customer info, fulfillment)
+ *   - Orders & Fulfillments (Searchable orders, one-click download re-send, manual gift orders)
+ *   - Coupons & Promotions (Create, toggle, and delete dynamic discount codes)
+ *   - Storefront Announcement Banner (Live headline toggle with custom links)
  *   - Customers (Customer profiles, order frequency, aggregated spend)
  *   - Analytics (Visitor graphs and device/source telemetry)
  *   - Settings (Cloudflare KV diagnostics, payment keys, receipt mailer health)
@@ -21,13 +23,15 @@ export class AdminController {
   constructor(app) {
     this.app = app;
     this.isAuthenticated = false;
-    this.activeTab = 'overview'; // 'overview' | 'products' | 'orders' | 'customers' | 'analytics' | 'settings'
+    this.activeTab = 'overview';
     this.editingProduct = null;
     this.coverBlob = null;
     this.thumbBlob = null;
     this.products = [];
     this.orders = [];
     this.customers = [];
+    this.coupons = {};
+    this.announcement = null;
     this.overviewData = null;
     this.settingsData = null;
     this.statsDays = 7;
@@ -59,7 +63,8 @@ export class AdminController {
 
   render(container, subRoute = 'overview') {
     this.container = container;
-    this.activeTab = ['products', 'orders', 'customers', 'analytics', 'settings'].includes(subRoute) ? subRoute : 'overview';
+    const allowed = ['products', 'orders', 'coupons', 'announcement', 'customers', 'analytics', 'settings'];
+    this.activeTab = allowed.includes(subRoute) ? subRoute : 'overview';
 
     container.innerHTML = `
       <div class="tmz-admin-root" style="min-height: 85vh; background: #F2F2EF; color: #0B0B0B; font-family: var(--font-body, system-ui, sans-serif);">
@@ -166,6 +171,8 @@ export class AdminController {
           { id: 'overview', label: 'Overview' },
           { id: 'products', label: 'E-Books & Catalog' },
           { id: 'orders', label: 'Orders & Payments' },
+          { id: 'coupons', label: 'Coupons & Discounts' },
+          { id: 'announcement', label: 'Store Banner' },
           { id: 'customers', label: 'Customers' },
           { id: 'analytics', label: 'Visitor Analytics' },
           { id: 'settings', label: 'Diagnostics & Settings' }
@@ -198,7 +205,6 @@ export class AdminController {
 
   switchTab(tab) {
     this.activeTab = tab;
-    // Update tab bar buttons
     const btns = this.container.querySelectorAll('.tmz-admin-tab-btn');
     btns.forEach((b) => {
       const isCur = b.dataset.tab === tab;
@@ -224,6 +230,12 @@ export class AdminController {
         break;
       case 'orders':
         await this.renderOrdersTab(tabBody);
+        break;
+      case 'coupons':
+        await this.renderCouponsTab(tabBody);
+        break;
+      case 'announcement':
+        await this.renderAnnouncementTab(tabBody);
         break;
       case 'customers':
         await this.renderCustomersTab(tabBody);
@@ -278,11 +290,14 @@ export class AdminController {
             <button id="tmz-action-add-book" type="button" style="text-align: left; padding: 14px 18px; border-radius: 14px; border: 1.5px solid rgba(11,11,11,0.12); background: #F7F7F5; font-family: var(--font-head); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s ease;">
               + Add New E-Book Guide
             </button>
-            <button id="tmz-action-view-orders" type="button" style="text-align: left; padding: 14px 18px; border-radius: 14px; border: 1.5px solid rgba(11,11,11,0.12); background: #F7F7F5; font-family: var(--font-head); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s ease;">
-              Inspect Recent Customer Orders ↗
+            <button id="tmz-action-gift-book" type="button" style="text-align: left; padding: 14px 18px; border-radius: 14px; border: 1.5px solid rgba(11,11,11,0.12); background: #F7F7F5; font-family: var(--font-head); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s ease;">
+              🎁 Send Free Gift / Reviewer Link
             </button>
-            <button id="tmz-action-view-analytics" type="button" style="text-align: left; padding: 14px 18px; border-radius: 14px; border: 1.5px solid rgba(11,11,11,0.12); background: #F7F7F5; font-family: var(--font-head); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s ease;">
-              Check Web Traffic & Visitors ↗
+            <button id="tmz-action-coupons" type="button" style="text-align: left; padding: 14px 18px; border-radius: 14px; border: 1.5px solid rgba(11,11,11,0.12); background: #F7F7F5; font-family: var(--font-head); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s ease;">
+              🏷️ Create / Manage Discount Coupons
+            </button>
+            <button id="tmz-action-banner" type="button" style="text-align: left; padding: 14px 18px; border-radius: 14px; border: 1.5px solid rgba(11,11,11,0.12); background: #F7F7F5; font-family: var(--font-head); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s ease;">
+              📢 Update Store Announcement Banner
             </button>
           </div>
         </div>
@@ -314,8 +329,14 @@ export class AdminController {
       this.switchTab('products');
       setTimeout(() => this.openProductForm(null), 50);
     });
-    document.getElementById('tmz-action-view-orders')?.addEventListener('click', () => this.switchTab('orders'));
-    document.getElementById('tmz-action-view-analytics')?.addEventListener('click', () => this.switchTab('analytics'));
+    document.getElementById('tmz-action-gift-book')?.addEventListener('click', () => {
+      this.switchTab('orders');
+      setTimeout(() => {
+        document.getElementById('tmz-gift-modal').style.display = 'block';
+      }, 50);
+    });
+    document.getElementById('tmz-action-coupons')?.addEventListener('click', () => this.switchTab('coupons'));
+    document.getElementById('tmz-action-banner')?.addEventListener('click', () => this.switchTab('announcement'));
   }
 
   // ---------------------------------------------------------------- PRODUCTS TAB
@@ -668,12 +689,45 @@ export class AdminController {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
           <div>
             <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 22px; margin: 0; color: #0B0B0B;">Orders & Fulfillments</h2>
-            <p style="color: #5E5E59; font-size: 14px; margin: 4px 0 0;">Customer transactions and verified digital delivery records.</p>
+            <p style="color: #5E5E59; font-size: 14px; margin: 4px 0 0;">Customer transactions, gift orders, and digital download links.</p>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <input type="text" id="tmz-order-search" placeholder="Search reference, email, phone…" value="${escapeText(this.orderSearchQuery)}" style="padding: 10px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 999px; font-size: 14px; min-width: 260px;" />
-            <button id="tmz-order-search-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 999px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">Search</button>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="tmz-btn-open-gift" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 999px; border: 1.5px solid #0B0B0B; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+              🎁 Send Gift Copy
+            </button>
+            <input type="text" id="tmz-order-search" placeholder="Search reference, email, phone…" value="${escapeText(this.orderSearchQuery)}" style="padding: 10px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 999px; font-size: 14px; min-width: 220px;" />
+            <button id="tmz-order-search-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; color: #0B0B0B; cursor: pointer;">Search</button>
           </div>
+        </div>
+
+        <!-- Gift Order Modal -->
+        <div id="tmz-gift-modal" style="display: none; background: #FFFFFF; border: 1px solid rgba(11,11,11,0.15); border-radius: 20px; padding: 24px; margin-bottom: 24px; box-shadow: 0 15px 35px -15px rgba(0,0,0,0.15);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0;">Send Free Gift / Review Copy</h3>
+            <button id="tmz-close-gift-modal" type="button" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
+          </div>
+          <form id="tmz-gift-form">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 14px;">
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Recipient Email *</label>
+                <input type="email" id="tmz-gift-email" required placeholder="reviewer@example.com" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2);" />
+              </div>
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Phone (Optional)</label>
+                <input type="tel" id="tmz-gift-phone" placeholder="9876543210" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2);" />
+              </div>
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">E-Book Edition *</label>
+                <select id="tmz-gift-product" required style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2);">
+                  ${this.products.map((p) => `<option value="${p.id}">${escapeText(p.name)} (₹${p.price})</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <div id="tmz-gift-result" style="margin-bottom: 14px; font-size: 14px;"></div>
+            <button type="submit" id="tmz-gift-submit-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 10px 22px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+              Generate &amp; Dispatch Gift Order
+            </button>
+          </form>
         </div>
 
         ${this.orders.length ? `
@@ -685,8 +739,7 @@ export class AdminController {
                   <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Customer</th>
                   <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Items Purchased</th>
                   <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Total</th>
-                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Status</th>
-                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Date</th>
+                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -695,6 +748,7 @@ export class AdminController {
                     <td style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600;">
                       ${escapeText(o.referenceId || o.orderId)}
                       <span style="display: block; font-size: 11px; color: #5E5E59; font-weight: 400;">${escapeText(o.paymentId || '')}</span>
+                      <span style="font-size: 11px; color: #8F8F89;">${o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</span>
                     </td>
                     <td style="padding: 14px 16px;">
                       <div style="font-weight: 500;">${escapeText(o.email || '—')}</div>
@@ -707,12 +761,9 @@ export class AdminController {
                       ₹${o.totalINR || Math.round((o.amountPaise || 0) / 100)}
                     </td>
                     <td style="padding: 14px 16px;">
-                      <span style="background: #E3F3E7; color: #1E7B2E; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; text-transform: uppercase;">
-                        ${escapeText(o.status || 'paid')}
-                      </span>
-                    </td>
-                    <td style="padding: 14px 16px; font-size: 12px; color: #5E5E59;">
-                      ${o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent'}
+                      <button type="button" class="tmz-resend-btn" data-id="${o.orderId}" style="font-family: var(--font-head); font-weight: 600; font-size: 12px; padding: 6px 12px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; cursor: pointer;">
+                        Re-send Email ✉
+                      </button>
                     </td>
                   </tr>
                 `).join('')}
@@ -727,15 +778,259 @@ export class AdminController {
       </div>
     `;
 
+    document.getElementById('tmz-btn-open-gift')?.addEventListener('click', () => {
+      document.getElementById('tmz-gift-modal').style.display = 'block';
+    });
+    document.getElementById('tmz-close-gift-modal')?.addEventListener('click', () => {
+      document.getElementById('tmz-gift-modal').style.display = 'none';
+    });
+
+    document.getElementById('tmz-gift-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('tmz-gift-email').value.trim();
+      const phone = document.getElementById('tmz-gift-phone').value.trim();
+      const productId = document.getElementById('tmz-gift-product').value;
+      const resBox = document.getElementById('tmz-gift-result');
+      const submitBtn = document.getElementById('tmz-gift-submit-btn');
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Generating…';
+      resBox.innerHTML = '';
+
+      const res = await this.api('orders/gift', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, phone, productId })
+      });
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Generate & Dispatch Gift Order';
+
+      if (!res.ok) {
+        resBox.style.color = '#B3261E';
+        resBox.textContent = res.data.error || 'Failed to generate gift copy.';
+        return;
+      }
+
+      resBox.style.color = '#1E7B2E';
+      resBox.innerHTML = `
+        Gift order created! Download URL:
+        <input type="text" readonly value="${res.data.downloadUrl}" style="width: 100%; box-sizing: border-box; padding: 6px; font-size: 12px; margin-top: 4px;" onclick="this.select()" />
+      `;
+      setTimeout(() => this.renderOrdersTab(mount), 2000);
+    });
+
+    mount.querySelectorAll('.tmz-resend-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+        const res = await this.api('orders/resend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: id })
+        });
+        btn.disabled = false;
+        if (res.ok) {
+          alert('Receipt and download link re-sent to customer email.');
+          btn.textContent = 'Sent ✓';
+        } else {
+          alert(res.data.error || 'Could not resend email.');
+          btn.textContent = 'Re-send Email ✉';
+        }
+      });
+    });
+
     const searchInput = document.getElementById('tmz-order-search');
     const searchBtn = document.getElementById('tmz-order-search-btn');
     const triggerSearch = () => {
       this.orderSearchQuery = searchInput.value;
       this.renderOrdersTab(mount);
     };
-    searchBtn.addEventListener('click', triggerSearch);
-    searchInput.addEventListener('keydown', (e) => {
+    searchBtn?.addEventListener('click', triggerSearch);
+    searchInput?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') triggerSearch();
+    });
+  }
+
+  // ---------------------------------------------------------------- COUPONS TAB
+  async renderCouponsTab(mount) {
+    const res = await this.api('coupons');
+    this.coupons = res.ok ? (res.data.coupons || {}) : {};
+    const couponList = Object.values(this.coupons);
+
+    mount.innerHTML = `
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 22px; margin: 0; color: #0B0B0B;">Discount Coupons & Promo Codes</h2>
+            <p style="color: #5E5E59; font-size: 14px; margin: 4px 0 0;">Create and manage promotional discount codes that work in the checkout bag.</p>
+          </div>
+          <button id="tmz-open-coupon-modal" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 11px 22px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+            + Create New Coupon
+          </button>
+        </div>
+
+        <div id="tmz-coupon-form-box" style="display: none; background: #FFFFFF; border: 1px solid rgba(11,11,11,0.15); border-radius: 20px; padding: 24px; margin-bottom: 24px;">
+          <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0 0 16px;">New Promotional Coupon</h3>
+          <form id="tmz-create-coupon-form">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px;">
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Coupon Code (e.g. LAUNCH20) *</label>
+                <input type="text" id="tmz-cp-code" required maxlength="20" placeholder="EID25" style="width: 100%; box-sizing: border-box; text-transform: uppercase; padding: 10px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2);" />
+              </div>
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Discount Type *</label>
+                <select id="tmz-cp-type" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2);">
+                  <option value="percent">Percentage (% off)</option>
+                  <option value="flat">Flat Amount (₹ INR off)</option>
+                </select>
+              </div>
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Discount Value *</label>
+                <input type="number" id="tmz-cp-val" required min="1" max="10000" placeholder="20" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2);" />
+              </div>
+            </div>
+            <div id="tmz-coupon-msg" style="margin-bottom: 12px; font-size: 14px;"></div>
+            <div style="display: flex; gap: 10px;">
+              <button type="submit" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 10px 22px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">Save Coupon</button>
+              <button type="button" id="tmz-close-coupon-modal" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 10px 22px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; cursor: pointer;">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        ${couponList.length ? `
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            ${couponList.map((c) => `
+              <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong style="font-family: var(--font-head); font-size: 18px; letter-spacing: 1px; color: #0B0B0B; display: block;">${escapeText(c.code)}</strong>
+                  <span style="font-size: 13px; color: #1E7B2E; font-weight: 600;">${escapeText(c.label || (c.type === 'flat' ? `₹${c.value} off` : `${c.value}% off`))}</span>
+                  <span style="display: block; font-size: 11px; color: #8F8F89; margin-top: 4px;">Active</span>
+                </div>
+                <button type="button" class="tmz-delete-coupon-btn" data-code="${c.code}" style="font-family: var(--font-head); font-weight: 600; font-size: 12px; padding: 6px 14px; border-radius: 999px; border: 1.5px solid rgba(179,38,30,0.3); background: transparent; color: #B3261E; cursor: pointer;">
+                  Delete
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; padding: 48px 24px; text-align: center; color: #5E5E59;">
+            <p style="margin: 0;">No active promotional coupons. Click "+ Create New Coupon" to offer instant discounts to buyers.</p>
+          </div>
+        `}
+      </div>
+    `;
+
+    document.getElementById('tmz-open-coupon-modal')?.addEventListener('click', () => {
+      document.getElementById('tmz-coupon-form-box').style.display = 'block';
+    });
+    document.getElementById('tmz-close-coupon-modal')?.addEventListener('click', () => {
+      document.getElementById('tmz-coupon-form-box').style.display = 'none';
+    });
+
+    document.getElementById('tmz-create-coupon-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const code = document.getElementById('tmz-cp-code').value;
+      const type = document.getElementById('tmz-cp-type').value;
+      const value = document.getElementById('tmz-cp-val').value;
+      const msg = document.getElementById('tmz-coupon-msg');
+
+      const res = await this.api('coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, type, value })
+      });
+
+      if (!res.ok) {
+        msg.style.color = '#B3261E';
+        msg.textContent = res.data.error || 'Failed to save coupon.';
+        return;
+      }
+      this.renderCouponsTab(mount);
+    });
+
+    mount.querySelectorAll('.tmz-delete-coupon-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const code = btn.dataset.code;
+        if (!confirm(`Delete coupon "${code}"?`)) return;
+        const res = await this.api(`coupons/${code}`, { method: 'DELETE' });
+        if (res.ok) this.renderCouponsTab(mount);
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------- ANNOUNCEMENT TAB
+  async renderAnnouncementTab(mount) {
+    const res = await this.api('announcement');
+    const ann = res.ok && res.data.announcement ? res.data.announcement : { enabled: false, text: '', link: '', linkText: '' };
+
+    mount.innerHTML = `
+      <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 20px; padding: 28px;">
+        <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 22px; margin: 0 0 8px; color: #0B0B0B;">Storefront Announcement Banner</h2>
+        <p style="color: #5E5E59; font-size: 14px; margin: 0 0 24px;">Display an eye-catching banner at the very top of your TAMYIZ website for sales, new editions, or notices.</p>
+
+        <form id="tmz-announcement-form">
+          <div style="margin-bottom: 18px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+              <input type="checkbox" id="tmz-ann-enabled" ${ann.enabled ? 'checked' : ''} style="width: 18px; height: 18px;" />
+              <span style="font-family: var(--font-head); font-weight: 600; font-size: 15px;">Enable Banner on Storefront</span>
+            </label>
+          </div>
+
+          <div style="margin-bottom: 18px;">
+            <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Banner Text *</label>
+            <input type="text" id="tmz-ann-text" maxlength="200" value="${escapeText(ann.text || '')}" placeholder="e.g. Ramadhan Special: 20% off all AI Playbooks with code EID20" style="width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: 1.5px solid rgba(11,11,11,0.2);" />
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px;">
+            <div>
+              <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Target URL (Optional)</label>
+              <input type="text" id="tmz-ann-link" maxlength="150" value="${escapeText(ann.link || '')}" placeholder="/editions or https://..." style="width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: 1.5px solid rgba(11,11,11,0.2);" />
+            </div>
+            <div>
+              <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Link Action Label (Optional)</label>
+              <input type="text" id="tmz-ann-linktext" maxlength="50" value="${escapeText(ann.linkText || '')}" placeholder="Explore Editions ↗" style="width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: 1.5px solid rgba(11,11,11,0.2);" />
+            </div>
+          </div>
+
+          <div id="tmz-ann-msg" style="margin-bottom: 14px; font-size: 14px; font-weight: 500;"></div>
+
+          <button type="submit" id="tmz-save-ann-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 15px; border-radius: 999px; padding: 12px 28px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+            Save Announcement Banner
+          </button>
+        </form>
+      </div>
+    `;
+
+    document.getElementById('tmz-announcement-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const enabled = document.getElementById('tmz-ann-enabled').checked;
+      const text = document.getElementById('tmz-ann-text').value;
+      const link = document.getElementById('tmz-ann-link').value;
+      const linkText = document.getElementById('tmz-ann-linktext').value;
+      const msg = document.getElementById('tmz-ann-msg');
+      const btn = document.getElementById('tmz-save-ann-btn');
+
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      const res = await this.api('announcement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled, text, link, linkText })
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Save Announcement Banner';
+
+      if (!res.ok) {
+        msg.style.color = '#B3261E';
+        msg.textContent = res.data.error || 'Failed to save announcement.';
+        return;
+      }
+      msg.style.color = '#1E7B2E';
+      msg.textContent = 'Announcement banner updated live on storefront!';
     });
   }
 
@@ -929,4 +1224,3 @@ export class AdminController {
     `;
   }
 }
-

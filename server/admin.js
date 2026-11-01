@@ -6,7 +6,7 @@
  * Ten wrong passwords from one address lock logins from it for 15 minutes.
  * Every change also needs the header X-Tamyiz-Admin: 1 (pages on other sites can't send it).
  */
-import { json, hmacSha256Hex, timingSafeEqual } from './payments.js';
+import { json, hmacSha256Hex, timingSafeEqual, signDownload, sendReceiptEmail } from './payments.js';
 import {
   loadCatalog, saveCatalog, store, findById, readFields, sniff, newId, uniqueSlug,
   MAX_PDF_BYTES, MAX_COVER_BYTES, StoreMissing,
@@ -294,6 +294,189 @@ async function getOverview(env) {
   });
 }
 
+async function resendOrder(request, env) {
+  const kv = store(env);
+  let body = {};
+  try { body = await request.json(); } catch {}
+  const orderId = body.orderId;
+  if (!orderId) return json({ error: 'Order ID is required.' }, 400);
+
+  const raw = await kv.get(`order:${orderId}`);
+  if (!raw) return json({ error: 'Order not found.' }, 404);
+  const ord = JSON.parse(raw);
+
+  const origin = new URL(request.url).origin;
+  const downloads = await Promise.all((ord.items || []).map(async (i) => ({
+    productId: i.productId || i.id,
+    name: i.name,
+    variant: 'PDF',
+    formatType: 'ebook',
+    downloadUrl: origin + (await signDownload(env, i.productId || i.id, ord.paymentId || ord.orderId)),
+    actionLabel: 'Download PDF ↗',
+    specs: 'PDF e-book • DRM-free',
+    price: i.price,
+  })));
+
+  let sent = false;
+  if (ord.email) {
+    sent = await sendReceiptEmail({
+      email: ord.email,
+      phone: ord.phone,
+      referenceId: ord.referenceId || ord.orderId,
+      paymentId: ord.paymentId || ord.orderId,
+      totalINR: ord.totalINR || 0,
+      downloads
+    }, env).catch(() => false);
+  }
+
+  return json({ ok: true, sent: Boolean(sent), downloads });
+}
+
+async function createComplimentaryOrder(request, env) {
+  const kv = store(env);
+  let body = {};
+  try { body = await request.json(); } catch {}
+  const { email, phone, productId, note } = body;
+  if (!email && !phone) return json({ error: 'Customer email or phone required.' }, 400);
+  if (!productId) return json({ error: 'E-book product required.' }, 400);
+
+  const catalog = await loadCatalog(env);
+  const book = findById(catalog, productId);
+  if (!book) return json({ error: 'Selected e-book not found.' }, 404);
+
+  const orderId = `gift_${Date.now().toString(36)}`;
+  const paymentId = `gift_pay_${Date.now().toString(36)}`;
+  const referenceId = `TAMYIZ-GIFT-${Date.now().toString(36).toUpperCase()}`;
+  const nowIso = new Date().toISOString();
+
+  const origin = new URL(request.url).origin;
+  const downloadUrl = origin + (await signDownload(env, book.id, paymentId));
+  const downloads = [{
+    productId: book.id,
+    name: book.name,
+    variant: 'PDF',
+    formatType: 'ebook',
+    downloadUrl,
+    actionLabel: 'Download PDF ↗',
+    specs: 'Complimentary Access • DRM-free',
+    price: 0
+  }];
+
+  let receiptEmailed = false;
+  if (email) {
+    receiptEmailed = await sendReceiptEmail({
+      email,
+      phone: phone || '',
+      referenceId,
+      paymentId,
+      totalINR: 0,
+      downloads
+    }, env).catch(() => false);
+  }
+
+  const orderData = {
+    orderId,
+    referenceId,
+    paymentId,
+    mode: 'complimentary_gift',
+    amountPaise: 0,
+    totalINR: 0,
+    subtotalINR: book.price || 0,
+    discountINR: book.price || 0,
+    email: email || '',
+    phone: phone || '',
+    items: [{ productId: book.id, name: book.name, variant: 'PDF', price: 0 }],
+    receiptEmailed: Boolean(receiptEmailed),
+    note: note || 'Complimentary VIP Access',
+    status: 'paid',
+    createdAt: nowIso
+  };
+
+  await kv.put(`order:${orderId}`, JSON.stringify(orderData));
+  const indexRaw = await kv.get('orders:index');
+  let orderIndex = [];
+  try { orderIndex = indexRaw ? JSON.parse(indexRaw) : []; } catch { orderIndex = []; }
+  orderIndex.unshift(orderId);
+  await kv.put('orders:index', JSON.stringify(orderIndex.slice(0, 500)));
+
+  return json({ ok: true, order: orderData, downloadUrl });
+}
+
+async function getCoupons(env) {
+  const kv = store(env);
+  const raw = await kv.get('store:coupons');
+  let coupons = {};
+  try { coupons = raw ? JSON.parse(raw) : {}; } catch { coupons = {}; }
+  return json({ coupons });
+}
+
+async function saveCoupon(request, env) {
+  const kv = store(env);
+  let body = {};
+  try { body = await request.json(); } catch {}
+  const { code, type, value, label } = body;
+  if (!code || typeof code !== 'string') return json({ error: 'Coupon code is required.' }, 400);
+  const cleanCode = code.toUpperCase().trim().replace(/[^A-Z0-9_-]/g, '');
+  if (cleanCode.length < 3) return json({ error: 'Coupon code must be at least 3 characters.' }, 400);
+
+  const numVal = Number(value);
+  if (!numVal || numVal < 1) return json({ error: 'Discount value must be a positive number.' }, 400);
+
+  const raw = await kv.get('store:coupons');
+  let coupons = {};
+  try { coupons = raw ? JSON.parse(raw) : {}; } catch { coupons = {}; }
+
+  coupons[cleanCode] = {
+    code: cleanCode,
+    type: type === 'flat' ? 'flat' : 'percent',
+    value: numVal,
+    label: label || (type === 'flat' ? `₹${numVal} off` : `${numVal}% off`),
+    active: true,
+    updatedAt: new Date().toISOString()
+  };
+
+  await kv.put('store:coupons', JSON.stringify(coupons));
+  return json({ ok: true, coupon: coupons[cleanCode] });
+}
+
+async function deleteCoupon(env, code) {
+  const kv = store(env);
+  const cleanCode = (code || '').toUpperCase().trim();
+  const raw = await kv.get('store:coupons');
+  let coupons = {};
+  try { coupons = raw ? JSON.parse(raw) : {}; } catch { coupons = {}; }
+
+  delete coupons[cleanCode];
+  await kv.put('store:coupons', JSON.stringify(coupons));
+  return json({ ok: true });
+}
+
+async function getAnnouncement(env) {
+  const kv = store(env);
+  const raw = await kv.get('store:announcement');
+  let announcement = null;
+  try { announcement = raw ? JSON.parse(raw) : null; } catch {}
+  return json({ announcement });
+}
+
+async function saveAnnouncement(request, env) {
+  const kv = store(env);
+  let body = {};
+  try { body = await request.json(); } catch {}
+  const { enabled, text, link, linkText } = body;
+
+  const announcement = {
+    enabled: Boolean(enabled),
+    text: (text || '').trim().slice(0, 200),
+    link: (link || '').trim().slice(0, 150),
+    linkText: (linkText || '').trim().slice(0, 50),
+    updatedAt: new Date().toISOString()
+  };
+
+  await kv.put('store:announcement', JSON.stringify(announcement));
+  return json({ ok: true, announcement });
+}
+
 function getSettings(env) {
   return json({
     storeConfig: {
@@ -326,6 +509,14 @@ export async function handleAdmin(request, env, rest) {
     if (rest === 'stats' && method === 'GET') return await getStats(request, env);
     if (rest === 'overview' && method === 'GET') return await getOverview(env);
     if (rest === 'orders' && method === 'GET') return await getOrders(request, env);
+    if (rest === 'orders/resend' && method === 'POST') return await resendOrder(request, env);
+    if (rest === 'orders/gift' && method === 'POST') return await createComplimentaryOrder(request, env);
+    if (rest === 'coupons' && method === 'GET') return await getCoupons(env);
+    if (rest === 'coupons' && method === 'POST') return await saveCoupon(request, env);
+    const cp = rest.match(/^coupons\/([A-Za-z0-9_-]{3,30})$/);
+    if (cp && method === 'DELETE') return await deleteCoupon(env, cp[1]);
+    if (rest === 'announcement' && method === 'GET') return await getAnnouncement(env);
+    if (rest === 'announcement' && method === 'POST') return await saveAnnouncement(request, env);
     if (rest === 'customers' && method === 'GET') return await getCustomers(request, env);
     if (rest === 'settings' && method === 'GET') return getSettings(env);
     if (rest === 'products' && method === 'GET') return json({ products: (await loadCatalog(env)).map(adminView) });

@@ -24,9 +24,10 @@ import { loadCatalog, findById } from './catalog.js';
 export const VALID_COUPONS = {};
 
 /**
- * Validates cart items and computes strict server-side price in INR & paise
+ * Validates cart items and computes strict server-side price in INR & paise.
+ * Synchronous by default for backwards compatibility with tests and callers.
  */
-export function calculateOrderTotal(items, couponCode = null, catalog = []) {
+export function calculateOrderTotal(items, couponCode = null, catalog = [], dynamicCoupons = null) {
   if (!Array.isArray(items) || items.length === 0) {
     throw new Error("Cart contains no valid items");
   }
@@ -51,7 +52,13 @@ export function calculateOrderTotal(items, couponCode = null, catalog = []) {
   // Calculate discount if coupon provided
   let discount = 0;
   if (couponCode) {
-    const c = VALID_COUPONS[String(couponCode).toUpperCase().trim()];
+    const cleanCode = String(couponCode).toUpperCase().trim();
+    let c = VALID_COUPONS[cleanCode];
+
+    if (!c && dynamicCoupons && dynamicCoupons[cleanCode] && dynamicCoupons[cleanCode].active !== false) {
+      c = dynamicCoupons[cleanCode];
+    }
+
     if (c) {
       if (c.type === 'percent') {
         discount = Math.round(subtotal * (c.value / 100));
@@ -71,6 +78,16 @@ export function calculateOrderTotal(items, couponCode = null, catalog = []) {
     amountPaise,
     items: validatedItems
   };
+}
+
+export async function getDynamicCoupons(env) {
+  if (!env || !env.TAMYIZ_STORE || !env.TAMYIZ_STORE.get) return {};
+  try {
+    const raw = await env.TAMYIZ_STORE.get('store:coupons');
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
 }
 
 /** Secret used to sign download links. Sandbox-only fallback so local testing works without keys. */
@@ -337,7 +354,8 @@ export async function handleCreateOrder(request, env, fetchImpl = fetch) {
 
   const catalog = await loadCatalog(env);
   let order;
-  try { order = calculateOrderTotal(items, coupon || couponCode, catalog); }
+  const dynamicCoupons = await getDynamicCoupons(env);
+  try { order = calculateOrderTotal(items, coupon || couponCode, catalog, dynamicCoupons); }
   catch (err) { return json({ error: err.message }, 400); }
 
   const notYet = notOnSale(order.items);
@@ -451,7 +469,8 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
   // Prices for the receipt screen, from the catalogue. Total = what Razorpay charged (or the sandbox total).
   const catalog = await loadCatalog(env);
   let priced;
-  try { priced = calculateOrderTotal(paidItems, null, catalog); }
+  const dynamicCoupons = await getDynamicCoupons(env);
+  try { priced = calculateOrderTotal(paidItems, null, catalog, dynamicCoupons); }
   catch { return json({ error: 'Your payment went through, but an item could not be found. Message us on WhatsApp with this payment ID: ' + paymentId }, 409); }
   // Sandbox (no real money) may only unlock ebooks that are on sale. A real, verified Razorpay payment is
   // always delivered, even if the ebook was switched off after the order was placed.
@@ -593,7 +612,8 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
 
   const catalog = await loadCatalog(env);
   let priced;
-  try { priced = calculateOrderTotal(items, null, catalog); }
+  const dynamicCoupons = await getDynamicCoupons(env);
+  try { priced = calculateOrderTotal(items, null, catalog, dynamicCoupons); }
   catch (err) { return json({ error: err.message }, 409); }
 
   const rawEmail = notes.email || pEntity.email || '';

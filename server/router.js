@@ -38,6 +38,17 @@ export async function route(request, env, fetchImpl = fetch) {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' }, // new e-books show on the next page load
     });
   }
+
+  if (rest === 'announcement' && method === 'GET') {
+    let announcement = null;
+    if (env.TAMYIZ_STORE && env.TAMYIZ_STORE.get) {
+      try {
+        const raw = await env.TAMYIZ_STORE.get('store:announcement');
+        announcement = raw ? JSON.parse(raw) : null;
+      } catch {}
+    }
+    return json({ announcement });
+  }
   let m = rest.match(/^cover\/([a-z0-9-]{3,40})$/);
   if (m && method === 'GET') return cover(env, m[1], request);
   m = rest.match(/^download\/([a-z0-9-]{3,40})$/);
