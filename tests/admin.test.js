@@ -205,3 +205,24 @@ test('visitor numbers: a refused token gives a clear message', async () => {
   assert.equal(sourceName('google.co.in'), 'Google');
   assert.equal(shapeStats({}, 7).visits, 0);
 });
+
+test('admin overview, orders and settings endpoints require login', async () => {
+  const e = env();
+  assert.equal((await call(e, '/api/admin/overview')).status, 401);
+  assert.equal((await call(e, '/api/admin/orders')).status, 401);
+  assert.equal((await call(e, '/api/admin/customers')).status, 401);
+  assert.equal((await call(e, '/api/admin/settings')).status, 401);
+
+  const cookie = await session(e);
+  const ovRes = await call(e, '/api/admin/overview', { headers: { Cookie: cookie, 'X-Tamyiz-Admin': '1' } });
+  assert.equal(ovRes.status, 200);
+  const ovData = await ovRes.json();
+  assert.ok('kpis' in ovData);
+  assert.equal(ovData.kpis.totalRevenueINR, 0);
+
+  const setRes = await call(e, '/api/admin/settings', { headers: { Cookie: cookie, 'X-Tamyiz-Admin': '1' } });
+  assert.equal(setRes.status, 200);
+  const setData = await setRes.json();
+  assert.ok('storeConfig' in setData);
+  assert.equal(setData.storeConfig.hasStorage, true);
+});

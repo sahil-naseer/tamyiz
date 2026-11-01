@@ -178,6 +178,138 @@ async function deleteProduct(env, id) {
   return json({ ok: true });
 }
 
+async function getOrders(request, env) {
+  const kv = store(env);
+  const indexRaw = await kv.get('orders:index');
+  let orderIds = [];
+  try { orderIds = indexRaw ? JSON.parse(indexRaw) : []; } catch { orderIds = []; }
+  if (!Array.isArray(orderIds)) orderIds = [];
+
+  const url = new URL(request.url);
+  const q = (url.searchParams.get('q') || '').toLowerCase().trim();
+  const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || 50)));
+
+  // Fetch orders from KV
+  const records = [];
+  for (const id of orderIds.slice(0, 150)) {
+    const raw = await kv.get(`order:${id}`);
+    if (raw) {
+      try {
+        const order = JSON.parse(raw);
+        if (q) {
+          const hay = `${order.orderId} ${order.referenceId || ''} ${order.paymentId || ''} ${order.email || ''} ${order.phone || ''} ${(order.items || []).map((i) => i.name).join(' ')}`.toLowerCase();
+          if (!hay.includes(q)) continue;
+        }
+        records.push(order);
+      } catch {}
+    }
+    if (records.length >= limit) break;
+  }
+  return json({ orders: records, total: orderIds.length });
+}
+
+async function getCustomers(request, env) {
+  const kv = store(env);
+  const indexRaw = await kv.get('orders:index');
+  let orderIds = [];
+  try { orderIds = indexRaw ? JSON.parse(indexRaw) : []; } catch { orderIds = []; }
+  if (!Array.isArray(orderIds)) orderIds = [];
+
+  const customerMap = new Map();
+  for (const id of orderIds) {
+    const raw = await kv.get(`order:${id}`);
+    if (!raw) continue;
+    try {
+      const ord = JSON.parse(raw);
+      const email = (ord.email || '').trim().toLowerCase();
+      const phone = (ord.phone || '').trim();
+      const key = email || phone || id;
+      if (!customerMap.has(key)) {
+        customerMap.set(key, {
+          email: email || '—',
+          phone: phone || '—',
+          ordersCount: 0,
+          totalSpentINR: 0,
+          lastOrderAt: ord.createdAt,
+          orders: []
+        });
+      }
+      const c = customerMap.get(key);
+      c.ordersCount += 1;
+      c.totalSpentINR += (ord.totalINR || 0);
+      c.orders.push({ orderId: ord.orderId, referenceId: ord.referenceId, totalINR: ord.totalINR, createdAt: ord.createdAt });
+      if (new Date(ord.createdAt) > new Date(c.lastOrderAt)) {
+        c.lastOrderAt = ord.createdAt;
+      }
+    } catch {}
+  }
+
+  const customers = Array.from(customerMap.values()).sort((a, b) => new Date(b.lastOrderAt) - new Date(a.lastOrderAt));
+  return json({ customers });
+}
+
+async function getOverview(env) {
+  const catalog = await loadCatalog(env);
+  const kv = store(env);
+  const indexRaw = await kv.get('orders:index');
+  let orderIds = [];
+  try { orderIds = indexRaw ? JSON.parse(indexRaw) : []; } catch { orderIds = []; }
+  if (!Array.isArray(orderIds)) orderIds = [];
+
+  let totalRevenueINR = 0;
+  let totalOrders = orderIds.length;
+  const buyers = new Set();
+  const productSalesMap = {};
+
+  for (const id of orderIds) {
+    const raw = await kv.get(`order:${id}`);
+    if (raw) {
+      try {
+        const ord = JSON.parse(raw);
+        totalRevenueINR += (ord.totalINR || 0);
+        if (ord.email) buyers.add(ord.email.toLowerCase());
+        else if (ord.phone) buyers.add(ord.phone);
+        for (const item of (ord.items || [])) {
+          const pid = item.productId || item.id;
+          productSalesMap[pid] = (productSalesMap[pid] || 0) + 1;
+        }
+      } catch {}
+    }
+  }
+
+  const bestSellers = catalog
+    .map((p) => ({ id: p.id, name: p.name, price: p.price, status: p.status, sales: productSalesMap[p.id] || 0 }))
+    .sort((a, b) => b.sales - a.sales)
+    .slice(0, 5);
+
+  return json({
+    kpis: {
+      totalRevenueINR,
+      totalOrders,
+      totalCustomers: buyers.size,
+      totalProducts: catalog.length,
+      onSaleProducts: catalog.filter((p) => p.status === 'on-sale').length,
+    },
+    bestSellers
+  });
+}
+
+function getSettings(env) {
+  return json({
+    storeConfig: {
+      hasStorage: Boolean(env.TAMYIZ_STORE),
+      hasRazorpay: Boolean(env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET),
+      razorpayKeyId: env.RAZORPAY_KEY_ID ? `${env.RAZORPAY_KEY_ID.slice(0, 8)}...` : 'Not configured',
+      isSandbox: Boolean(env.TAMYIZ_SANDBOX === 'true' || env.TAMYIZ_SANDBOX === true),
+      hasBrevo: Boolean(env.BREVO_API_KEY),
+      hasResend: Boolean(env.RESEND_API_KEY),
+      receiptSender: env.RECEIPT_FROM || 'tamyiz.co@gmail.com',
+      hasDownloadSecret: Boolean(env.DOWNLOAD_SECRET),
+      hasAnalyticsToken: Boolean(env.CF_API_TOKEN),
+    }
+  });
+}
+
 /** Routes for /api/admin/<rest>. */
 export async function handleAdmin(request, env, rest) {
   const method = request.method;
@@ -192,6 +324,10 @@ export async function handleAdmin(request, env, rest) {
       return json({ ok: true, storage: Boolean(env.TAMYIZ_STORE) });
     }
     if (rest === 'stats' && method === 'GET') return await getStats(request, env);
+    if (rest === 'overview' && method === 'GET') return await getOverview(env);
+    if (rest === 'orders' && method === 'GET') return await getOrders(request, env);
+    if (rest === 'customers' && method === 'GET') return await getCustomers(request, env);
+    if (rest === 'settings' && method === 'GET') return getSettings(env);
     if (rest === 'products' && method === 'GET') return json({ products: (await loadCatalog(env)).map(adminView) });
     if (rest === 'products' && method === 'POST') return await saveProduct(request, env, null);
     const t = rest.match(/^products\/([a-z0-9-]{3,40})\/thumb$/);

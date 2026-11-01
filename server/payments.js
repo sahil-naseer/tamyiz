@@ -474,15 +474,38 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
     .catch(() => false);
 
   if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.put) {
-    await env.TAMYIZ_STORE.put(`order-fulfilled:${paymentId}`, JSON.stringify({
+    const orderData = {
       orderId,
       referenceId,
+      paymentId,
+      mode,
+      amountPaise,
+      totalINR,
+      subtotalINR: priced.subtotal,
+      discountINR: Math.max(0, priced.subtotal - totalINR),
       email: cleanEmail,
       phone: cleanPhone,
-      totalINR,
+      items: priced.items,
       receiptEmailed: Boolean(receiptEmailed),
-      timestamp: new Date().toISOString()
-    }), { expirationTtl: 30 * 86400 }).catch(() => {});
+      status: 'paid',
+      createdAt: new Date().toISOString()
+    };
+    await env.TAMYIZ_STORE.put(`order-fulfilled:${paymentId}`, JSON.stringify(orderData), { expirationTtl: 365 * 86400 }).catch(() => {});
+    await env.TAMYIZ_STORE.put(`order:${orderId}`, JSON.stringify(orderData)).catch(() => {});
+
+    // Maintain a persistent list of recent order IDs for the admin dashboard
+    try {
+      const orderIndexRaw = await env.TAMYIZ_STORE.get('orders:index');
+      let orderIndex = [];
+      try { orderIndex = orderIndexRaw ? JSON.parse(orderIndexRaw) : []; } catch { orderIndex = []; }
+      if (!orderIndex.includes(orderId)) {
+        orderIndex.unshift(orderId);
+        if (orderIndex.length > 500) orderIndex = orderIndex.slice(0, 500);
+        await env.TAMYIZ_STORE.put('orders:index', JSON.stringify(orderIndex));
+      }
+    } catch (e) {
+      console.error('Failed to update orders:index', e);
+    }
   }
 
   return json({
@@ -605,15 +628,37 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
   }, env, fetchImpl).catch(() => false);
 
   if (env.TAMYIZ_STORE && env.TAMYIZ_STORE.put) {
-    await env.TAMYIZ_STORE.put(fulfilledKey, JSON.stringify({
+    const orderData = {
       orderId,
       referenceId,
+      paymentId,
+      mode: 'razorpay_webhook',
+      amountPaise: Number(pEntity.amount || priced.amountPaise),
+      totalINR,
+      subtotalINR: priced.subtotal,
+      discountINR: Math.max(0, priced.subtotal - totalINR),
       email: cleanEmail,
       phone: cleanPhone,
-      totalINR,
+      items: priced.items,
       receiptEmailed: Boolean(receiptEmailed),
-      timestamp: new Date().toISOString()
-    }), { expirationTtl: 30 * 86400 }).catch(() => {});
+      status: 'paid',
+      createdAt: new Date().toISOString()
+    };
+    await env.TAMYIZ_STORE.put(fulfilledKey, JSON.stringify(orderData), { expirationTtl: 365 * 86400 }).catch(() => {});
+    await env.TAMYIZ_STORE.put(`order:${orderId}`, JSON.stringify(orderData)).catch(() => {});
+
+    try {
+      const orderIndexRaw = await env.TAMYIZ_STORE.get('orders:index');
+      let orderIndex = [];
+      try { orderIndex = orderIndexRaw ? JSON.parse(orderIndexRaw) : []; } catch { orderIndex = []; }
+      if (!orderIndex.includes(orderId)) {
+        orderIndex.unshift(orderId);
+        if (orderIndex.length > 500) orderIndex = orderIndex.slice(0, 500);
+        await env.TAMYIZ_STORE.put('orders:index', JSON.stringify(orderIndex));
+      }
+    } catch (e) {
+      console.error('Failed to update orders:index in webhook', e);
+    }
   }
 
   return json({ status: 'fulfilled', paymentId, receiptEmailed: Boolean(receiptEmailed) }, 200);

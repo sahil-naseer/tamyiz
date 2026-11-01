@@ -24,6 +24,7 @@ import { renderPhilosophyPage } from './pages/philosophy-page.js';
 import { renderAtelierPage } from './pages/atelier-page.js';
 import { renderCheckoutPage } from './pages/checkout-page.js';
 import { renderLegalPage, legalDocs } from './pages/legal-page.js';
+import { AdminController } from './pages/admin-page.js';
 
 export const escapeText = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
@@ -41,6 +42,7 @@ class TamyizUnifiedApp {
     this.mobileMenuOpen = false;
     this.activePreviewProduct = null;
     this.activePreviewTab = 0;
+    this.adminController = new AdminController(this);
 
     this.init();
   }
@@ -148,6 +150,10 @@ class TamyizUnifiedApp {
     if (cleanPath.startsWith('/legal/')) {
       const slug = cleanPath.replace('/legal/', '').split('/')[0] || 'delivery-protocol';
       return { page: 'legal', slug, anchor: hash };
+    }
+    if (cleanPath === '/admin' || cleanPath.startsWith('/admin/')) {
+      const sub = cleanPath === '/admin' ? 'overview' : cleanPath.replace('/admin/', '').split('/')[0] || 'overview';
+      return { page: 'admin', slug: sub, anchor: hash };
     }
 
     // Unknown address: a proper "page not found" (the server also answers 404 for it)
@@ -613,6 +619,10 @@ class TamyizUnifiedApp {
 
       case 'legal':
         mainEl.innerHTML = renderLegalPage(this.currentSlug || 'delivery-protocol', this);
+        break;
+
+      case 'admin':
+        this.adminController.render(mainEl, this.currentSlug || 'overview');
         break;
 
       default:

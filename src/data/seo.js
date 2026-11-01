@@ -37,6 +37,12 @@ const STATIC_PAGES = {
     description: DEFAULT_DESCRIPTION,
     noindex: true,
   },
+  admin: {
+    path: '/admin',
+    title: `Admin Dashboard | ${BRAND}`,
+    description: 'TAMYIZ™ Administrative Portal and Operations Console.',
+    noindex: true,
+  },
   notfound: {
     path: null,
     title: `Page not found | ${BRAND}`,
@@ -84,7 +90,7 @@ export function pageMeta(page, slug) {
 /** Every real page address, for the build script and the sitemap. */
 export function allPages() {
   return [
-    ...['home', 'editions', 'philosophy', 'atelier', 'checkout'].map((page) => ({ page, slug: null })),
+    ...['home', 'editions', 'philosophy', 'atelier', 'checkout', 'admin'].map((page) => ({ page, slug: null })),
     ...products.map((p) => ({ page: 'edition', slug: p.slug })),
     ...Object.keys(legalDocs).map((slug) => ({ page: 'legal', slug })),
   ];
