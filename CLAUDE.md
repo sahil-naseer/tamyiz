@@ -193,7 +193,6 @@ tamyiz-unified.css). Don't ship below this.
   (Brevo or Resend) so the sender looks clean and spam risk drops. Buyers before 25 Oct 22:45 IST got no email.
 
 2 Nov 2026 to-dos (found while updating this file):
-- `.env.example` is out of date: add `BREVO_API_KEY`, `CF_API_TOKEN`, `CF_ACCOUNT_ID`, `CF_SITE_TAG`, `RAZORPAY_WEBHOOK_SECRET`.
 - Tighten the CSP (drop `'unsafe-inline'` for scripts) when the page's inline scripts are moved out.
 - Add Cloudflare rate limiting rules for `/api/*` and `/api/admin/*` so abuse doesn't spend KV writes.
 - Decide whether the hard-coded `SAMPLE10` stays; it is visible to anyone reading the public repo.
