@@ -38,7 +38,7 @@ sold with Razorpay and delivered as private signed download links.
   the book is switched off later; deleting a book breaks its links (admin warns).
 - Settings (Cloudflare: project → Settings → Variables and secrets; locally `.dev.vars` for wrangler or `.env` for Vite,
   both git-ignored): `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` (secret), `BREVO_API_KEY` (secret, receipt emails; used first),
-  `RESEND_API_KEY` (secret, alternative receipts, needs own domain), `RECEIPT_FROM` (optional sender; default tamyiz.co@gmail.com, must be verified in Brevo), `DOWNLOAD_SECRET` (optional), `TAMYIZ_SANDBOX` (never in production).
+  `RAZORPAY_WEBHOOK_SECRET` (secret, verifies Razorpay's webhook), `CF_API_TOKEN` / `CF_ACCOUNT_ID` / `CF_SITE_TAG` (visitor stats), `RESEND_API_KEY` (secret, alternative receipts, needs own domain), `RECEIPT_FROM` (optional sender; default tamyiz.co@gmail.com, must be verified in Brevo), `DOWNLOAD_SECRET` (optional), `TAMYIZ_SANDBOX` (never in production).
 - Deploys stop silently if Cloudflare loses access to this repo (yellow "disconnected" banner in the Pages project).
   Fix: GitHub → Settings → Applications → Cloudflare Workers and Pages → Configure → Repository access must list
   BOTH tamyiz and eternal-polyclinic → Save. (Happened 23 Oct 2026.)
@@ -49,6 +49,36 @@ sold with Razorpay and delivered as private signed download links.
   `CF_API_TOKEN` (Account Analytics: Read only). Account id and site tag are in stats.js (identifiers, not secrets).
 - Tests: `npm test` (node test runner, `tests/`: payments, downloads, admin). Run before every push. `npm run cf:dev` runs the built site on
   Cloudflare's runtime locally (wrangler, with a local KV store; set ADMIN_PASSWORD/TAMYIZ_SANDBOX in .dev.vars).
+
+## Added on 2 Nov 2026 (read from the code and git history)
+
+About ten commits landed on 2 Nov. Everything below is in `server/` (routes in `server/router.js`) unless noted.
+
+- Orders and webhook: orders are saved (`orders:index`, `order:<id>`); Razorpay webhook at `/api/webhook/razorpay`
+  (also `/api/razorpay-webhook`, signature checked with `RAZORPAY_WEBHOOK_SECRET`); a payment already fulfilled is not
+  fulfilled twice (idempotency); order creation is rate-limited.
+- Downloads: each paid link allows `MAX_DOWNLOADS` = 10 downloads, then asks the buyer to message on WhatsApp with
+  the payment ID. Digital books are limited to one copy per order.
+- Admin: one unified dashboard on /admin (orders, analytics, coupons, gift orders, announcement banner, leads,
+  reviews, abandoned bags). Logging out revokes the session on the server, not just in the browser.
+- Coupons, gifts and banner: dynamic coupons (`store:coupons`), gift orders, link re-send, and a site announcement
+  banner (`store:announcement`, public `GET /api/announcement`).
+- Free Chapter 1 sample (`/api/sample`, `sample.js`): lead capture, an on-page reader, a welcome email sequence that
+  includes the SAMPLE10 gift, and a leads manager on /admin. Limit: 10 requests per IP per 15 min.
+- Download recovery portal (`/api/recover-downloads`, `recovery.js`): a buyer enters their email to get links again
+  (masked email shown). Limit: 8 per IP per 15 min.
+- Reader reviews (`/api/reviews`, `reviews.js`): every new review is saved as `pending`; only reviews approved on
+  /admin are shown (`store:reviews:approved`). `verifiedBuyer` is only a label, found by searching the latest 100 orders
+  for the same email and book; anyone can still submit a review. The honesty rule below still applies: approve real
+  reviews only. Book structured data (Google Book schema, with aggregate reviews) was added on 2 Nov in the SEO commit.
+- Abandoned bag recovery (`/api/abandoned-cart`, `abandoned.js`): captures the email at checkout, a funnel view on
+  /admin, and a 1-click restore of the bag. Limit: 20 per IP per 15 min.
+- Security headers: `public/_headers` sets X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy and a
+  Content-Security-Policy. The CSP still allows `'unsafe-inline'` scripts (needed by the current page); tightening it
+  is a known to-do. Dev dependencies were patched ("0 vulnerabilities" per commit 972b8d9); re-run `npm audit` after any install.
+- Rate limits are counters stored in KV. KV's free plan allows only 1,000 writes per day (see Storage), and each
+  counted request is a write, so a flood of requests could use up the day's writes and break orders and uploads.
+  Prefer Cloudflare's own rate limiting rules in front of /api for anything public.
 
 ## Selling
 
@@ -80,6 +110,8 @@ The contact form has no mail server: it opens WhatsApp with the message filled i
 ## Honesty rules (decided by Sahil and Basit, 24 Oct 2026)
 
 - No struck-through "was" prices, "SAVE x%", "BESTSELLER", star ratings or review counts until they are real.
+  Reviews now exist: only approve real ones from real readers, never write or buy any. Automatic bundle discounts must
+  be shown as what they are (a discount for buying 2+ books), never as a fake "was" price.
 - It is a "Receipt", never a "Tax invoice" (that needs GST registration).
 - Nothing is sent on WhatsApp automatically; never claim it. Page counts stay "planned" until the book exists.
 - Sopore/Kashmir only in legal contact details and receipts, not in brand copy (TAMYIZ is a global brand).
@@ -141,13 +173,15 @@ tamyiz-unified.css). Don't ship below this.
 3. What gets unlocked is read back from the Razorpay order notes written at creation (`itemsToNotes`/`notesToItems`).
 4. Prices come from the catalogue in KV (set on /admin), read by the server at order time. The bag refreshes every
    item's price from the catalogue on load (`store.pruneUnavailable`), so it always shows what will be charged.
-   Promo codes: none (the template's were public and gave 10–15% off; removed 24 Oct 2026). To add one, put the same
-   code in `VALID_COUPONS` (server/payments.js) and `AVAILABLE_COUPONS` (store.js); the promo box shows only then.
+   Promo codes (changed 2 Nov 2026): the 24 Oct note "none" is out of date. Coupons now live in KV (`store:coupons`,
+   managed on /admin) plus one hard-coded code, `SAMPLE10` (10%, in `VALID_COUPONS`, server/payments.js). The repo is
+   PUBLIC, so anything hard-coded there is public: use /admin coupons for real promotions, and treat SAMPLE10 as known to everyone.
+   Automatic volume discount: 2 books = 20% off, 3+ books = 25% off (`calculateOrderTotal`), applied before any coupon.
 5. The sandbox simulator (free unlock, for testing) runs only when `TAMYIZ_SANDBOX=true`. Never set it in production.
    Without keys and without sandbox, checkout returns a polite 503 pointing buyers to WhatsApp.
 6. Never commit keys. The repo is public.
 
-## Open issues (as of 24 Oct 2026)
+## Open issues (24 Oct 2026 notes, plus 2 Nov 2026 to-dos)
 
 - Cloudflare setup 24 Oct 2026: KV namespace `tamyiz-store` bound as `TAMYIZ_STORE` (Production). The first names were
   saved with a trailing dot ("TAMYIZ_STORE.") and didn't work; names must match exactly. The dashboard then refused
@@ -157,3 +191,10 @@ tamyiz-unified.css). Don't ship below this.
   25 Oct: receipt arrived in Inbox (Gmail shows the sender as tamyiz.co@…brevosend.com, normal for a Gmail sender).
   FAQ, delivery policy, checkout and legal contact block now mention the email receipt. Better later: own domain
   (Brevo or Resend) so the sender looks clean and spam risk drops. Buyers before 25 Oct 22:45 IST got no email.
+
+2 Nov 2026 to-dos (found while updating this file):
+- `.env.example` is out of date: add `BREVO_API_KEY`, `CF_API_TOKEN`, `CF_ACCOUNT_ID`, `CF_SITE_TAG`, `RAZORPAY_WEBHOOK_SECRET`.
+- Tighten the CSP (drop `'unsafe-inline'` for scripts) when the page's inline scripts are moved out.
+- Add Cloudflare rate limiting rules for `/api/*` and `/api/admin/*` so abuse doesn't spend KV writes.
+- Decide whether the hard-coded `SAMPLE10` stays; it is visible to anyone reading the public repo.
+- Checked 2 Nov 2026 on commit a9939a8: `npm test` 52 of 52 pass, `npm audit` 0 vulnerabilities. Re-run both after every change.
