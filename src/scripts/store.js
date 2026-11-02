@@ -15,9 +15,9 @@ const STORAGE_KEYS = {
 };
 
 // Promo codes shown in the bag. Keep in step with VALID_COUPONS in server/payments.js (the server is what counts).
-// Empty on purpose: the template's codes were public (in this file and on GitHub) and gave anyone 10–15% off.
-// To run a promotion, add the same code in both places, e.g. 'LAUNCH10': { type: 'percent', value: 10, label: '10% off' }.
-const AVAILABLE_COUPONS = {};
+const AVAILABLE_COUPONS = {
+  SAMPLE10: { type: 'percent', value: 10, label: '10% sample reader gift' },
+};
 
 export const hasCoupons = () => Object.keys(AVAILABLE_COUPONS).length > 0;
 
@@ -178,19 +178,41 @@ class Store {
     return subtotal >= 4999 ? 0 : 250;
   }
 
-  getDiscount() {
+  getBundleDiscount() {
+    const subtotal = this.getSubtotal();
+    if (subtotal === 0) return 0;
+    const uniqueBooksCount = this.cart.length;
+    if (uniqueBooksCount >= 3) {
+      return Math.round(subtotal * 0.25);
+    }
+    if (uniqueBooksCount === 2) {
+      return Math.round(subtotal * 0.20);
+    }
+    return 0;
+  }
+
+  getCouponDiscount() {
     if (!this.coupon) return 0;
     const subtotal = this.getSubtotal();
+    const bundleDiscount = this.getBundleDiscount();
+    const remaining = subtotal - bundleDiscount;
     const c = AVAILABLE_COUPONS[this.coupon.code];
     if (!c) return 0;
 
     if (c.type === 'percent') {
-      return Math.round((subtotal * c.value) / 100);
+      return Math.round((remaining * c.value) / 100);
     }
     if (c.type === 'flat') {
-      return subtotal >= 3000 ? Math.min(subtotal, c.value) : 0;
+      return subtotal >= 3000 ? Math.min(remaining, c.value) : 0;
     }
     return 0;
+  }
+
+  getDiscount() {
+    const subtotal = this.getSubtotal();
+    const bundle = this.getBundleDiscount();
+    const coupon = this.getCouponDiscount();
+    return Math.min(Math.max(0, subtotal - 1), bundle + coupon);
   }
 
   getTotal() {
@@ -198,7 +220,7 @@ class Store {
     if (subtotal === 0) return 0;
     const shipping = this.getShippingFee();
     const discount = this.getDiscount();
-    return Math.max(0, subtotal + shipping - discount);
+    return Math.max(1, subtotal + shipping - discount);
   }
 
   applyCoupon(code) {

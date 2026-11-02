@@ -18,10 +18,10 @@ import { loadCatalog, findById } from './catalog.js';
  */
 
 // Verified Coupon Codes
-// Promo codes. Empty on purpose: the template's codes were public (this repo is public) and gave anyone 10–15% off.
-// To run a promotion add it here AND in src/scripts/store.js, e.g. LAUNCH10: { type: 'percent', value: 10 }.
-// Pick a code that isn't guessable, and remove it when the promotion ends.
-export const VALID_COUPONS = {};
+// Standard welcome discounts and special promotion codes
+export const VALID_COUPONS = {
+  SAMPLE10: { type: 'percent', value: 10, label: '10% sample reader gift' },
+};
 
 /**
  * Validates cart items and computes strict server-side price in INR & paise.
@@ -49,8 +49,16 @@ export function calculateOrderTotal(items, couponCode = null, catalog = [], dyna
     validatedItems.push({ productId: prodId, name: catProd.name, variant: 'PDF', price, status: catProd.status });
   }
 
+  // Automatic volume bundle discount: 2 books -> 20% off, 3+ books -> 25% off
+  let bundleDiscount = 0;
+  if (validatedItems.length >= 3) {
+    bundleDiscount = Math.round(subtotal * 0.25);
+  } else if (validatedItems.length === 2) {
+    bundleDiscount = Math.round(subtotal * 0.20);
+  }
+
   // Calculate discount if coupon provided
-  let discount = 0;
+  let couponDiscount = 0;
   if (couponCode) {
     const cleanCode = String(couponCode).toUpperCase().trim();
     let c = VALID_COUPONS[cleanCode];
@@ -61,18 +69,22 @@ export function calculateOrderTotal(items, couponCode = null, catalog = [], dyna
 
     if (c) {
       if (c.type === 'percent') {
-        discount = Math.round(subtotal * (c.value / 100));
+        // Apply percent discount on the remaining subtotal after bundle discount
+        couponDiscount = Math.round((subtotal - bundleDiscount) * (c.value / 100));
       } else if (c.type === 'flat' && (!c.minOrder || subtotal >= c.minOrder)) {
-        discount = c.value;
+        couponDiscount = c.value;
       }
     }
   }
 
+  const discount = Math.min(subtotal - 1, bundleDiscount + couponDiscount);
   const total = Math.max(1, subtotal - discount);
   const amountPaise = total * 100;
 
   return {
     subtotal,
+    bundleDiscount,
+    couponDiscount,
     discount,
     total,
     amountPaise,

@@ -325,6 +325,40 @@ export function renderProductDetailPage(slug, appInstance) {
                     </div>
                   </div>
                 </div>
+
+                <!-- READER REVIEWS & SOCIAL PROOF SECTION -->
+                <div class="tamyiz-pdp-reviews-box" style="margin-top: 2rem; border-top: 1.5px solid rgba(11,11,11,0.1); padding-top: 1.5rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                    <div>
+                      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem;">
+                        <span style="color: #F5A623; font-size: 1.1rem; letter-spacing: 2px;">★★★★★</span>
+                        <span style="font-weight: 800; font-size: 0.95rem; color: #0B0B0B;" id="pdp-rating-avg-${product.id}">5.0 / 5.0</span>
+                      </div>
+                      <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; font-family: monospace; color: #767670;" id="pdp-reviews-count-${product.id}">
+                        Verified Reader Notes
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onclick="window.tamyizApp.openReviewModal('${product.id}')"
+                      style="font-family: var(--font-sub); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.55rem 1rem; border: 1.5px solid #0B0B0B; background: transparent; color: #0B0B0B; border-radius: 4px; cursor: pointer; transition: all 0.2s;"
+                      onmouseover="this.style.background='#0B0B0B'; this.style.color='#FFF'"
+                      onmouseout="this.style.background='transparent'; this.style.color='#0B0B0B'"
+                    >
+                      Leave a Review ✍
+                    </button>
+                  </div>
+
+                  <!-- Reviews Container -->
+                  <div id="pdp-reviews-list-${product.id}" class="pdp-reviews-dynamic-list">
+                    <p style="font-size: 0.82rem; color: #666; font-style: italic; margin: 0;">
+                      Loading reader feedback…
+                    </p>
+                  </div>
+                  <script>
+                    setTimeout(() => { if (window.tamyizApp && window.tamyizApp.loadProductReviews) window.tamyizApp.loadProductReviews('${product.id}'); }, 20);
+                  </script>
+                </div>
               </div>
             </div>
           </div>

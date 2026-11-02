@@ -12,6 +12,7 @@ import {
   MAX_PDF_BYTES, MAX_COVER_BYTES, StoreMissing,
 } from './catalog.js';
 import { getStats } from './stats.js';
+import { getAdminReviews, approveReview, deleteReview } from './reviews.js';
 
 const COOKIE = 'tmz_admin';
 const SESSION_SECONDS = 12 * 60 * 60;
@@ -547,6 +548,11 @@ export async function handleAdmin(request, env, rest) {
     if (rest === 'leads' && method === 'GET') return await getLeads(request, env);
     const ld = rest.match(/^leads\/([A-Za-z0-9_-]{5,60})$/);
     if (ld && method === 'DELETE') return await deleteLead(env, ld[1]);
+    if (rest === 'reviews' && method === 'GET') return await getAdminReviews(env);
+    const rvApprove = rest.match(/^reviews\/([A-Za-z0-9_-]{5,50})\/approve$/);
+    if (rvApprove && method === 'POST') return await approveReview(env, rvApprove[1]);
+    const rvDelete = rest.match(/^reviews\/([A-Za-z0-9_-]{5,50})$/);
+    if (rvDelete && method === 'DELETE') return await deleteReview(env, rvDelete[1]);
     if (rest === 'customers' && method === 'GET') return await getCustomers(request, env);
     if (rest === 'settings' && method === 'GET') return getSettings(env);
     if (rest === 'products' && method === 'GET') return json({ products: (await loadCatalog(env)).map(adminView) });

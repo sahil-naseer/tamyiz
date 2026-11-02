@@ -78,6 +78,11 @@ export async function handleSampleLead(request, env) {
     }
   }
 
+  // Automated sample-to-buyer email sequence (welcome gift & 10% coupon)
+  try {
+    sendSampleWelcomeEmail(env, cleanEmail, pub).catch(() => {});
+  } catch {}
+
   return json({
     ok: true,
     message: 'Sample unlocked successfully.',
@@ -97,3 +102,92 @@ export async function handleSampleLead(request, env) {
     },
   });
 }
+
+/** Sends a welcome email with a 10% coupon code to prospective readers */
+export async function sendSampleWelcomeEmail(env, to, product, fetchImpl = fetch) {
+  if (!env || (!env.BREVO_API_KEY && !env.RESEND_API_KEY)) return false;
+  const fromEmail = String(env.RECEIPT_FROM || 'tamyiz.co@gmail.com').replace(/^.*<|>.*$/g, '').trim();
+  const subject = `Your sample of "${product.name}" + a welcome gift from TAMYIZ`;
+  const bookUrl = `https://tamyiz.pages.dev/edition/${product.slug || product.id}`;
+  const text = [
+    `TAMYIZ™ ATELIER`,
+    ``,
+    `Thank you for requesting a sample of "${product.name}".`,
+    `You can read Chapter 1 anytime or view the complete monograph curriculum here:`,
+    `${bookUrl}`,
+    ``,
+    `----------------------------------------------------`,
+    `EXCLUSIVE WELCOME GIFT: 10% OFF YOUR COMPLETE EDITION`,
+    `Use Coupon Code: SAMPLE10 at checkout`,
+    `----------------------------------------------------`,
+    ``,
+    `All TAMYIZ e-books include instant digital delivery, DRM-free PDF, and free revision updates.`,
+    ``,
+    `Questions? Message our authors directly on WhatsApp: https://wa.me/919541722379`,
+    ``,
+    `TAMYIZ — Distinction is quiet.`
+  ].join('\n');
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #F7F7F5; color: #0B0B0B;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 580px; background: #FFFFFF; border-radius: 12px; border: 1px solid rgba(11,11,11,0.1); overflow: hidden; padding: 32px;">
+        <tr>
+          <td>
+            <div style="font-family: monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #767670; margin-bottom: 8px;">
+              TAMYIZ™ ATELIER
+            </div>
+            <h1 style="font-size: 22px; font-weight: 700; margin: 0 0 16px; color: #0B0B0B; line-height: 1.3;">
+              Your Sample of "${product.name}"
+            </h1>
+            <p style="font-size: 15px; line-height: 1.6; color: #444; margin: 0 0 20px;">
+              Thank you for exploring our publications. You can return to your Chapter 1 sample anytime, or inspect the complete curriculum architecture.
+            </p>
+            <div style="background: #FAF9F6; border: 1.5px dashed #0B0B0B; border-radius: 10px; padding: 20px; text-align: center; margin: 24px 0;">
+              <span style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #C00; display: block; margin-bottom: 6px;">
+                Welcome Reader Gift
+              </span>
+              <div style="font-size: 24px; font-family: monospace; font-weight: 800; color: #0B0B0B; letter-spacing: 2px; margin-bottom: 6px;">
+                SAMPLE10
+              </div>
+              <p style="font-size: 13px; color: #555; margin: 0;">
+                Get <strong>10% off</strong> the full edition at checkout.
+              </p>
+            </div>
+            <div style="text-align: center; margin: 28px 0 20px;">
+              <a href="${bookUrl}" style="display: inline-block; background: #0B0B0B; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 28px; border-radius: 999px; letter-spacing: 0.5px;">
+                Read Full Book Specifications →
+              </a>
+            </div>
+            <hr style="border: none; border-top: 1px solid rgba(11,11,11,0.08); margin: 28px 0 20px;" />
+            <p style="font-size: 12px; line-height: 1.5; color: #888; margin: 0;">
+              TAMYIZ e-books are DRM-free and optimized for iPad, Kindle, phone and desktop. Questions? Message us anytime on WhatsApp.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    const res = env.BREVO_API_KEY
+      ? await fetchImpl('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: { 'api-key': env.BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ sender: { name: 'TAMYIZ', email: fromEmail }, to: [{ email: to }], replyTo: { email: 'tamyiz.co@gmail.com', name: 'TAMYIZ' }, subject, htmlContent: html, textContent: text }),
+      })
+      : await fetchImpl('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: env.RECEIPT_FROM || 'TAMYIZ <onboarding@resend.dev>', to: [to], reply_to: 'tamyiz.co@gmail.com', subject, html, text }),
+      });
+    return res.ok;
+  } catch (err) {
+    console.warn('Sample welcome email error:', err.message);
+    return false;
+  }
+}
+

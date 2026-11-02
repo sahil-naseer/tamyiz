@@ -173,6 +173,7 @@ export class AdminController {
           { id: 'orders', label: 'Orders & Payments' },
           { id: 'coupons', label: 'Coupons & Discounts' },
           { id: 'leads', label: 'Sample Leads' },
+          { id: 'reviews', label: 'Reader Reviews' },
           { id: 'announcement', label: 'Store Banner' },
           { id: 'customers', label: 'Customers' },
           { id: 'analytics', label: 'Visitor Analytics' },
@@ -237,6 +238,9 @@ export class AdminController {
         break;
       case 'leads':
         await this.renderLeadsTab(tabBody);
+        break;
+      case 'reviews':
+        await this.renderReviewsTab(tabBody);
         break;
       case 'announcement':
         await this.renderAnnouncementTab(tabBody);
@@ -1130,6 +1134,153 @@ export class AdminController {
           this.renderLeadsTab(mount);
         } else {
           alert(res.error || 'Failed to remove lead');
+        }
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------- REVIEWS TAB
+  async renderReviewsTab(mount) {
+    const res = await this.api('reviews');
+    const data = res.ok ? res.data : { pending: [], approved: [] };
+    const pending = Array.isArray(data.pending) ? data.pending : [];
+    const approved = Array.isArray(data.approved) ? data.approved : [];
+
+    mount.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <p style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #5E5E59; margin: 0 0 4px;">Social Proof &amp; Moderation</p>
+          <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 24px; margin: 0; color: #0B0B0B;">Reader Reviews &amp; Testimonials</h2>
+          <p style="font-size: 14px; color: #5E5E59; margin: 4px 0 0;">Moderate incoming ratings and comments from readers before they appear live on the storefront.</p>
+        </div>
+      </div>
+
+      <!-- KPI Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px;">
+        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
+          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Pending Moderation</span>
+          <strong style="font-size: 28px; font-weight: 700; color: ${pending.length > 0 ? '#C00' : '#0B0B0B'}; font-family: var(--font-head);">${pending.length}</strong>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
+          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Live Approved Reviews</span>
+          <strong style="font-size: 28px; font-weight: 700; color: #1E7B2E; font-family: var(--font-head);">${approved.length}</strong>
+        </div>
+      </div>
+
+      <!-- Section 1: Pending Reviews -->
+      <div style="background: #FFFFFF; border: 1.5px solid ${pending.length > 0 ? '#0B0B0B' : 'rgba(11,11,11,0.08)'}; border-radius: 16px; padding: 24px; margin-bottom: 28px;">
+        <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0 0 16px; color: #0B0B0B; display: flex; align-items: center; gap: 8px;">
+          <span>⏳ Awaiting Your Approval</span>
+          <span style="font-size: 12px; background: #0B0B0B; color: #FFF; padding: 2px 8px; border-radius: 999px;">${pending.length}</span>
+        </h3>
+
+        ${pending.length === 0 ? `
+          <p style="font-size: 14px; color: #5E5E59; margin: 0;">No pending reviews. All reader submissions have been moderated.</p>
+        ` : `
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            ${pending.map(r => `
+              <div style="background: #FAF9F6; border: 1px solid rgba(11,11,11,0.1); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+                  <div>
+                    <div style="color: #F5A623; font-size: 16px; letter-spacing: 2px; margin-bottom: 4px;">
+                      ${'★'.repeat(r.rating || 5)}${'☆'.repeat(5 - (r.rating || 5))}
+                    </div>
+                    <strong style="font-family: var(--font-head); font-size: 15px; color: #0B0B0B;">${escapeText(r.name)}</strong>
+                    <span style="font-size: 13px; color: #767670; margin-left: 6px;">(${escapeText(r.email)})</span>
+                    ${r.verifiedBuyer ? `
+                      <span style="font-size: 11px; background: #E8F5E9; color: #2E7D32; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-left: 8px; text-transform: uppercase;">
+                        ✓ Verified Buyer
+                      </span>
+                    ` : ''}
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" class="tmz-approve-rev-btn" data-id="${r.id}" style="font-family: var(--font-head); font-weight: 700; font-size: 12px; padding: 6px 14px; background: #0B0B0B; color: #FFF; border: none; border-radius: 6px; cursor: pointer;">
+                      Approve &amp; Publish ✓
+                    </button>
+                    <button type="button" class="tmz-delete-rev-btn" data-id="${r.id}" style="font-family: var(--font-head); font-weight: 600; font-size: 12px; padding: 6px 12px; background: transparent; color: #B3261E; border: 1px solid rgba(179,38,30,0.3); border-radius: 6px; cursor: pointer;">
+                      Reject / Delete
+                    </button>
+                  </div>
+                </div>
+                <div style="font-size: 13px; color: #5E5E59;">Book: <strong>${escapeText(r.bookName || r.productId)}</strong></div>
+                <blockquote style="margin: 6px 0 0; font-size: 14px; line-height: 1.5; color: #222; font-style: italic; border-left: 2px solid #0B0B0B; padding-left: 12px;">
+                  "${escapeText(r.comment)}"
+                </blockquote>
+              </div>
+            `).join('')}
+          </div>
+        `}
+      </div>
+
+      <!-- Section 2: Approved Reviews Table -->
+      <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 16px; padding: 24px;">
+        <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0 0 16px; color: #0B0B0B;">
+          Published Storefront Reviews (${approved.length})
+        </h3>
+
+        ${approved.length === 0 ? `
+          <p style="font-size: 14px; color: #5E5E59; margin: 0;">No approved reviews published yet.</p>
+        ` : `
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+              <thead>
+                <tr style="border-bottom: 1.5px solid rgba(11,11,11,0.08); background: #FAF9F6; font-size: 12px; color: #5E5E59; text-transform: uppercase;">
+                  <th style="padding: 12px 14px;">Rating</th>
+                  <th style="padding: 12px 14px;">Reviewer</th>
+                  <th style="padding: 12px 14px;">Book</th>
+                  <th style="padding: 12px 14px;">Feedback</th>
+                  <th style="padding: 12px 14px; text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${approved.map(r => `
+                  <tr style="border-bottom: 1px solid rgba(11,11,11,0.06);">
+                    <td style="padding: 12px 14px; color: #F5A623; white-space: nowrap;">${'★'.repeat(r.rating || 5)}</td>
+                    <td style="padding: 12px 14px; font-weight: 600; color: #0B0B0B; white-space: nowrap;">
+                      ${escapeText(r.name)}
+                      ${r.verifiedBuyer ? '<span style="color:#2E7D32; font-size:11px;">✓</span>' : ''}
+                    </td>
+                    <td style="padding: 12px 14px; font-size: 13px; color: #5E5E59; white-space: nowrap;">${escapeText(r.bookName || r.productId)}</td>
+                    <td style="padding: 12px 14px; font-size: 13px; color: #333; max-width: 320px;">
+                      "${escapeText(r.comment)}"
+                    </td>
+                    <td style="padding: 12px 14px; text-align: right;">
+                      <button type="button" class="tmz-delete-rev-btn" data-id="${r.id}" style="background: none; border: none; color: #B3261E; font-size: 12px; font-weight: 600; cursor: pointer;">
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `}
+      </div>
+    `;
+
+    // Hook approve
+    mount.querySelectorAll('.tmz-approve-rev-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = e.currentTarget.dataset.id;
+        const res = await this.api(`reviews/${id}/approve`, { method: 'POST' });
+        if (res.ok) {
+          this.renderReviewsTab(mount);
+        } else {
+          alert(res.error || 'Failed to approve review');
+        }
+      });
+    });
+
+    // Hook delete
+    mount.querySelectorAll('.tmz-delete-rev-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = e.currentTarget.dataset.id;
+        if (!confirm('Permanently remove this review?')) return;
+        const res = await this.api(`reviews/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          this.renderReviewsTab(mount);
+        } else {
+          alert(res.error || 'Failed to remove review');
         }
       });
     });

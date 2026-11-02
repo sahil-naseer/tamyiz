@@ -22,6 +22,7 @@ import { renderEditionsPage } from './pages/editions-page.js';
 import { renderProductDetailPage } from './pages/product-detail-page.js';
 import { renderPhilosophyPage } from './pages/philosophy-page.js';
 import { renderAtelierPage } from './pages/atelier-page.js';
+import { renderDownloadsPage } from './pages/downloads-page.js';
 import { renderCheckoutPage } from './pages/checkout-page.js';
 import { renderLegalPage, legalDocs } from './pages/legal-page.js';
 import { AdminController } from './pages/admin-page.js';
@@ -159,6 +160,9 @@ class TamyizUnifiedApp {
     }
     if (cleanPath === '/atelier') {
       return { page: 'atelier', slug: null, anchor: hash };
+    }
+    if (cleanPath === '/downloads' || cleanPath === '/orders') {
+      return { page: 'downloads', slug: null, anchor: hash };
     }
     if (cleanPath === '/checkout') {
       return { page: 'checkout', slug: null, anchor: hash };
@@ -435,9 +439,18 @@ class TamyizUnifiedApp {
 
         <!-- Cart drawer footer (Hidden on empty cart) -->
         <div class="tamyiz-drawer-foot" id="cart-foot-container" style="display: none;">
+          <div id="cart-bundle-upsell-banner" style="display: none; margin-bottom: 0.85rem; padding: 0.65rem 0.85rem; background: #F4F8F4; border: 1px dashed #2A7E3B; border-radius: 6px; font-size: 0.76rem; color: #1E5C2A;">
+            <strong>Bundle &amp; Save:</strong> Add 1 more e-book to automatically get <strong>20% off</strong> your entire order!
+          </div>
+
           <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-family: monospace; font-size: 0.78rem; text-transform: uppercase;">
             <span style="color: #666;">Subtotal</span>
             <strong id="cart-subtotal" style="color: #000;">₹0</strong>
+          </div>
+
+          <div id="cart-bundle-row" style="display: none; justify-content: space-between; margin-bottom: 0.4rem; font-family: monospace; font-size: 0.78rem; text-transform: uppercase; color: #1E7B2E;">
+            <span id="cart-bundle-label">Bundle Savings (20% Off)</span>
+            <strong id="cart-bundle-val">-₹0</strong>
           </div>
 
           <div id="cart-discount-row" style="display: none; justify-content: space-between; margin-bottom: 0.4rem; font-family: monospace; font-size: 0.78rem; text-transform: uppercase; color: #1E7B2E;">
@@ -543,6 +556,7 @@ class TamyizUnifiedApp {
               <h3>Shop</h3>
               <ul class="tamyiz-footer-links">
                 <li><a href="/editions" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')">All e-books${products.length ? ` (${products.length})` : ''}</a></li>
+                <li><a href="/downloads" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/downloads')">Download Recovery</a></li>
               </ul>
             </div>
 
@@ -635,6 +649,10 @@ class TamyizUnifiedApp {
 
       case 'atelier':
         mainEl.innerHTML = renderAtelierPage(this);
+        break;
+
+      case 'downloads':
+        mainEl.innerHTML = renderDownloadsPage(this);
         break;
 
       case 'checkout':
@@ -1104,14 +1122,36 @@ class TamyizUnifiedApp {
     if (subtotalEl) subtotalEl.textContent = `₹${store.getSubtotal().toLocaleString('en-IN')}`;
     if (totalEl) totalEl.textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
 
+    // Bundle discount banner & row
+    const bundleBanner = document.getElementById('cart-bundle-upsell-banner');
+    const bundleRow = document.getElementById('cart-bundle-row');
+    const bundleVal = document.getElementById('cart-bundle-val');
+    const bundleLabel = document.getElementById('cart-bundle-label');
+    const bundleDisc = store.getBundleDiscount();
+
+    if (bundleBanner) {
+      bundleBanner.style.display = store.cart.length === 1 ? 'block' : 'none';
+    }
+    if (bundleRow && bundleVal) {
+      if (bundleDisc > 0) {
+        bundleRow.style.display = 'flex';
+        bundleVal.textContent = `-₹${bundleDisc.toLocaleString('en-IN')}`;
+        if (bundleLabel) {
+          bundleLabel.textContent = store.cart.length >= 3 ? 'Bundle Savings (25% Off 3+)' : 'Bundle Savings (20% Off 2)';
+        }
+      } else {
+        bundleRow.style.display = 'none';
+      }
+    }
+
     // Coupon discount row
     const discountRow = document.getElementById('cart-discount-row');
     const discountVal = document.getElementById('cart-discount-val');
     if (discountRow && discountVal) {
-      const discount = store.getDiscount();
-      if (discount > 0) {
+      const couponDisc = store.getCouponDiscount();
+      if (couponDisc > 0) {
         discountRow.style.display = 'flex';
-        discountVal.textContent = `-₹${discount.toLocaleString('en-IN')}`;
+        discountVal.textContent = `-₹${couponDisc.toLocaleString('en-IN')}`;
       } else {
         discountRow.style.display = 'none';
       }
@@ -1710,6 +1750,258 @@ class TamyizUnifiedApp {
     `;
 
     this.openModalContent(html);
+  }
+
+  async submitDownloadRecovery(e) {
+    if (e) e.preventDefault();
+    const email = document.getElementById('recovery-input-email')?.value.trim();
+    const phone = document.getElementById('recovery-input-phone')?.value.trim();
+    const msgBox = document.getElementById('recovery-msg-box');
+    const resultsContainer = document.getElementById('recovery-results-container');
+    const btn = document.getElementById('recovery-submit-btn');
+
+    if (!email && !phone) {
+      if (msgBox) {
+        msgBox.style.display = 'block';
+        msgBox.style.background = '#FEE';
+        msgBox.style.color = '#B3261E';
+        msgBox.textContent = 'Please provide either your purchase email or mobile number.';
+      }
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>Searching verified library…</span>';
+    }
+    if (msgBox) msgBox.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/recover-downloads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, phone })
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'No active purchases found.');
+      }
+
+      if (resultsContainer) {
+        resultsContainer.style.display = 'block';
+        resultsContainer.innerHTML = `
+          <div style="background: #FFFFFF; border: 1.5px solid rgba(11,11,11,0.12); border-radius: 16px; padding: 2rem 1.75rem; margin-bottom: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(11,11,11,0.08); padding-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span style="font-family: monospace; font-size: 0.72rem; color: #1E7B2E; font-weight: 700; text-transform: uppercase;">
+                  ✓ Verified Digital Library
+                </span>
+                <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 1.35rem; margin: 0.2rem 0 0; color: #0B0B0B;">
+                  Your Purchased E-Books (${data.books.length})
+                </h3>
+              </div>
+              <span style="font-size: 0.8rem; color: #767670;">Account: ${escapeText(data.email)}</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              ${data.books.map(b => `
+                <div style="background: #FAF9F6; border: 1px solid rgba(11,11,11,0.08); border-radius: 10px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                  <div>
+                    <strong style="display: block; font-family: var(--font-head); font-size: 1.05rem; color: #0B0B0B; margin-bottom: 0.25rem;">
+                      ${escapeText(b.name)}
+                    </strong>
+                    <span style="font-size: 0.75rem; color: #666; font-family: monospace;">
+                      Order ID: ${escapeText(b.orderId || 'Verified')} • DRM-free PDF
+                    </span>
+                  </div>
+                  <a
+                    href="${b.downloadUrl}"
+                    style="padding: 0.65rem 1.25rem; font-size: 0.82rem; font-family: var(--font-head); font-weight: 700; text-transform: uppercase; background: #0B0B0B; color: #FFF; text-decoration: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.4rem;"
+                  >
+                    <span>Download PDF ↓</span>
+                  </a>
+                </div>
+              `).join('')}
+            </div>
+
+            <p style="font-size: 0.78rem; color: #888; margin: 1.25rem 0 0; text-align: center;">
+              A permanent backup copy of these active download links has also been dispatched to your email address.
+            </p>
+          </div>
+        `;
+        resultsContainer.scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (err) {
+      if (msgBox) {
+        msgBox.style.display = 'block';
+        msgBox.style.background = '#FEE';
+        msgBox.style.color = '#B3261E';
+        msgBox.textContent = err.message;
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Retrieve Digital Access →</span>';
+      }
+    }
+  }
+
+  async loadProductReviews(productId) {
+    const listEl = document.getElementById(`pdp-reviews-list-${productId}`);
+    const countEl = document.getElementById(`pdp-reviews-count-${productId}`);
+    const avgEl = document.getElementById(`pdp-rating-avg-${productId}`);
+    if (!listEl) return;
+
+    try {
+      const res = await fetch(`/api/reviews?product=${encodeURIComponent(productId)}`);
+      const data = await res.json();
+      const reviews = (data.ok && Array.isArray(data.reviews)) ? data.reviews : [];
+
+      if (countEl) countEl.textContent = `${reviews.length} Verified Reader Note${reviews.length === 1 ? '' : 's'}`;
+      if (avgEl && data.averageRating) avgEl.textContent = `${data.averageRating} / 5.0`;
+
+      if (reviews.length === 0) {
+        listEl.innerHTML = `
+          <div style="background: #FAF9F6; border: 1px dashed rgba(11,11,11,0.15); border-radius: 8px; padding: 1rem; text-align: center;">
+            <p style="font-size: 0.84rem; color: #666; margin: 0 0 0.4rem;">Have you read this monograph or preview?</p>
+            <button onclick="window.tamyizApp.openReviewModal('${productId}')" style="background: none; border: none; font-size: 0.8rem; font-weight: 700; color: #0B0B0B; text-decoration: underline; cursor: pointer;">
+              Be the first reader to share your review →
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+          ${reviews.map(r => `
+            <div style="background: #FAF9F6; border: 1px solid rgba(11,11,11,0.08); border-radius: 8px; padding: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <span style="color: #F5A623; font-size: 0.9rem;">${'★'.repeat(r.rating || 5)}</span>
+                  <strong style="font-size: 0.88rem; color: #0B0B0B;">${escapeText(r.name)}</strong>
+                  ${r.verifiedBuyer ? '<span style="font-size: 0.68rem; font-weight: 700; background: #E8F5E9; color: #2E7D32; padding: 1px 5px; border-radius: 4px; text-transform: uppercase;">✓ Verified Reader</span>' : ''}
+                </div>
+                <span style="font-size: 0.72rem; color: #888;">${r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : ''}</span>
+              </div>
+              <p style="font-size: 0.86rem; line-height: 1.5; color: #333; margin: 0; font-family: var(--font-serif, serif); font-style: italic;">
+                "${escapeText(r.comment)}"
+              </p>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } catch {
+      listEl.innerHTML = `<p style="font-size: 0.8rem; color: #888;">Could not load reviews.</p>`;
+    }
+  }
+
+  openReviewModal(productId) {
+    const product = findProductBySlugOrId(productId);
+    if (!product) return;
+
+    const html = `
+      <div style="padding: 1.5rem 1rem; max-width: 480px; margin: 0 auto; text-align: left;">
+        <span style="font-family: var(--font-sub); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-red-ink); display: block; margin-bottom: 0.3rem;">
+          Reader Feedback
+        </span>
+        <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 1.35rem; line-height: 1.25; margin: 0 0 0.4rem; color: #0B0B0B;">
+          Review: ${escapeText(product.name)}
+        </h3>
+        <p style="font-size: 0.85rem; color: #5E5E59; line-height: 1.5; margin: 0 0 1.25rem;">
+          Share your candid takeaways with other prospective readers. Verified purchases receive a priority badge.
+        </p>
+
+        <form onsubmit="window.tamyizApp.submitProductReview(event, '${product.id}')" style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <div>
+            <label style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">Your Rating *</label>
+            <select id="rev-input-rating" style="width: 100%; padding: 0.65rem 0.8rem; font-size: 0.9rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 6px; background: #FFF;">
+              <option value="5">★★★★★ (5/5 Exceptional clarity &amp; craft)</option>
+              <option value="4">★★★★☆ (4/5 Very good insights)</option>
+              <option value="3">★★★☆☆ (3/5 Average)</option>
+              <option value="2">★★☆☆☆ (2/5 Needs more depth)</option>
+              <option value="1">★☆☆☆☆ (1/5 Not what I expected)</option>
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div>
+              <label for="rev-input-name" style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">Your Name *</label>
+              <input type="text" id="rev-input-name" required placeholder="Sahil N." style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; font-size: 0.88rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 6px;" />
+            </div>
+            <div>
+              <label for="rev-input-email" style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">Purchase Email *</label>
+              <input type="email" id="rev-input-email" required placeholder="name@domain.com" style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; font-size: 0.88rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 6px;" />
+            </div>
+          </div>
+
+          <div>
+            <label for="rev-input-comment" style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">Your Feedback &amp; Takeaways *</label>
+            <textarea id="rev-input-comment" required rows="4" placeholder="What resonated with you? How did this book influence your practice?" style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; font-size: 0.88rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 6px; resize: vertical;"></textarea>
+          </div>
+
+          <div id="rev-msg-error" style="display: none; padding: 0.6rem; border-radius: 6px; background: #FEE; color: #C00; font-size: 0.8rem;"></div>
+
+          <button
+            type="submit"
+            id="rev-submit-btn"
+            style="width: 100%; padding: 0.85rem; background: #0B0B0B; color: #FFF; font-family: var(--font-head); font-weight: 700; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.05em; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s;"
+            onmouseover="this.style.background='#222'"
+            onmouseout="this.style.background='#0B0B0B'"
+          >
+            Submit Review →
+          </button>
+        </form>
+      </div>
+    `;
+
+    this.openModalContent(html);
+  }
+
+  async submitProductReview(e, productId) {
+    if (e) e.preventDefault();
+    const rating = document.getElementById('rev-input-rating')?.value;
+    const name = document.getElementById('rev-input-name')?.value.trim();
+    const email = document.getElementById('rev-input-email')?.value.trim();
+    const comment = document.getElementById('rev-input-comment')?.value.trim();
+    const errBox = document.getElementById('rev-msg-error');
+    const btn = document.getElementById('rev-submit-btn');
+
+    if (!name || !email || !comment) {
+      if (errBox) {
+        errBox.textContent = 'Please fill out all required fields.';
+        errBox.style.display = 'block';
+      }
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = 'Submitting…';
+    }
+
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, name, email, rating, comment })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to submit review');
+
+      this.closeModal();
+      this.showToast('Thank you! Your review has been submitted for moderation.', 'success');
+    } catch (err) {
+      if (errBox) {
+        errBox.textContent = err.message;
+        errBox.style.display = 'block';
+      }
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = 'Submit Review →';
+      }
+    }
   }
 
   toggleAccordion(id) {

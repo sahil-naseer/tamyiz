@@ -31,6 +31,11 @@ const STATIC_PAGES = {
     title: `About us | ${BRAND}`,
     description: 'TAMYIZ™ is Basit Majeed and Sahil Naseer: two people writing short, practical e-books on AI and the digital world.',
   },
+  downloads: {
+    path: '/downloads',
+    title: `Download Recovery | ${BRAND}`,
+    description: 'Retrieve and renew your purchased TAMYIZ e-book and monograph download links anytime.',
+  },
   checkout: {
     path: '/checkout',
     title: `Checkout | ${BRAND}`,
@@ -90,7 +95,7 @@ export function pageMeta(page, slug) {
 /** Every real page address, for the build script and the sitemap. */
 export function allPages() {
   return [
-    ...['home', 'editions', 'philosophy', 'atelier', 'checkout', 'admin'].map((page) => ({ page, slug: null })),
+    ...['home', 'editions', 'philosophy', 'atelier', 'downloads', 'checkout', 'admin'].map((page) => ({ page, slug: null })),
     ...products.map((p) => ({ page: 'edition', slug: p.slug })),
     ...Object.keys(legalDocs).map((slug) => ({ page: 'legal', slug })),
   ];

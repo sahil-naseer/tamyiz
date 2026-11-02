@@ -6,6 +6,8 @@ import { json, handleCreateOrder, handleVerifyPayment, handleDownload, handleRaz
 import { handleAdmin } from './admin.js';
 import { publicCatalog } from './catalog.js';
 import { handleSampleLead } from './sample.js';
+import { handleRecoverDownloads } from './recovery.js';
+import { handleReviews } from './reviews.js';
 
 async function cover(env, id, request) {
   if (!env.TAMYIZ_STORE) return new Response('Not found', { status: 404 });
@@ -57,6 +59,14 @@ export async function route(request, env, fetchImpl = fetch) {
 
   if (rest === 'sample' && method === 'POST') {
     return handleSampleLead(request, env);
+  }
+
+  if (rest === 'recover-downloads' && method === 'POST') {
+    return handleRecoverDownloads(request, env, fetchImpl);
+  }
+
+  if (rest === 'reviews') {
+    return handleReviews(request, env);
   }
 
   if (rest === 'create-order' || rest === 'verify-payment' || rest === 'webhook/razorpay' || rest === 'razorpay-webhook') {
