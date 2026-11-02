@@ -13,6 +13,7 @@ import {
 } from './catalog.js';
 import { getStats } from './stats.js';
 import { getAdminReviews, approveReview, deleteReview } from './reviews.js';
+import { getAdminAbandonedCarts, sendAbandonedCartRecoveryEmail, deleteAbandonedCart } from './abandoned.js';
 
 const COOKIE = 'tmz_admin';
 const SESSION_SECONDS = 12 * 60 * 60;
@@ -553,6 +554,10 @@ export async function handleAdmin(request, env, rest) {
     if (rvApprove && method === 'POST') return await approveReview(env, rvApprove[1]);
     const rvDelete = rest.match(/^reviews\/([A-Za-z0-9_-]{5,50})$/);
     if (rvDelete && method === 'DELETE') return await deleteReview(env, rvDelete[1]);
+    if (rest === 'abandoned' && method === 'GET') return await getAdminAbandonedCarts(env);
+    if (rest === 'abandoned/send' && method === 'POST') return await sendAbandonedCartRecoveryEmail(request, env);
+    const abDel = rest.match(/^abandoned\/([A-Za-z0-9_-]{5,50})$/);
+    if (abDel && method === 'DELETE') return await deleteAbandonedCart(env, abDel[1]);
     if (rest === 'customers' && method === 'GET') return await getCustomers(request, env);
     if (rest === 'settings' && method === 'GET') return getSettings(env);
     if (rest === 'products' && method === 'GET') return json({ products: (await loadCatalog(env)).map(adminView) });

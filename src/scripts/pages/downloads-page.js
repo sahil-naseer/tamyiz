@@ -83,3 +83,4 @@ export function renderDownloadsPage(appInstance) {
     </div>
   `;
 }
+

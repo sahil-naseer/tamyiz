@@ -8,6 +8,7 @@ import { publicCatalog } from './catalog.js';
 import { handleSampleLead } from './sample.js';
 import { handleRecoverDownloads } from './recovery.js';
 import { handleReviews } from './reviews.js';
+import { handleTrackAbandonedCart } from './abandoned.js';
 
 async function cover(env, id, request) {
   if (!env.TAMYIZ_STORE) return new Response('Not found', { status: 404 });
@@ -67,6 +68,10 @@ export async function route(request, env, fetchImpl = fetch) {
 
   if (rest === 'reviews') {
     return handleReviews(request, env);
+  }
+
+  if (rest === 'abandoned-cart' && method === 'POST') {
+    return handleTrackAbandonedCart(request, env);
   }
 
   if (rest === 'create-order' || rest === 'verify-payment' || rest === 'webhook/razorpay' || rest === 'razorpay-webhook') {

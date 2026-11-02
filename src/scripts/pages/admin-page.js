@@ -171,6 +171,7 @@ export class AdminController {
           { id: 'overview', label: 'Overview' },
           { id: 'products', label: 'E-Books & Catalog' },
           { id: 'orders', label: 'Orders & Payments' },
+          { id: 'abandoned', label: 'Abandoned Bags' },
           { id: 'coupons', label: 'Coupons & Discounts' },
           { id: 'leads', label: 'Sample Leads' },
           { id: 'reviews', label: 'Reader Reviews' },
@@ -232,6 +233,9 @@ export class AdminController {
         break;
       case 'orders':
         await this.renderOrdersTab(tabBody);
+        break;
+      case 'abandoned':
+        await this.renderAbandonedTab(tabBody);
         break;
       case 'coupons':
         await this.renderCouponsTab(tabBody);
@@ -886,6 +890,193 @@ export class AdminController {
     searchBtn?.addEventListener('click', triggerSearch);
     searchInput?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') triggerSearch();
+    });
+  }
+
+  // ---------------------------------------------------------------- ABANDONED CARTS TAB
+  async renderAbandonedTab(mount) {
+    const res = await this.api('abandoned');
+    const data = res.ok ? res.data : { list: [], totalLostRevenue: 0, totalCount: 0, recoveredCount: 0 };
+    const list = Array.isArray(data.list) ? data.list : [];
+    const uniqueEmails = [...new Set(list.map(c => c.email))].filter(Boolean);
+
+    mount.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <p style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #5E5E59; margin: 0 0 4px;">Checkout Funnel &amp; Revenue Recovery</p>
+          <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 24px; margin: 0; color: #0B0B0B;">Abandoned Reading Bags</h2>
+          <p style="font-size: 14px; color: #5E5E59; margin: 4px 0 0;">Visitors who entered their email in the checkout bag but left before completing payment.</p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button id="tmz-copy-abandoned-emails-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: #FFFFFF; color: #0B0B0B; cursor: pointer; transition: all 0.15s ease;">
+            📋 Copy All Emails (${uniqueEmails.length})
+          </button>
+          <button id="tmz-export-abandoned-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid #0B0B0B; background: #0B0B0B; color: #FFFFFF; cursor: pointer; transition: all 0.15s ease;">
+            📥 Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
+          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Unclaimed Revenue</span>
+          <strong style="font-size: 28px; font-weight: 700; color: #B3261E; font-family: var(--font-head);">₹${(data.totalLostRevenue || 0).toLocaleString('en-IN')}</strong>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
+          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Abandoned Sessions</span>
+          <strong style="font-size: 28px; font-weight: 700; color: #0B0B0B; font-family: var(--font-head);">${list.length}</strong>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
+          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Successfully Recovered</span>
+          <strong style="font-size: 28px; font-weight: 700; color: #1E7B2E; font-family: var(--font-head);">${data.recoveredCount || 0}</strong>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; overflow: hidden;">
+        ${list.length === 0 ? `
+          <div style="padding: 48px 24px; text-align: center; color: #5E5E59;">
+            <p style="font-size: 16px; font-weight: 600; color: #0B0B0B; margin: 0 0 4px;">No abandoned checkouts recorded</p>
+            <p style="font-size: 14px; margin: 0;">When visitors enter their email in the bag drawer, uncompleted carts will appear here.</p>
+          </div>
+        ` : `
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+              <thead>
+                <tr style="border-bottom: 1.5px solid rgba(11,11,11,0.08); background: #FAF9F6; font-size: 12px; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.06em;">
+                  <th style="padding: 14px 16px; font-weight: 600;">Last Seen</th>
+                  <th style="padding: 14px 16px; font-weight: 600;">Customer Contact</th>
+                  <th style="padding: 14px 16px; font-weight: 600;">Books In Bag</th>
+                  <th style="padding: 14px 16px; font-weight: 600;">Cart Value</th>
+                  <th style="padding: 14px 16px; font-weight: 600;">Status</th>
+                  <th style="padding: 14px 16px; font-weight: 600; text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${list.map(c => {
+                  const dateStr = c.lastSeenAt ? new Date(c.lastSeenAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+                  const cleanPhone = (c.phone || '').replace(/[^0-9+]/g, '');
+                  const waText = encodeURIComponent(`Hi! We noticed you left ${(c.items || []).map(i => i.name).join(', ')} in your TAMYIZ reading bag. Here is a 10% discount to complete your order: https://tamyiz.pages.dev/checkout?resume=${(c.items || []).map(i => i.productId).join(',')}&coupon=SAMPLE10`);
+                  const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}?text=${waText}` : null;
+                  const isRecovered = c.status === 'recovered';
+
+                  return `
+                    <tr style="border-bottom: 1px solid rgba(11,11,11,0.06); ${isRecovered ? 'opacity: 0.75; background: #FAFDF9;' : ''}">
+                      <td style="padding: 14px 16px; color: #5E5E59; font-size: 13px; white-space: nowrap;">${dateStr}</td>
+                      <td style="padding: 14px 16px;">
+                        <a href="mailto:${escapeText(c.email)}" style="font-weight: 600; color: #0B0B0B; text-decoration: none; display: block;">${escapeText(c.email)}</a>
+                        ${cleanPhone ? `
+                          <a href="${waUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: #1E7B2E; text-decoration: underline; margin-top: 2px; display: inline-flex; align-items: center; gap: 4px;">
+                            WhatsApp: ${escapeText(c.phone)} ↗
+                          </a>
+                        ` : ''}
+                      </td>
+                      <td style="padding: 14px 16px; font-size: 13px;">
+                        ${(c.items || []).map(i => `<div style="font-weight: 500; color: #0B0B0B;">• ${escapeText(i.name)}</div>`).join('')}
+                      </td>
+                      <td style="padding: 14px 16px; font-weight: 700; color: #0B0B0B; font-family: monospace; white-space: nowrap;">
+                        ₹${(c.total || c.subtotal || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td style="padding: 14px 16px; white-space: nowrap;">
+                        ${isRecovered ? `
+                          <span style="font-size: 11px; font-weight: 700; background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">
+                            ✓ Recovered
+                          </span>
+                        ` : c.emailSent ? `
+                          <span style="font-size: 11px; font-weight: 700; background: #E3F2FD; color: #1565C0; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">
+                            Emailed
+                          </span>
+                        ` : `
+                          <span style="font-size: 11px; font-weight: 700; background: #FFF3E0; color: #E65100; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">
+                            Abandoned
+                          </span>
+                        `}
+                      </td>
+                      <td style="padding: 14px 16px; text-align: right; white-space: nowrap;">
+                        ${!isRecovered ? `
+                          <button type="button" class="tmz-send-abandoned-btn" data-id="${c.id}" style="font-family: var(--font-head); font-weight: 700; font-size: 12px; padding: 6px 12px; background: #0B0B0B; color: #FFF; border: none; border-radius: 6px; cursor: pointer; margin-right: 6px;">
+                            ${c.emailSent ? 'Re-send Email' : 'Send Recovery Email'}
+                          </button>
+                        ` : ''}
+                        <button type="button" class="tmz-del-abandoned-btn" data-id="${c.id}" style="background: none; border: none; color: #B3261E; font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 6px;">
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `}
+      </div>
+    `;
+
+    // Copy All Emails
+    document.getElementById('tmz-copy-abandoned-emails-btn')?.addEventListener('click', () => {
+      if (uniqueEmails.length === 0) return alert('No emails to copy.');
+      navigator.clipboard.writeText(uniqueEmails.join(', ')).then(() => {
+        alert(`Copied ${uniqueEmails.length} unique emails to clipboard!`);
+      });
+    });
+
+    // Export CSV
+    document.getElementById('tmz-export-abandoned-btn')?.addEventListener('click', () => {
+      if (list.length === 0) return alert('No abandoned carts to export.');
+      const headers = ['Last Seen', 'Email', 'Phone', 'Total (INR)', 'Items', 'Status'];
+      const rows = list.map(c => [
+        `"${c.lastSeenAt || ''}"`,
+        `"${(c.email || '').replace(/"/g, '""')}"`,
+        `"${(c.phone || '').replace(/"/g, '""')}"`,
+        `"${c.total || c.subtotal || 0}"`,
+        `"${(c.items || []).map(i => i.name).join(' | ').replace(/"/g, '""')}"`,
+        `"${c.status || 'abandoned'}"`,
+      ]);
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `tamyiz-abandoned-carts-${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // Send Recovery Email
+    mount.querySelectorAll('.tmz-send-abandoned-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = e.currentTarget.dataset.id;
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+        const res = await this.api('abandoned/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        if (res.ok) {
+          alert('Recovery email sent with 10% discount and 1-click cart restore link!');
+          this.renderAbandonedTab(mount);
+        } else {
+          alert(res.error || 'Failed to send recovery email');
+          btn.disabled = false;
+          btn.textContent = 'Send Recovery Email';
+        }
+      });
+    });
+
+    // Delete Abandoned Cart
+    mount.querySelectorAll('.tmz-del-abandoned-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = e.currentTarget.dataset.id;
+        if (!confirm('Remove this abandoned cart record?')) return;
+        const res = await this.api(`abandoned/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          this.renderAbandonedTab(mount);
+        } else {
+          alert(res.error || 'Failed to remove record');
+        }
+      });
     });
   }
 

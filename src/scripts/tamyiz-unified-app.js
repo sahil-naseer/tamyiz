@@ -71,6 +71,7 @@ class TamyizUnifiedApp {
       this.renderCurrentPage();
       this.renderDrawerItems();
       window.scrollTo({ top: y, behavior: 'instant' });
+      this.checkResumeCart();
     });
 
     // 3. Listen for browser Back/Forward (Zero-crash navigation)
@@ -2430,6 +2431,7 @@ class TamyizUnifiedApp {
       const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
       if (errorDiv) errorDiv.style.display = (val && !valid) ? 'block' : 'none';
       emailInput.classList.toggle('has-error', Boolean(val && !valid));
+      if (valid) this.debounceTrackAbandoned(val);
       return valid;
     }
     if (field === 'phone') {
@@ -2441,9 +2443,70 @@ class TamyizUnifiedApp {
       const valid = digits.length >= 10;
       if (errorDiv) errorDiv.style.display = (val && !valid) ? 'block' : 'none';
       phoneInput.classList.toggle('has-error', Boolean(val && !valid));
+      if (valid) this.debounceTrackAbandoned();
       return valid;
     }
     return true;
+  }
+
+  debounceTrackAbandoned(emailOverride = null) {
+    clearTimeout(this._abandonedTimer);
+    this._abandonedTimer = setTimeout(() => {
+      this.trackAbandonedCart(emailOverride);
+    }, 1200);
+  }
+
+  async trackAbandonedCart(emailOverride = null) {
+    if (!store.cart || store.cart.length === 0) return;
+    const email = emailOverride || document.getElementById('bag-dispatch-email')?.value.trim() || document.getElementById('chk-email')?.value.trim() || localStorage.getItem('tamyiz_buyer_email');
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    const phone = document.getElementById('bag-dispatch-phone')?.value.trim() || document.getElementById('chk-phone')?.value.trim() || localStorage.getItem('tamyiz_buyer_phone') || '';
+
+    try {
+      await fetch('/api/abandoned-cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          email,
+          phone,
+          items: store.cart,
+          subtotal: store.getSubtotal(),
+          total: store.getTotal(),
+          coupon: store.coupon ? store.coupon.code : null,
+        }),
+      });
+    } catch {}
+  }
+
+  checkResumeCart() {
+    if (this._resumeChecked) return;
+    this._resumeChecked = true;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const resume = params.get('resume') || params.get('cart');
+      const coupon = params.get('coupon');
+      if (resume) {
+        const ids = resume.split(',');
+        let count = 0;
+        for (const id of ids) {
+          const p = findProductBySlugOrId(id.trim());
+          if (p && isAvailable(p)) {
+            store.addToCart(p, null, 1, p.price, p.originalPrice, { quiet: true });
+            count++;
+          }
+        }
+        if (coupon) {
+          store.applyCoupon(coupon);
+        }
+        if (count > 0) {
+          setTimeout(() => {
+            this.openCart();
+            this.showToast(`Restored ${count} book${count === 1 ? '' : 's'} to your bag!`, 'success');
+          }, 350);
+        }
+      }
+    } catch {}
   }
 
   validateDispatchInputs() {

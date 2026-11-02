@@ -1,4 +1,5 @@
 import { loadCatalog, findById } from './catalog.js';
+import { markCartRecovered } from './abandoned.js';
 
 /**
  * TAMYIZ™ payments: prices, coupons, Razorpay orders and verification, download links, receipt email.
@@ -534,6 +535,7 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
         if (orderIndex.length > 500) orderIndex = orderIndex.slice(0, 500);
         await env.TAMYIZ_STORE.put('orders:index', JSON.stringify(orderIndex));
       }
+      markCartRecovered(env, email).catch(() => {});
     } catch (e) {
       console.error('Failed to update orders:index', e);
     }
@@ -688,6 +690,7 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
         if (orderIndex.length > 500) orderIndex = orderIndex.slice(0, 500);
         await env.TAMYIZ_STORE.put('orders:index', JSON.stringify(orderIndex));
       }
+      markCartRecovered(env, cleanEmail).catch(() => {});
     } catch (e) {
       console.error('Failed to update orders:index in webhook', e);
     }
