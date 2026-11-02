@@ -49,7 +49,18 @@ export async function isAdmin(request, env) {
   const [exp, sig] = raw.split('.');
   if (!exp || !sig || Number(exp) < Math.floor(Date.now() / 1000)) return false;
   const expected = await hmacSha256Hex(adminPassword(env), `admin|${exp}`);
-  return timingSafeEqual(expected, sig);
+  if (!timingSafeEqual(expected, sig)) return false;
+
+  // Server-side session revocation: tokens issued before the last logout are revoked
+  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get) {
+    try {
+      const revokedBefore = Number(await env.TAMYIZ_STORE.get('admin:revoked_before')) || 0;
+      const issuedAt = Number(exp) - SESSION_SECONDS;
+      if (issuedAt < revokedBefore) return false;
+    } catch {}
+  }
+
+  return true;
 }
 
 const clientIp = (request) => request.headers.get('CF-Connecting-IP') || 'local';
@@ -80,7 +91,12 @@ async function login(request, env) {
   });
 }
 
-function logout() {
+async function logout(env) {
+  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.put) {
+    try {
+      await env.TAMYIZ_STORE.put('admin:revoked_before', String(Math.floor(Date.now() / 1000) + 1), { expirationTtl: SESSION_SECONDS });
+    } catch {}
+  }
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Set-Cookie': cookieHeader('', 0) },
@@ -527,7 +543,7 @@ export async function handleAdmin(request, env, rest) {
   const method = request.method;
   try {
     if (rest === 'login' && method === 'POST') return await login(request, env);
-    if (rest === 'logout' && method === 'POST') return logout();
+    if (rest === 'logout' && method === 'POST') return await logout(env);
 
     if (!(await isAdmin(request, env))) return json({ error: 'Please log in.' }, 401);
     if (method !== 'GET' && request.headers.get('X-Tamyiz-Admin') !== '1') return json({ error: 'Forbidden.' }, 403);

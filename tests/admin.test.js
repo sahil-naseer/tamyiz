@@ -71,6 +71,19 @@ test('no, fake, expired or old-password cookies get nothing', async () => {
   assert.equal((await call(e, '/api/admin/products', { headers: { Cookie: cookie } })).status, 200);
 });
 
+test('logging out revokes old session on the server', async () => {
+  const e = env();
+  const cookie = await session(e);
+  assert.equal((await call(e, '/api/admin/products', { headers: { Cookie: cookie } })).status, 200);
+
+  // Logout invalidates session in KV
+  const logoutRes = await call(e, '/api/admin/logout', { method: 'POST', headers: authed(cookie) });
+  assert.equal(logoutRes.status, 200);
+
+  // Reusing the old cookie is now rejected with 401
+  assert.equal((await call(e, '/api/admin/products', { headers: { Cookie: cookie } })).status, 401);
+});
+
 test('changes need the X-Tamyiz-Admin header (blocks forms posted from other sites)', async () => {
   const e = env(); const cookie = await session(e);
   const r = await call(e, '/api/admin/products', { method: 'POST', headers: { Cookie: cookie }, body: form({}) });

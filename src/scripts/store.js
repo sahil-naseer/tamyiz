@@ -144,6 +144,11 @@ class Store {
     const item = this.cart.find(i => i.cartItemId === cartItemId);
     if (!item) return;
 
+    if (item.isDigital && delta > 0) {
+      this.showToast('TAMYIZ e-books are single-licence publications (1 copy per order).', 'info');
+      return;
+    }
+
     item.quantity += delta;
     if (item.quantity <= 0) {
       this.removeFromCart(cartItemId);
