@@ -431,6 +431,46 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
   try { body = await request.json(); } catch { body = {}; }
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, email, phone } = body || {};
 
+  // Idempotency: if this payment was already fulfilled (e.g. user refreshed the page or webhook ran first),
+  // return the existing fulfilled order immediately to avoid duplicate emails or reference ID conflicts.
+  if (razorpay_payment_id && env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get) {
+    try {
+      const existingRaw = await env.TAMYIZ_STORE.get(`order-fulfilled:${razorpay_payment_id}`);
+      if (existingRaw) {
+        const existing = JSON.parse(existingRaw);
+        const origin = new URL(request.url).origin;
+        const downloads = await Promise.all((existing.items || []).map(async (i) => ({
+          productId: i.productId || i.id,
+          name: i.name,
+          variant: 'PDF',
+          formatType: 'ebook',
+          downloadUrl: origin + (await signDownload(env, i.productId || i.id, existing.paymentId)),
+          actionLabel: 'Download PDF ↗',
+          specs: 'PDF e-book • DRM-free',
+          price: i.price,
+        })));
+        return json({
+          verified: true,
+          mode: existing.mode,
+          referenceId: existing.referenceId,
+          paymentId: existing.paymentId,
+          orderId: existing.orderId,
+          timestamp: existing.createdAt,
+          email: existing.email,
+          phone: existing.phone,
+          itemsCount: (existing.items || []).length,
+          amount: existing.amountPaise,
+          totalINR: existing.totalINR,
+          subtotalINR: existing.subtotalINR,
+          discountINR: existing.discountINR,
+          downloads,
+          receiptEmailed: existing.receiptEmailed,
+          alreadyFulfilled: true,
+        });
+      }
+    } catch {}
+  }
+
   let paidItems;
   let paidOrderAmount;
   let mode;

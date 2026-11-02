@@ -46,6 +46,17 @@ async function getApprovedReviews(env, productId) {
 }
 
 async function submitReview(request, env) {
+  // Rate limiting per IP to prevent review spamming
+  const ip = request.headers.get('CF-Connecting-IP') || 'local';
+  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
+    const rateKey = `review-rate:${ip}`;
+    const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
+    if (recent >= 5) {
+      return json({ error: 'Too many review submissions. Please wait a while before submitting another review.' }, 429);
+    }
+    await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 });
+  }
+
   let body;
   try {
     body = await request.json();

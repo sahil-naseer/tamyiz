@@ -131,6 +131,18 @@ test('customer download recovery: retrieves active library with signed download 
   const dlRes = await call(e, dlPath);
   assert.equal(dlRes.status, 200);
   assert.equal(dlRes.headers.get('Content-Type'), 'application/pdf');
+
+  // Security check: phone-only recovery MUST NOT expose download links or unmasked email on screen
+  const phoneRecoveryRes = await call(e, '/api/recover-downloads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: '+919876543210' }),
+  });
+  assert.equal(phoneRecoveryRes.status, 200);
+  const phoneData = await phoneRecoveryRes.json();
+  assert.equal(phoneData.dispatchedToEmail, true);
+  assert.equal(phoneData.email, 'v***r@test.com');
+  assert.equal(phoneData.books[0].downloadUrl, undefined); // download URLs withheld from screen for security!
 });
 
 // ---------------------------------------------------------------------------

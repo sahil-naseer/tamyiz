@@ -640,9 +640,12 @@ class TamyizUnifiedApp {
         mainEl.innerHTML = renderEditionsPage(this);
         break;
 
-      case 'edition':
+      case 'edition': {
         mainEl.innerHTML = renderProductDetailPage(this.currentSlug, this);
+        const prod = findProductBySlugOrId(this.currentSlug);
+        this.loadProductReviews(prod ? prod.id : this.currentSlug);
         break;
+      }
 
       case 'philosophy':
         mainEl.innerHTML = renderPhilosophyPage(this);
@@ -1816,18 +1819,26 @@ class TamyizUnifiedApp {
                       Order ID: ${escapeText(b.orderId || 'Verified')} • DRM-free PDF
                     </span>
                   </div>
-                  <a
-                    href="${b.downloadUrl}"
-                    style="padding: 0.65rem 1.25rem; font-size: 0.82rem; font-family: var(--font-head); font-weight: 700; text-transform: uppercase; background: #0B0B0B; color: #FFF; text-decoration: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.4rem;"
-                  >
-                    <span>Download PDF ↓</span>
-                  </a>
+                  ${b.downloadUrl ? `
+                    <a
+                      href="${b.downloadUrl}"
+                      style="padding: 0.65rem 1.25rem; font-size: 0.82rem; font-family: var(--font-head); font-weight: 700; text-transform: uppercase; background: #0B0B0B; color: #FFF; text-decoration: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.4rem;"
+                    >
+                      <span>Download PDF ↓</span>
+                    </a>
+                  ` : `
+                    <span style="font-size: 0.78rem; font-weight: 600; color: #1E7B2E; background: #E3F3E7; padding: 6px 12px; border-radius: 999px;">
+                      ✓ Dispatched to your email
+                    </span>
+                  `}
                 </div>
               `).join('')}
             </div>
 
             <p style="font-size: 0.78rem; color: #888; margin: 1.25rem 0 0; text-align: center;">
-              A permanent backup copy of these active download links has also been dispatched to your email address.
+              ${data.dispatchedToEmail
+                ? 'For your security, download links have been sent to your registered email address.'
+                : 'A permanent backup copy of these active download links has also been dispatched to your email address.'}
             </p>
           </div>
         `;
@@ -1849,13 +1860,15 @@ class TamyizUnifiedApp {
   }
 
   async loadProductReviews(productId) {
-    const listEl = document.getElementById(`pdp-reviews-list-${productId}`);
-    const countEl = document.getElementById(`pdp-reviews-count-${productId}`);
-    const avgEl = document.getElementById(`pdp-rating-avg-${productId}`);
+    const prod = findProductBySlugOrId(productId);
+    const resolvedId = prod ? prod.id : productId;
+    const listEl = document.getElementById(`pdp-reviews-list-${resolvedId}`);
+    const countEl = document.getElementById(`pdp-reviews-count-${resolvedId}`);
+    const avgEl = document.getElementById(`pdp-rating-avg-${resolvedId}`);
     if (!listEl) return;
 
     try {
-      const res = await fetch(`/api/reviews?product=${encodeURIComponent(productId)}`);
+      const res = await fetch(`/api/reviews?product=${encodeURIComponent(resolvedId)}`);
       const data = await res.json();
       const reviews = (data.ok && Array.isArray(data.reviews)) ? data.reviews : [];
 
@@ -2662,8 +2675,12 @@ class TamyizUnifiedApp {
         rzp.open();
       } catch (err) {
         console.error('Razorpay instantiation failed:', err);
-        store.showToast('Could not open Razorpay checkout modal. Launching sandbox verification.', 'info');
-        this.openSandboxModal(orderData, email, phone);
+        if (orderData.isSandbox) {
+          this.openSandboxModal(orderData, email, phone);
+        } else {
+          store.showToast('Payment window could not open (it may be blocked by your browser or ad blocker). Please disable ad blockers or message us on WhatsApp (+91 95417 22379).', 'error');
+          this.restoreCheckoutButton();
+        }
       }
     };
 
@@ -2674,8 +2691,12 @@ class TamyizUnifiedApp {
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.onload = () => initiateRazorpay();
       script.onerror = () => {
-        store.showToast('Razorpay script could not be loaded. Launching sandbox approval.', 'info');
-        this.openSandboxModal(orderData, email, phone);
+        if (orderData.isSandbox) {
+          this.openSandboxModal(orderData, email, phone);
+        } else {
+          store.showToast('Razorpay payment gateway was blocked by your browser or network. Please disable ad blockers or message us on WhatsApp (+91 95417 22379) for instant UPI checkout.', 'error');
+          this.restoreCheckoutButton();
+        }
       };
       document.head.appendChild(script);
     }

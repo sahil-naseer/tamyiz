@@ -10,6 +10,17 @@ export async function handleTrackAbandonedCart(request, env) {
     return json({ error: 'Method Not Allowed. Use POST.' }, 405);
   }
 
+  // Rate limiting per IP to prevent spamming cart records
+  const ip = request.headers.get('CF-Connecting-IP') || 'local';
+  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
+    const rateKey = `abandoned-rate:${ip}`;
+    const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
+    if (recent >= 20) {
+      return json({ ok: true, rateLimited: true });
+    }
+    await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 });
+  }
+
   let body;
   try {
     body = await request.json();

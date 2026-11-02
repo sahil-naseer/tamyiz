@@ -16,8 +16,8 @@ async function cover(env, id, request) {
   // ?s=sm asks for the small version (cards, bag); fall back to the full cover if a book has none yet.
   let found = params.get('s') === 'sm' ? await env.TAMYIZ_STORE.getWithMetadata(`thumb:${id}`, 'arrayBuffer') : null;
   if (!found || !found.value) found = await env.TAMYIZ_STORE.getWithMetadata(`cover:${id}`, 'arrayBuffer');
+  if (!found || !found.value) return new Response('Not found', { status: 404 });
   const { value, metadata } = found;
-  if (!value) return new Response('Not found', { status: 404 });
   const versioned = params.has('v');
   return new Response(value, {
     headers: {

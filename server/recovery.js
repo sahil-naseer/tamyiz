@@ -1,8 +1,26 @@
 import { json, signDownload, escapeHtml } from './payments.js';
 
+export function maskEmail(email) {
+  if (!email || !email.includes('@')) return '***';
+  const [user, domain] = email.split('@');
+  if (user.length <= 2) return `${user[0]}***@${domain}`;
+  return `${user[0]}***${user[user.length - 1]}@${domain}`;
+}
+
 export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
   if (request.method !== 'POST') {
     return json({ error: 'Method Not Allowed. Use POST.' }, 405);
+  }
+
+  // Rate limiting per IP to prevent automated library scanning
+  const ip = request.headers.get('CF-Connecting-IP') || 'local';
+  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
+    const rateKey = `recover-rate:${ip}`;
+    const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
+    if (recent >= 8) {
+      return json({ error: 'Too many recovery attempts. Please wait 15 minutes before trying again or message us on WhatsApp.' }, 429);
+    }
+    await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 });
   }
 
   let body;
@@ -99,10 +117,29 @@ export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
     } catch {}
   }
 
+  const masked = maskEmail(targetEmail);
+
+  // Security guard: When recovering via phone number only, do NOT expose download URLs or raw email on screen.
+  // Delivery is routed to the customer's registered email to prevent unauthorized phone-based scraping.
+  if (!cleanEmail && cleanPhone) {
+    return json({
+      ok: true,
+      message: `Found ${books.length} e-book${books.length === 1 ? '' : 's'} in your library. For your security, your download links have been sent to your registered email (${masked}).`,
+      email: masked,
+      dispatchedToEmail: true,
+      books: books.map((b) => ({
+        productId: b.productId,
+        name: b.name,
+        purchasedAt: b.purchasedAt,
+        orderId: b.orderId,
+      })),
+    });
+  }
+
   return json({
     ok: true,
     message: `Found ${books.length} e-book${books.length === 1 ? '' : 's'} in your library.`,
-    email: targetEmail,
+    email: masked,
     books,
   });
 }

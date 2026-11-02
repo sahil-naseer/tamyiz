@@ -355,9 +355,6 @@ export function renderProductDetailPage(slug, appInstance) {
                       Loading reader feedback…
                     </p>
                   </div>
-                  <script>
-                    setTimeout(() => { if (window.tamyizApp && window.tamyizApp.loadProductReviews) window.tamyizApp.loadProductReviews('${product.id}'); }, 20);
-                  </script>
                 </div>
               </div>
             </div>
