@@ -269,3 +269,4 @@ export async function deleteAbandonedCart(env, id) {
   } catch {}
   return json({ ok: true });
 }
+

@@ -107,3 +107,4 @@ test('admin abandoned cart: list, send recovery email, and mark recovered upon p
   assert.equal(adminData3.recoveredCount, 1);
   assert.equal(adminData3.totalLostRevenue, 0); // recovered revenue is no longer lost
 });
+
