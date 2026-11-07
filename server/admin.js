@@ -418,6 +418,17 @@ async function createComplimentaryOrder(request, env) {
   orderIndex.unshift(orderId);
   await kv.put('orders:index', JSON.stringify(orderIndex.slice(0, 500)));
 
+  if (email && email.includes('@')) {
+    const cleanE = email.trim().toLowerCase();
+    const bRaw = await kv.get(`buyer-orders:${cleanE}`);
+    let bOrders = [];
+    try { bOrders = bRaw ? JSON.parse(bRaw) : []; } catch { bOrders = []; }
+    if (!bOrders.includes(orderId)) {
+      bOrders.unshift(orderId);
+      await kv.put(`buyer-orders:${cleanE}`, JSON.stringify(bOrders)).catch(() => {});
+    }
+  }
+
   return json({ ok: true, order: orderData, downloadUrl });
 }
 

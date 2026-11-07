@@ -617,7 +617,28 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
       if (!orderIndex.includes(orderId)) {
         orderIndex.unshift(orderId);
         if (orderIndex.length > 500) orderIndex = orderIndex.slice(0, 500);
-        await env.TAMYIZ_STORE.put('orders:index', JSON.stringify(orderIndex));
+        await env.TAMYIZ_STORE.put('orders:index', JSON.stringify(orderIndex)).catch(() => {});
+      }
+      // Index order directly by buyer email and phone so downloads can always be recovered
+      if (cleanEmail) {
+        const bKey = `buyer-orders:${cleanEmail}`;
+        const bRaw = await env.TAMYIZ_STORE.get(bKey);
+        let bOrders = [];
+        try { bOrders = bRaw ? JSON.parse(bRaw) : []; } catch { bOrders = []; }
+        if (!bOrders.includes(orderId)) {
+          bOrders.unshift(orderId);
+          await env.TAMYIZ_STORE.put(bKey, JSON.stringify(bOrders)).catch(() => {});
+        }
+      }
+      if (cleanPhone && cleanPhone.length >= 10) {
+        const pKey = `buyer-phone:${cleanPhone.slice(-10)}`;
+        const pRaw = await env.TAMYIZ_STORE.get(pKey);
+        let pOrders = [];
+        try { pOrders = pRaw ? JSON.parse(pRaw) : []; } catch { pOrders = []; }
+        if (!pOrders.includes(orderId)) {
+          pOrders.unshift(orderId);
+          await env.TAMYIZ_STORE.put(pKey, JSON.stringify(pOrders)).catch(() => {});
+        }
       }
       await markCartRecovered(env, cleanEmail).catch(() => {});
     } catch (e) {
@@ -782,6 +803,26 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
         orderIndex.unshift(orderId);
         if (orderIndex.length > 500) orderIndex = orderIndex.slice(0, 500);
         await env.TAMYIZ_STORE.put('orders:index', JSON.stringify(orderIndex)).catch(() => {});
+      }
+      if (cleanEmail) {
+        const bKey = `buyer-orders:${cleanEmail}`;
+        const bRaw = await env.TAMYIZ_STORE.get(bKey);
+        let bOrders = [];
+        try { bOrders = bRaw ? JSON.parse(bRaw) : []; } catch { bOrders = []; }
+        if (!bOrders.includes(orderId)) {
+          bOrders.unshift(orderId);
+          await env.TAMYIZ_STORE.put(bKey, JSON.stringify(bOrders)).catch(() => {});
+        }
+      }
+      if (cleanPhone && cleanPhone.length >= 10) {
+        const pKey = `buyer-phone:${cleanPhone.slice(-10)}`;
+        const pRaw = await env.TAMYIZ_STORE.get(pKey);
+        let pOrders = [];
+        try { pOrders = pRaw ? JSON.parse(pRaw) : []; } catch { pOrders = []; }
+        if (!pOrders.includes(orderId)) {
+          pOrders.unshift(orderId);
+          await env.TAMYIZ_STORE.put(pKey, JSON.stringify(pOrders)).catch(() => {});
+        }
       }
       await markCartRecovered(env, cleanEmail).catch(() => {});
     } catch (e) {

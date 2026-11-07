@@ -305,3 +305,33 @@ test('download: missing file returns 404 and does not increment download count',
   const count = await e.TAMYIZ_STORE.get(`dl-count:${paymentId}:eb-onsale`);
   assert.equal(count, null);
 });
+
+test('recovery: recovers links via buyer-orders index even if order dropped off orders:index', async () => {
+  const e = env({ BREVO_API_KEY: 'test_brevo' });
+  const oldOrderId = 'order_old_vintage_999';
+  const orderData = {
+    orderId: oldOrderId,
+    paymentId: 'pay_vintage_999',
+    email: 'vintage@buyer.test',
+    phone: '+919876543210',
+    items: [{ productId: 'eb-onsale', name: 'On Sale Book', price: 299 }],
+    status: 'paid'
+  };
+  await e.TAMYIZ_STORE.put(`order:${oldOrderId}`, JSON.stringify(orderData));
+  await e.TAMYIZ_STORE.put('buyer-orders:vintage@buyer.test', JSON.stringify([oldOrderId]));
+  // Notice orders:index is completely empty - order is NOT on the 500-order list
+  await e.TAMYIZ_STORE.put('orders:index', JSON.stringify([]));
+
+  let emailed = false;
+  const mockFetch = async (url) => {
+    if (String(url).includes('api.brevo.com')) {
+      emailed = true;
+      return new Response('{"messageId":"ok"}', { status: 201 });
+    }
+    return new Response('{}', { status: 404 });
+  };
+
+  const res = await post(e, '/api/recover-downloads', { email: 'vintage@buyer.test' }, {}, mockFetch);
+  assert.equal(res.status, 200);
+  assert.equal(emailed, true);
+});

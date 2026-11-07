@@ -59,8 +59,24 @@ export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
   const kv = env.TAMYIZ_STORE;
   let orderIds = [];
   try {
-    const raw = await kv.get('orders:index');
-    if (raw) orderIds = JSON.parse(raw);
+    // Check direct buyer indexes first (instant direct lookup, immune to 500-order limit)
+    if (cleanEmail) {
+      const buyerRaw = await kv.get(`buyer-orders:${cleanEmail}`);
+      if (buyerRaw) {
+        try { orderIds = JSON.parse(buyerRaw); } catch {}
+      }
+    }
+    if ((!Array.isArray(orderIds) || orderIds.length === 0) && cleanPhone.length >= 10) {
+      const phoneRaw = await kv.get(`buyer-phone:${cleanPhone.slice(-10)}`);
+      if (phoneRaw) {
+        try { orderIds = JSON.parse(phoneRaw); } catch {}
+      }
+    }
+    // Fall back to scanning orders:index if direct index isn't populated
+    if (!Array.isArray(orderIds) || orderIds.length === 0) {
+      const raw = await kv.get('orders:index');
+      if (raw) orderIds = JSON.parse(raw);
+    }
   } catch {}
   if (!Array.isArray(orderIds)) orderIds = [];
 

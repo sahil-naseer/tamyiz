@@ -101,19 +101,26 @@ async function submitReview(request, env) {
   if (!book || book.status === 'draft') return json({ error: 'That e-book was not found.' }, 404);
   const bookName = book.name;
 
-  // Check if verified buyer from orders:index
+  // Check if verified buyer from buyer-orders or orders:index
   let isVerifiedBuyer = false;
   if (env && env.TAMYIZ_STORE) {
     try {
-      const rawIdx = await env.TAMYIZ_STORE.get('orders:index');
-      const orderIds = rawIdx ? JSON.parse(rawIdx) : [];
+      let orderIds = [];
+      const buyerRaw = await env.TAMYIZ_STORE.get(`buyer-orders:${cleanEmail}`);
+      if (buyerRaw) {
+        try { orderIds = JSON.parse(buyerRaw); } catch {}
+      }
+      if (!Array.isArray(orderIds) || orderIds.length === 0) {
+        const rawIdx = await env.TAMYIZ_STORE.get('orders:index');
+        orderIds = rawIdx ? JSON.parse(rawIdx) : [];
+      }
       if (Array.isArray(orderIds)) {
-        for (const oId of orderIds.slice(0, 100)) {
+        for (const oId of orderIds.slice(0, 50)) {
           const oRaw = await env.TAMYIZ_STORE.get(`order:${oId}`);
           if (!oRaw) continue;
           const ord = JSON.parse(oRaw);
           if (ord.email && ord.email.toLowerCase() === cleanEmail) {
-            const hasItem = (ord.items || []).some((i) => i.productId === book.id);
+            const hasItem = (ord.items || []).some((i) => (i.productId || i.id) === book.id);
             if (hasItem && (ord.status === 'paid' || ord.status === 'gift' || ord.paymentId)) {
               isVerifiedBuyer = true;
               break;
