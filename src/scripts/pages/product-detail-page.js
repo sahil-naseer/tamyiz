@@ -127,7 +127,7 @@ export function renderProductDetailPage(slug, appInstance) {
                               <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
                               <line x1="12" y1="18" x2="12.01" y2="18"></line>
                             </svg>
-                            Retina Optimized
+                            Reads on any device
                           </span>
                         </div>
                       </div>
@@ -295,7 +295,7 @@ export function renderProductDetailPage(slug, appInstance) {
                     <div class="tamyiz-pdp-acc-content">
                       <div class="tamyiz-spec-table">
                         ${(product.specifications || [
-                          { label: "Format", value: "Instant Digital Download (PDF + EPUB bundle)" },
+                          { label: "Format", value: "Instant Digital Download (DRM-free PDF e-book)" },
                           { label: "Reader Support", value: "Apple Books, Kindle, Adobe Acrobat, iPad, Android" },
                           { label: "Delivery", value: "Instant download after payment" }
                         ]).map(spec => `

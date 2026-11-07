@@ -55,6 +55,13 @@ export async function route(request, env, fetchImpl = fetch) {
   }
   // Is a coupon code valid? (the bag asks before showing a discount; the server re-checks at payment anyway)
   if (rest === 'coupon' && method === 'GET') {
+    if (env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && env.TAMYIZ_STORE.put) {
+      const ip = request.headers.get('cf-connecting-ip') || 'local';
+      const rateKey = `coupon-rate:${ip}`;
+      const hits = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
+      if (hits >= 20) return json({ valid: false, error: 'Too many coupon attempts. Please wait a few minutes.' }, 429);
+      try { await env.TAMYIZ_STORE.put(rateKey, String(hits + 1), { expirationTtl: 300 }); } catch {}
+    }
     const c = await findCoupon(env, new URL(request.url).searchParams.get('code'));
     return c ? json({ valid: true, coupon: c }) : json({ valid: false }, 404);
   }

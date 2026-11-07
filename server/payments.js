@@ -559,10 +559,10 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
   const cleanEmail = contact.email || String(rawEmail || '').trim().toLowerCase();
   const cleanPhone = contact.phone || String(rawPhone || '').trim();
 
-  const refBytes = crypto.getRandomValues(new Uint8Array(5));
-  const referenceId = 'TAMYIZ-ORD-' + Date.now().toString(36).toUpperCase() + [...refBytes].map((b) => b.toString(36)).join('').toUpperCase().slice(0, 6);
   const paymentId = razorpay_payment_id || `pay_sandbox_${Date.now()}`;
   const orderId = razorpay_order_id || `order_sandbox_${Date.now()}`;
+  const refSuffix = String(orderId || paymentId).replace(/^order_(sandbox_)?/i, '').replace(/^pay_(sandbox_)?/i, '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(-10);
+  const referenceId = 'TAMYIZ-ORD-' + (refSuffix || Date.now().toString(36).toUpperCase());
   // Prices for the receipt screen, from the catalogue. Total = what Razorpay charged (or the sandbox total).
   const catalog = await loadCatalog(env);
   let priced;
@@ -751,7 +751,8 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
   const cleanPhone = contact.phone || (orderNotes.phone ? String(orderNotes.phone).trim() : '');
 
   const totalINR = Math.round(Number(rzpOrder.amount) / 100);
-  const referenceId = 'TAMYIZ-ORD-' + Date.now().toString(36).toUpperCase();
+  const refSuffix = String(orderId || paymentId).replace(/^order_(sandbox_)?/i, '').replace(/^pay_(sandbox_)?/i, '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(-10);
+  const referenceId = 'TAMYIZ-ORD-' + (refSuffix || Date.now().toString(36).toUpperCase());
   const origin = new URL(request.url).origin;
 
   const downloads = await Promise.all(priced.items.map(async (i) => ({

@@ -112,19 +112,19 @@ export const policies = {
     content: "Each purchase is a personal licence for one person. Refunds within 7 days for a double charge, or a file we could not deliver or fix. See the Refund, Cancellation & License Policy."
   },
   formatGuide: {
-    title: "Digital Formats & Compatibility Guide",
-    content: "• E-BOOKS (PDF + EPUB + Kindle EPUB):\n- Compatible with Apple Books, Amazon Kindle, iPad, Android tablets, Remarkable, and desktop readers.\n- Vector typography, scalable charts, and dark mode reading support.\n\n• NOTION TEMPLATES:\n- 1-click duplication into any free or Plus Notion workspace.\n- Fully automated databases, formula views, and onboarding video guides.\n\n• UI/UX & DESIGN SYSTEMS:\n- Clean auto-layout Figma component libraries.\n- Production-ready Tailwind CSS and semantic HTML snippets."
+    title: "Format & Compatibility Guide",
+    content: "• PDF E-BOOKS:\n- Compatible with Apple Books, Amazon Kindle, iPad, Android phones and tablets, reMarkable, and desktop PDF readers.\n- Clean typography and DRM-free personal copy — keep it on all your personal devices and read offline anytime."
   },
   sizeGuide: {
-    title: "Digital Formats & Compatibility Guide",
-    content: "• E-BOOKS (PDF + EPUB + Kindle EPUB):\n- Compatible with Apple Books, Amazon Kindle, iPad, Android tablets, Remarkable, and desktop readers.\n- Vector typography, scalable charts, and dark mode reading support.\n\n• NOTION TEMPLATES:\n- 1-click duplication into any free or Plus Notion workspace.\n- Fully automated databases, formula views, and onboarding video guides.\n\n• UI/UX & DESIGN SYSTEMS:\n- Clean auto-layout Figma component libraries.\n- Production-ready Tailwind CSS and semantic HTML snippets."
+    title: "Format & Compatibility Guide",
+    content: "• PDF E-BOOKS:\n- Compatible with Apple Books, Amazon Kindle, iPad, Android phones and tablets, reMarkable, and desktop PDF readers.\n- Clean typography and DRM-free personal copy — keep it on all your personal devices and read offline anytime."
   },
   privacy: {
     title: "Privacy & Data Protection",
-    content: "TAMYIZ™ operates under strict data privacy principles. We never sell, rent, or trade your personal information. Payment processing is tokenized through 256-bit SSL encrypted PCI-DSS Level 1 compliant gateways."
+    content: "TAMYIZ™ operates under strict data privacy principles. We never sell, rent, or trade your personal information. Payment processing is handled directly by Razorpay."
   },
   terms: {
     title: "Terms & Conditions",
-    content: "By accessing and placing orders through TAMYIZ™, you agree to our terms of service. All trademarks, digital monographs, templates, and imagery remain the exclusive intellectual property of TAMYIZ Studio."
+    content: "By accessing and placing orders through TAMYIZ™, you agree to our terms of service. All e-books, text, and cover art remain the intellectual property of TAMYIZ™."
   }
 };

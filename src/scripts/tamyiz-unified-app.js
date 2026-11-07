@@ -1682,14 +1682,14 @@ class TamyizUnifiedApp {
                 Free sample
               </span>
               <span style="font-family: var(--font-sub); font-size: 0.72rem; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.05em;">
-                ${chapterLabel}
+                ${escapeText(chapterLabel)}
               </span>
             </div>
             <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 1.35rem; line-height: 1.25; margin: 0 0 0.25rem; color: #0B0B0B;">
               ${escapeText(product.name)}
             </h3>
             <p style="font-size: 0.85rem; color: #5E5E59; margin: 0;">
-              ${subtitle}
+              ${escapeText(subtitle)}
             </p>
           </div>
           <button
@@ -1707,10 +1707,10 @@ class TamyizUnifiedApp {
             § 01 / Selected Excerpt
           </div>
           <h4 style="font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; margin: 0 0 1.25rem; color: #0B0B0B;">
-            ${subtitle}
+            ${escapeText(subtitle)}
           </h4>
           <div class="tamyiz-excerpt-dropcap" style="font-family: var(--font-serif, 'Georgia', serif); font-size: 1.05rem; line-height: 1.85; color: #1D1D1D; text-align: justify; white-space: pre-line;">
-            ${text}
+            ${escapeText(text)}
           </div>
           <div style="margin-top: 1.75rem; padding: 1rem 1.25rem; border-left: 3px solid #0B0B0B; background: #F1F1EE; font-family: var(--font-serif, 'Georgia', serif); font-style: italic; font-size: 0.95rem; color: #333;">
             "Distinction is not loud; it is undeniable weight and proportion."
@@ -1726,7 +1726,7 @@ class TamyizUnifiedApp {
               ${toc.map((item, idx) => `
                 <li style="display: flex; gap: 0.75rem; align-items: baseline;">
                   <span style="font-family: var(--font-mono, monospace); font-size: 0.75rem; color: #888; font-weight: 600;">0${idx + 1}</span>
-                  <span style="color: #111; font-weight: 500;">${item}</span>
+                  <span style="color: #111; font-weight: 500;">${escapeText(item)}</span>
                 </li>
               `).join('')}
             </ul>
@@ -2201,8 +2201,8 @@ class TamyizUnifiedApp {
   <div class="parties">
     <div>
       <div class="party-title">PAID BY</div>
-      <div>Email: ${order.shippingAddress?.email || '—'}</div>
-      ${order.shippingAddress?.phone ? `<div>WhatsApp: ${order.shippingAddress.phone}</div>` : ''}
+      <div>Email: ${escapeText(order.shippingAddress?.email || '—')}</div>
+      ${order.shippingAddress?.phone ? `<div>WhatsApp: ${escapeText(order.shippingAddress.phone)}</div>` : ''}
     </div>
     <div style="text-align: right;">
       <div class="party-title">DELIVERY</div>
@@ -2679,9 +2679,9 @@ class TamyizUnifiedApp {
         </div>
 
         <div class="tamyiz-sandbox-meta">
-          <div>ORDER REFERENCE: <strong>#${orderId}</strong></div>
+          <div>ORDER REFERENCE: <strong>#${escapeText(orderId)}</strong></div>
           <div>TOTAL PAYABLE: <strong>₹${totalINR.toLocaleString('en-IN')}</strong> (INSTANT DOWNLOAD)</div>
-          <div>DISPATCH COORDINATES: <strong>${email}</strong> • <strong>${phone}</strong></div>
+          <div>DISPATCH COORDINATES: <strong>${escapeText(email)}</strong> • <strong>${escapeText(phone)}</strong></div>
           <div style="color: #666; font-size: 0.72rem; margin-top: 0.35rem; line-height: 1.4;">
             Test mode (No live Razorpay keys configured in environment). Test the complete purchase-to-unlock fulfillment lifecycle with one click.
           </div>
