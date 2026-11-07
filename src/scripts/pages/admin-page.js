@@ -103,18 +103,30 @@ export class AdminController {
         <p style="color: #5E5E59; font-size: 14px; margin: 0 0 24px; line-height: 1.45;">Enter your administrative password to manage the store catalog, customer orders, and operations.</p>
         
         <form id="tmz-admin-login-form">
-          <label for="tmz-admin-pass" style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 8px;">Master Password</label>
-          <input type="password" id="tmz-admin-pass" autocomplete="current-password" required placeholder="Enter password…" style="width: 100%; box-sizing: border-box; font-size: 15px; padding: 12px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 12px; background: #FFFFFF; color: #0B0B0B; outline: none; margin-bottom: 14px;" />
+          <div id="tmz-admin-pass-group">
+            <label for="tmz-admin-pass" style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 8px;">Master Password</label>
+            <input type="password" id="tmz-admin-pass" autocomplete="current-password" required placeholder="Enter password…" style="width: 100%; box-sizing: border-box; font-size: 15px; padding: 12px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 12px; background: #FFFFFF; color: #0B0B0B; outline: none; margin-bottom: 14px;" />
+          </div>
+          <div id="tmz-admin-otp-group" style="display: none; margin-bottom: 14px;">
+            <label for="tmz-admin-otp" style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">6-Digit Email Security Code</label>
+            <p id="tmz-admin-otp-hint" style="font-size: 12px; color: #1E7B2E; margin: 0 0 8px; font-weight: 500;"></p>
+            <input type="text" id="tmz-admin-otp" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="123456" style="width: 100%; box-sizing: border-box; font-family: monospace; font-size: 22px; font-weight: 700; letter-spacing: 6px; text-align: center; padding: 12px 14px; border: 1.5px solid #0B0B0B; border-radius: 12px; background: #F7F7F5; color: #0B0B0B; outline: none;" />
+          </div>
           <div id="tmz-admin-login-msg" style="margin-bottom: 14px; font-size: 14px; font-weight: 500;"></div>
           <button type="submit" id="tmz-admin-login-btn" style="width: 100%; font-family: var(--font-head); font-weight: 600; font-size: 15px; border-radius: 999px; padding: 12px 20px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer; transition: background 0.15s ease;">Sign In to Dashboard</button>
         </form>
       </div>
     `;
 
+    let otpChallenge = '';
     const form = document.getElementById('tmz-admin-login-form');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const pass = document.getElementById('tmz-admin-pass').value;
+      const otpInput = document.getElementById('tmz-admin-otp');
+      const otpGroup = document.getElementById('tmz-admin-otp-group');
+      const passGroup = document.getElementById('tmz-admin-pass-group');
+      const otpHint = document.getElementById('tmz-admin-otp-hint');
       const btn = document.getElementById('tmz-admin-login-btn');
       const msg = document.getElementById('tmz-admin-login-msg');
 
@@ -122,18 +134,34 @@ export class AdminController {
       btn.textContent = 'Verifying…';
       msg.textContent = '';
 
+      const payload = { password: pass };
+      if (otpChallenge && otpInput && otpInput.value.trim()) {
+        payload.otp = otpInput.value.trim();
+        payload.challenge = otpChallenge;
+      }
+
       const res = await this.api('login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pass }),
+        body: JSON.stringify(payload),
       });
 
       btn.disabled = false;
-      btn.textContent = 'Sign In to Dashboard';
 
       if (!res.ok) {
+        btn.textContent = otpChallenge ? 'Verify 6-Digit Code' : 'Sign In to Dashboard';
         msg.style.color = '#B3261E';
         msg.textContent = res.data.error || 'Authentication rejected.';
+        return;
+      }
+
+      if (res.data && res.data.requiresOtp) {
+        otpChallenge = res.data.challenge || '';
+        if (passGroup) passGroup.style.display = 'none';
+        if (otpGroup) otpGroup.style.display = 'block';
+        if (otpHint) otpHint.textContent = `We emailed a 6-digit login code to ${res.data.emailHint || 'your founder email'}.`;
+        btn.textContent = 'Verify 6-Digit Code';
+        otpInput?.focus();
         return;
       }
 
@@ -1731,6 +1759,16 @@ export class AdminController {
             </div>
             <span style="background: #E3F3E7; color: #1E7B2E; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;">
               Secured (1-Year Tokens)
+            </span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(11,11,11,0.06); padding-bottom: 12px;">
+            <div>
+              <strong style="font-family: var(--font-head); font-size: 15px; display: block;">Admin Login Protection (Zero-KV Rate Limit + Email 2FA)</strong>
+              <span style="font-size: 13px; color: #5E5E59;">${cfg.hasAdmin2FA ? `6-digit Email OTP active (${escapeText(cfg.adminOtpEmail)})` : 'In-memory brute-force lockout active (0 KV writes)'}</span>
+            </div>
+            <span style="background: #E3F3E7; color: #1E7B2E; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;">
+              ${cfg.hasAdmin2FA ? '2FA + Zero-KV Active' : 'Zero-KV Lockout Active'}
             </span>
           </div>
         </div>

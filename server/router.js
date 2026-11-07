@@ -34,7 +34,7 @@ export async function route(request, env, fetchImpl = fetch) {
   const method = request.method;
   const rest = path.replace(/^\/api\/?/, '');
 
-  if (rest.startsWith('admin/')) return handleAdmin(request, env, rest.slice(6));
+  if (rest.startsWith('admin/')) return handleAdmin(request, env, rest.slice(6), fetchImpl);
 
   if (rest === 'products' && method === 'GET') {
     const products = await publicCatalog(env);

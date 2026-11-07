@@ -335,3 +335,66 @@ test('recovery: recovers links via buyer-orders index even if order dropped off 
   assert.equal(res.status, 200);
   assert.equal(emailed, true);
 });
+
+test('admin login: uses 0 KV writes on wrong passwords and supports stateless 6-digit Email OTP (2FA)', async () => {
+  let kvWrites = 0;
+  const baseKv = devKV();
+  const countingKv = {
+    get: (...args) => baseKv.get(...args),
+    put: (...args) => { kvWrites++; return baseKv.put(...args); },
+    delete: (...args) => baseKv.delete(...args),
+    getWithMetadata: (...args) => baseKv.getWithMetadata(...args),
+  };
+
+  let capturedOtp = '';
+  const mockFetch = async (url, opts) => {
+    if (String(url).includes('api.brevo.com')) {
+      const body = JSON.parse(opts.body);
+      const match = body.subject.match(/^(\d{6})/);
+      if (match) capturedOtp = match[1];
+      return new Response('{"messageId":"otp-sent"}', { status: 201 });
+    }
+    return new Response('{}', { status: 404 });
+  };
+
+  const e = {
+    TAMYIZ_STORE: countingKv,
+    TAMYIZ_ADMIN_PASSWORD: 'super-secret-password-2026',
+    ADMIN_OTP_EMAIL: 'tamyiz.co@gmail.com,sahilnaseer0123@gmail.com',
+    BREVO_API_KEY: 'test_brevo_key',
+  };
+
+  // 1. Wrong password fails with 401 and 0 KV writes
+  const wrongPass = await post(e, '/api/admin/login', { password: 'wrong' }, { 'CF-Connecting-IP': '10.0.0.1' }, mockFetch);
+  assert.equal(wrongPass.status, 401);
+  assert.equal(kvWrites, 0);
+
+  // 2. Correct password triggers 6-digit OTP email and returns challenge (no Set-Cookie yet, 0 KV writes)
+  const step1 = await post(e, '/api/admin/login', { password: 'super-secret-password-2026' }, { 'CF-Connecting-IP': '10.0.0.1' }, mockFetch);
+  assert.equal(step1.status, 200);
+  assert.equal(step1.headers.get('Set-Cookie'), null);
+  const step1Data = await step1.json();
+  assert.equal(step1Data.requiresOtp, true);
+  assert.ok(step1Data.challenge);
+  assert.match(capturedOtp, /^\d{6}$/);
+  assert.equal(kvWrites, 0);
+
+  // 3. Wrong 6-digit OTP is rejected with 401 (0 KV writes)
+  const badOtp = await post(e, '/api/admin/login', {
+    password: 'super-secret-password-2026',
+    otp: '000000',
+    challenge: step1Data.challenge,
+  }, { 'CF-Connecting-IP': '10.0.0.1' }, mockFetch);
+  assert.equal(badOtp.status, 401);
+  assert.equal(kvWrites, 0);
+
+  // 4. Correct 6-digit OTP issues the HttpOnly admin session cookie (0 KV writes)
+  const step2 = await post(e, '/api/admin/login', {
+    password: 'super-secret-password-2026',
+    otp: capturedOtp,
+    challenge: step1Data.challenge,
+  }, { 'CF-Connecting-IP': '10.0.0.1' }, mockFetch);
+  assert.equal(step2.status, 200);
+  assert.ok(step2.headers.get('Set-Cookie')?.includes('tmz_admin='));
+  assert.equal(kvWrites, 0);
+});

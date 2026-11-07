@@ -65,13 +65,66 @@ export async function isAdmin(request, env) {
 
 const clientIp = (request) => request.headers.get('CF-Connecting-IP') || 'local';
 
-async function login(request, env) {
+// Zero-KV-write in-memory rate tracking per environment/store instance (prevents password brute-forcing from exhausting KV write quota)
+const loginFailBuckets = new WeakMap();
+const fallbackBucket = new Map();
+function getFailMap(env) {
+  if (env && typeof env.TAMYIZ_STORE === 'object' && env.TAMYIZ_STORE !== null) {
+    if (!loginFailBuckets.has(env.TAMYIZ_STORE)) loginFailBuckets.set(env.TAMYIZ_STORE, new Map());
+    return loginFailBuckets.get(env.TAMYIZ_STORE);
+  }
+  return fallbackBucket;
+}
+function getLoginFails(env, ip) {
+  const map = getFailMap(env);
+  const rec = map.get(ip);
+  if (!rec) return 0;
+  if (Date.now() > rec.expiresAt) { map.delete(ip); return 0; }
+  return rec.count;
+}
+function recordLoginFail(env, ip) {
+  const map = getFailMap(env);
+  const prev = getLoginFails(env, ip);
+  map.set(ip, { count: prev + 1, expiresAt: Date.now() + 15 * 60 * 1000 });
+}
+function clearLoginFails(env, ip) {
+  getFailMap(env).delete(ip);
+}
+
+async function sendAdminOtpEmail(env, toEmails, otpCode, ip, fetchImpl = fetch) {
+  if (!env.BREVO_API_KEY) return false;
+  const senderEmail = env.RECEIPT_FROM || 'tamyiz.co@gmail.com';
+  const to = toEmails.map((email) => ({ email }));
+  const htmlContent = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 460px; margin: 0 auto; padding: 28px; border: 1px solid #E5E5E0; border-radius: 16px; color: #0B0B0B;">
+      <p style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #5E5E59; margin: 0 0 8px;">TAMYIZ™ ADMIN SECURITY</p>
+      <h2 style="font-size: 22px; font-weight: 700; margin: 0 0 12px;">Your 6-Digit Login Code</h2>
+      <p style="font-size: 14px; color: #444; line-height: 1.5; margin: 0 0 20px;">Enter this one-time verification code to finish signing in to the TAMYIZ™ Admin Console:</p>
+      <div style="background: #F4F4F0; border: 1.5px solid #0B0B0B; border-radius: 12px; padding: 16px; text-align: center; font-family: monospace; font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #0B0B0B; margin-bottom: 20px;">
+        ${otpCode}
+      </div>
+      <p style="font-size: 12px; color: #71716D; margin: 0;">Valid for 10 minutes • Requested from IP: ${String(ip).replace(/[^0-9a-fA-F.:a-z_-]/g, '')}</p>
+    </div>
+  `;
+  const res = await fetchImpl('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'api-key': env.BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      sender: { name: 'TAMYIZ Security', email: senderEmail },
+      to,
+      subject: `${otpCode} is your TAMYIZ Admin verification code`,
+      htmlContent,
+    }),
+  });
+  return res.ok;
+}
+
+async function login(request, env, fetchImpl = fetch) {
   if (!passwordReady(env)) {
     return json({ error: `Admin password not set. In Cloudflare add the secret TAMYIZ_ADMIN_PASSWORD (at least ${MIN_PASSWORD} characters).` }, 503);
   }
-  const kv = env.TAMYIZ_STORE;
-  const failKey = `login-fail:${clientIp(request)}`;
-  const fails = kv ? Number(await kv.get(failKey)) || 0 : 0;
+  const ip = clientIp(request);
+  const fails = getLoginFails(env, ip);
   if (fails >= MAX_FAILS) return json({ error: 'Too many wrong passwords. Try again in 15 minutes.' }, 429);
 
   let body = {};
@@ -79,10 +132,55 @@ async function login(request, env) {
   // Compare hashes, so the comparison takes the same time whatever the password length.
   const ok = timingSafeEqual(await sha256Hex(body.password || ''), await sha256Hex(adminPassword(env)));
   if (!ok) {
-    if (kv) await kv.put(failKey, String(fails + 1), { expirationTtl: 15 * 60 });
+    recordLoginFail(env, ip);
     await new Promise((r) => setTimeout(r, 400));
     return json({ error: 'Wrong password.' }, 401);
   }
+
+  // Optional 2-Step Email OTP (2FA) when ADMIN_OTP_EMAIL + BREVO_API_KEY are configured (uses 0 KV writes via HMAC challenge)
+  const otpEmails = String(env.ADMIN_OTP_EMAIL || '')
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s.includes('@'));
+
+  if (otpEmails.length > 0 && env.BREVO_API_KEY) {
+    const submittedOtp = String(body.otp || '').trim();
+    const challenge = String(body.challenge || '').trim();
+    if (!submittedOtp || !challenge) {
+      const rand = new Uint32Array(1);
+      crypto.getRandomValues(rand);
+      const otpCode = String(100000 + (rand[0] % 900000));
+      const otpExp = Math.floor(Date.now() / 1000) + 600; // 10 minutes
+      const otpSig = await hmacSha256Hex(adminPassword(env), `admin-otp|${otpExp}|${ip}|${otpCode}`);
+      const sent = await sendAdminOtpEmail(env, otpEmails, otpCode, ip, fetchImpl).catch(() => false);
+      if (!sent) {
+        return json({ error: 'Could not send 2FA verification email via Brevo. Check BREVO_API_KEY.' }, 502);
+      }
+      const primary = otpEmails[0];
+      const [userPart, domainPart] = primary.split('@');
+      const masked = `${userPart.slice(0, 2)}***@${domainPart}`;
+      return json({
+        ok: true,
+        requiresOtp: true,
+        challenge: `${otpExp}.${otpSig}`,
+        emailHint: masked,
+      });
+    }
+
+    const [otpExpStr, otpSig] = challenge.split('.');
+    const otpExp = Number(otpExpStr);
+    if (!otpExp || !otpSig || otpExp < Math.floor(Date.now() / 1000)) {
+      return json({ error: 'Verification code expired. Please sign in again.' }, 401);
+    }
+    const expectedOtpSig = await hmacSha256Hex(adminPassword(env), `admin-otp|${otpExp}|${ip}|${submittedOtp}`);
+    if (!timingSafeEqual(expectedOtpSig, otpSig)) {
+      recordLoginFail(env, ip);
+      await new Promise((r) => setTimeout(r, 400));
+      return json({ error: 'Invalid 6-digit verification code.' }, 401);
+    }
+  }
+
+  clearLoginFails(env, ip);
   const exp = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
   const sig = await hmacSha256Hex(adminPassword(env), `admin|${exp}`);
   return new Response(JSON.stringify({ ok: true }), {
@@ -550,15 +648,17 @@ function getSettings(env) {
       receiptSender: env.RECEIPT_FROM || 'tamyiz.co@gmail.com',
       hasDownloadSecret: Boolean(env.DOWNLOAD_SECRET),
       hasAnalyticsToken: Boolean(env.CF_API_TOKEN),
+      hasAdmin2FA: Boolean(env.ADMIN_OTP_EMAIL && env.BREVO_API_KEY),
+      adminOtpEmail: env.ADMIN_OTP_EMAIL || '',
     }
   });
 }
 
 /** Routes for /api/admin/<rest>. */
-export async function handleAdmin(request, env, rest) {
+export async function handleAdmin(request, env, rest, fetchImpl = fetch) {
   const method = request.method;
   try {
-    if (rest === 'login' && method === 'POST') return await login(request, env);
+    if (rest === 'login' && method === 'POST') return await login(request, env, fetchImpl);
     if (rest === 'logout' && method === 'POST') return await logout(request, env);
 
     if (!(await isAdmin(request, env))) return json({ error: 'Please log in.' }, 401);
