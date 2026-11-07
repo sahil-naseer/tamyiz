@@ -15,12 +15,18 @@ export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
   // Rate limiting per IP to prevent automated library scanning
   const ip = request.headers.get('CF-Connecting-IP') || 'local';
   if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
-    const rateKey = `recover-rate:${ip}`;
-    const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
-    if (recent >= 8) {
-      return json({ error: 'Too many recovery attempts. Please wait 15 minutes before trying again or message us on WhatsApp.' }, 429);
+    try {
+      const rateKey = `recover-rate:${ip}`;
+      const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
+      if (recent >= 8) {
+        return json({ error: 'Too many recovery attempts. Please wait 15 minutes before trying again or message us on WhatsApp.' }, 429);
+      }
+      if (env.TAMYIZ_STORE.put) {
+        await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 }).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Recovery rate limit KV check failed:', e);
     }
-    await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 });
   }
 
   let body;
@@ -98,7 +104,17 @@ export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
     }
   }
   for (const [to, { books }] of byEmail) {
-    if (books.length) await sendRecoveryEmail(env, to, books, fetchImpl).catch(() => false);
+    if (books.length) {
+      if (kv && kv.get) {
+        try {
+          const emailRateKey = `recover-email:${to}`;
+          const count = Number(await kv.get(emailRateKey)) || 0;
+          if (count >= 3) continue; // Rate limited per recipient address (max 3 per hour to protect email quota)
+          if (kv.put) await kv.put(emailRateKey, String(count + 1), { expirationTtl: 3600 }).catch(() => {});
+        } catch {}
+      }
+      await sendRecoveryEmail(env, to, books, fetchImpl).catch(() => false);
+    }
   }
 
   return json({

@@ -9,12 +9,18 @@ export async function handleSampleLead(request, env) {
   // Rate limiting per IP to prevent email quota exhaustion
   const ip = request.headers.get('CF-Connecting-IP') || 'local';
   if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
-    const rateKey = `sample-rate:${ip}`;
-    const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
-    if (recent >= 10) {
-      return json({ error: 'Too many sample requests. Please wait a few minutes before trying again.' }, 429);
+    try {
+      const rateKey = `sample-rate:${ip}`;
+      const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
+      if (recent >= 10) {
+        return json({ error: 'Too many sample requests. Please wait a few minutes before trying again.' }, 429);
+      }
+      if (env.TAMYIZ_STORE.put) {
+        await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 }).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Sample rate limit KV check failed:', e);
     }
-    await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 });
   }
 
   let body;

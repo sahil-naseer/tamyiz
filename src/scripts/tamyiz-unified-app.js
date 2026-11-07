@@ -2864,7 +2864,7 @@ class TamyizUnifiedApp {
         </div>
 
         <p style="font-size: 0.85rem; color: #333; line-height: 1.55; margin: 0 0 1.25rem; padding: 0.75rem 1rem; background: #F4F4F2; border-left: 3px solid var(--color-red-ink);">
-          <strong>Download it now and keep the file.</strong> ${result.receiptEmailed ? `We also emailed a receipt with these download links to <strong>${result.email}</strong>. If you can't find it, check Spam or Promotions.` : 'No email is sent.'} The link works for one year. If you lose the file, WhatsApp us your order number and we will send it again.
+          <strong>Download it now and keep the file.</strong> ${result.receiptEmailed ? `We also emailed a receipt with these download links to <strong>${escapeText(result.email || '')}</strong>. If you can't find it, check Spam or Promotions.` : 'No email is sent.'} The link works for one year. If you lose the file, WhatsApp us your order number and we will send it again.
         </p>
 
         <div style="display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.25rem;">

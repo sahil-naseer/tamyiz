@@ -268,8 +268,9 @@ test('order creation is rate limited per client IP to prevent flooding', async (
 });
 
 test('razorpay webhook: validates signature and fulfills order asynchronously', async () => {
-  const env = await shop({ ...KEYS, BREVO_API_KEY: 'test_brevo' });
-  const secret = KEYS.RAZORPAY_KEY_SECRET;
+  const webhookSecret = 'test_hook_secret_xyz';
+  const env = await shop({ ...KEYS, RAZORPAY_WEBHOOK_SECRET: webhookSecret, BREVO_API_KEY: 'test_brevo' });
+  const secret = webhookSecret;
 
   const payload = {
     event: 'payment.captured',
@@ -288,6 +289,15 @@ test('razorpay webhook: validates signature and fulfills order asynchronously', 
   };
   const bodyText = JSON.stringify(payload);
   const sig = await hmacSha256Hex(secret, bodyText);
+
+  // Webhook secret required (no fallback to key secret)
+  const envNoWebhookSecret = await shop({ ...KEYS, BREVO_API_KEY: 'test_brevo' });
+  const noSecretRes = await route(new Request('https://shop.test/api/webhook/razorpay', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-razorpay-signature': 'any' },
+    body: bodyText
+  }), envNoWebhookSecret);
+  assert.equal(noSecretRes.status, 503);
 
   // Missing signature
   const missingSig = await route(new Request('https://shop.test/api/webhook/razorpay', {
@@ -316,12 +326,19 @@ test('razorpay webhook: validates signature and fulfills order asynchronously', 
   assert.equal(ignored.status, 200);
   assert.equal((await ignored.json()).status, 'ignored');
 
-  // Valid fulfillment with Brevo stub
+  // Valid fulfillment with Brevo stub and Razorpay order mock
   let emailSent = false;
   const webhookFetch = async (url) => {
     if (String(url).includes('api.brevo.com')) {
       emailSent = true;
       return new Response('{"messageId":"hook-123"}', { status: 201 });
+    }
+    if (String(url).includes('api.razorpay.com/v1/orders/order_hook_1')) {
+      return new Response(JSON.stringify({
+        id: 'order_hook_1',
+        amount: 29900,
+        notes: { ...itemsToNotes(cart), email: 'buyer@webhook.test', phone: '+919876543210' }
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
     return new Response('{}', { status: 404 });
   };

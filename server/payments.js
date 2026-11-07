@@ -153,21 +153,35 @@ export async function handleDownload(request, env, productId) {
   if (!ok) return json({ error: 'This download link is not valid or has expired. Message us on WhatsApp with your order reference.' }, 403);
   if (!env.TAMYIZ_STORE) return json({ error: 'Storage is not connected.' }, 503);
 
-  // Anti-piracy guard: limit total successful downloads per purchased book
-  if (paymentId && env.TAMYIZ_STORE.get) {
-    const dlKey = `dl-count:${paymentId}:${productId}`;
-    const count = Number(await env.TAMYIZ_STORE.get(dlKey)) || 0;
-    if (count >= MAX_DOWNLOADS) {
-      return json({
-        error: `Download limit reached (${MAX_DOWNLOADS}/${MAX_DOWNLOADS}). If you need an additional copy, message us on WhatsApp with your payment ID: ${paymentId}.`
-      }, 403);
+  // Anti-piracy guard: check download limit
+  const dlKey = paymentId ? `dl-count:${paymentId}:${productId}` : null;
+  let dlCount = 0;
+  if (dlKey && env.TAMYIZ_STORE.get) {
+    try {
+      dlCount = Number(await env.TAMYIZ_STORE.get(dlKey)) || 0;
+      if (dlCount >= MAX_DOWNLOADS) {
+        return json({
+          error: `Download limit reached (${MAX_DOWNLOADS}/${MAX_DOWNLOADS}). If you need an additional copy, message us on WhatsApp with your payment ID: ${paymentId}.`
+        }, 403);
+      }
+    } catch (e) {
+      console.warn('Could not read download counter from KV:', e);
     }
-    await env.TAMYIZ_STORE.put(dlKey, String(count + 1), { expirationTtl: DOWNLOAD_DAYS * 86400 });
   }
 
   const product = findById(await loadCatalog(env), productId);
   const { value, metadata } = await env.TAMYIZ_STORE.getWithMetadata(`file:${productId}`, 'stream');
   if (!value) return json({ error: 'The file is missing. Message us on WhatsApp and we will send it.' }, 404);
+
+  // Only record the download after confirming the file exists.
+  // Wrapped in try/catch so KV write limits (e.g. free plan exhausted) never block legitimate downloads.
+  if (dlKey && env.TAMYIZ_STORE.put) {
+    try {
+      await env.TAMYIZ_STORE.put(dlKey, String(dlCount + 1), { expirationTtl: DOWNLOAD_DAYS * 86400 });
+    } catch (e) {
+      console.warn('Could not record download count in KV:', e);
+    }
+  }
   const filename = `${(product && product.slug) || productId}.pdf`;
   return new Response(value, {
     headers: {
@@ -370,12 +384,18 @@ export async function handleCreateOrder(request, env, fetchImpl = fetch) {
   // Rate limiting per IP to prevent Razorpay order flooding
   const ip = clientIp(request);
   if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
-    const rateKey = `order-rate:${ip}`;
-    const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
-    if (recent >= ORDER_RATE_LIMIT) {
-      return json({ error: 'Too many checkout attempts. Please wait a few minutes before trying again or message us on WhatsApp.' }, 429);
+    try {
+      const rateKey = `order-rate:${ip}`;
+      const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
+      if (recent >= ORDER_RATE_LIMIT) {
+        return json({ error: 'Too many checkout attempts. Please wait a few minutes before trying again or message us on WhatsApp.' }, 429);
+      }
+      if (env.TAMYIZ_STORE.put) {
+        await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: ORDER_RATE_TTL }).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Rate limit KV check failed:', e);
     }
-    await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: ORDER_RATE_TTL });
   }
 
   const catalog = await loadCatalog(env);
@@ -492,6 +512,7 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
   let paidItems;
   let paidOrderAmount;
   let mode;
+  let rzpOrder;
 
   if (hasRazorpayKeys(env)) {
     mode = 'razorpay';
@@ -514,7 +535,7 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
       return json({ error: 'Could not confirm the payment with Razorpay. If you were charged, message us on WhatsApp.' }, 502);
     }
     const payment = await payRes.json();
-    const rzpOrder = await ordRes.json();
+    rzpOrder = await ordRes.json();
     const okStatus = payment.status === 'captured' || payment.status === 'authorized';
     if (payment.order_id !== razorpay_order_id || !okStatus || Number(payment.amount) !== Number(rzpOrder.amount)) {
       return json({ error: 'Payment not completed for this order.' }, 400);
@@ -531,9 +552,12 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
     return json({ error: PAYMENTS_OFF }, 503);
   }
 
-  const contact = cleanContact(email, phone);
-  const cleanEmail = contact.email || String(email || '').trim().toLowerCase();
-  const cleanPhone = contact.phone || String(phone || '').trim();
+  // Use the verified contact info from order notes for real payments (prevents browser overrides)
+  const rawEmail = (mode === 'razorpay' && rzpOrder?.notes?.email) ? rzpOrder.notes.email : email;
+  const rawPhone = (mode === 'razorpay' && rzpOrder?.notes?.phone) ? rzpOrder.notes.phone : phone;
+  const contact = cleanContact(rawEmail, rawPhone);
+  const cleanEmail = contact.email || String(rawEmail || '').trim().toLowerCase();
+  const cleanPhone = contact.phone || String(rawPhone || '').trim();
 
   const refBytes = crypto.getRandomValues(new Uint8Array(5));
   const referenceId = 'TAMYIZ-ORD-' + Date.now().toString(36).toUpperCase() + [...refBytes].map((b) => b.toString(36)).join('').toUpperCase().slice(0, 6);
@@ -626,7 +650,8 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
 // ---------------------------------------------------------------------------
 
 export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
-  const secret = env.RAZORPAY_WEBHOOK_SECRET || env.RAZORPAY_KEY_SECRET;
+  // Security: RAZORPAY_WEBHOOK_SECRET is required. Never fall back to payment key secret.
+  const secret = env.RAZORPAY_WEBHOOK_SECRET;
   if (!secret) return json({ error: 'Webhook secret not configured on server.' }, 503);
 
   const sig = request.headers.get('x-razorpay-signature');
@@ -653,7 +678,7 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
   const paymentId = pEntity.id;
   const orderId = pEntity.order_id || oEntity.id;
 
-  if (!paymentId) return json({ error: 'Missing payment entity in webhook.' }, 400);
+  if (!paymentId || !orderId) return json({ error: 'Missing payment or order entity in webhook.' }, 400);
 
   // Deduplication: if the user already stayed on-page and verify-payment ran, skip email duplication
   const fulfilledKey = `order-fulfilled:${paymentId}`;
@@ -664,24 +689,31 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
     }
   }
 
-  // Extract ordered items from Razorpay notes
-  const notes = { ...(oEntity.notes || {}), ...(pEntity.notes || {}) };
-  let items = notesToItems(notes);
-
-  if (items.length === 0 && orderId && hasRazorpayKeys(env)) {
-    try {
-      const ordRes = await fetchImpl(`https://api.razorpay.com/v1/orders/${encodeURIComponent(orderId)}`, {
-        headers: { Authorization: basicAuth(env) }
-      });
-      if (ordRes.ok) {
-        const rzpOrd = await ordRes.json();
-        items = notesToItems(rzpOrd.notes || {});
-      }
-    } catch (err) {
-      console.error('Failed to query order notes from Razorpay:', err);
-    }
+  // Always fetch order from Razorpay's API to ensure authentic notes and amount
+  if (!hasRazorpayKeys(env)) {
+    return json({ error: 'Payment gateway keys not configured.' }, 503);
   }
 
+  const ordRes = await fetchImpl(`https://api.razorpay.com/v1/orders/${encodeURIComponent(orderId)}`, {
+    headers: { Authorization: basicAuth(env) }
+  });
+  if (!ordRes.ok) {
+    return json({ error: 'Could not fetch order from Razorpay.' }, 502);
+  }
+  const rzpOrder = await ordRes.json();
+
+  // Validate that payment belongs to this order and amount equals order amount
+  if (pEntity.order_id && pEntity.order_id !== rzpOrder.id) {
+    return json({ error: 'Payment does not belong to this order.' }, 400);
+  }
+  if (Number(pEntity.amount) !== Number(rzpOrder.amount)) {
+    return json({ error: 'Payment amount does not match order amount.' }, 400);
+  }
+
+  // Security (critical): extract ordered items ONLY from the authentic Razorpay order's notes.
+  // Never merge or fall back to buyer-controllable payment notes (pEntity.notes).
+  const orderNotes = rzpOrder.notes || {};
+  const items = notesToItems(orderNotes);
   if (items.length === 0) return json({ error: 'No items found in order notes.' }, 400);
 
   const catalog = await loadCatalog(env);
@@ -690,13 +722,14 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
   try { priced = calculateOrderTotal(items, null, catalog, dynamicCoupons); }
   catch (err) { return json({ error: err.message }, 409); }
 
-  const rawEmail = notes.email || pEntity.email || '';
-  const rawPhone = notes.phone || pEntity.contact || '';
+  // Use the verified buyer contact from order notes (never buyer-modified payment notes)
+  const rawEmail = orderNotes.email || pEntity.email || '';
+  const rawPhone = orderNotes.phone || pEntity.contact || '';
   const contact = cleanContact(rawEmail, rawPhone);
-  const cleanEmail = contact.email || String(rawEmail || '').trim().toLowerCase();
-  const cleanPhone = contact.phone || String(rawPhone || '').trim();
+  const cleanEmail = contact.email || (orderNotes.email ? String(orderNotes.email).trim().toLowerCase() : '');
+  const cleanPhone = contact.phone || (orderNotes.phone ? String(orderNotes.phone).trim() : '');
 
-  const totalINR = Math.round(Number(pEntity.amount || priced.amountPaise) / 100);
+  const totalINR = Math.round(Number(rzpOrder.amount) / 100);
   const referenceId = 'TAMYIZ-ORD-' + Date.now().toString(36).toUpperCase();
   const origin = new URL(request.url).origin;
 
@@ -727,7 +760,7 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
       referenceId,
       paymentId,
       mode: 'razorpay_webhook',
-      amountPaise: Number(pEntity.amount || priced.amountPaise),
+      amountPaise: Number(rzpOrder.amount),
       totalINR,
       subtotalINR: priced.subtotal,
       discountINR: Math.max(0, priced.subtotal - totalINR),
@@ -748,7 +781,7 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
       if (!orderIndex.includes(orderId)) {
         orderIndex.unshift(orderId);
         if (orderIndex.length > 500) orderIndex = orderIndex.slice(0, 500);
-        await env.TAMYIZ_STORE.put('orders:index', JSON.stringify(orderIndex));
+        await env.TAMYIZ_STORE.put('orders:index', JSON.stringify(orderIndex)).catch(() => {});
       }
       await markCartRecovered(env, cleanEmail).catch(() => {});
     } catch (e) {

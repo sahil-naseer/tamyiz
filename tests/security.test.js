@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { route } from '../server/router.js';
 import { devKV } from '../server/dev-kv.js';
-import { hmacSha256Hex } from '../server/payments.js';
+import { hmacSha256Hex, itemsToNotes } from '../server/payments.js';
 import { productSchema } from '../src/data/seo.js';
 import { withSecurityHeaders } from '../server/security-headers.js';
 
@@ -11,7 +11,8 @@ const PASSWORD = 'correct-horse-battery';
 const BASE = 'https://shop.test';
 const CATALOG = [
   { id: 'eb-onsale', slug: 'on-sale-book', name: 'On Sale Book', price: 299, status: 'on-sale', fileSize: 10, createdAt: 3 },
-  { id: 'eb-draft01', slug: 'secret-draft', name: 'Unreleased Draft', price: 499, status: 'draft', description: 'DRAFT TEXT', createdAt: 2,
+  { id: 'eb-pricey', slug: 'pricey-book', name: 'Pricey Book', price: 999, status: 'on-sale', fileSize: 20, createdAt: 2 },
+  { id: 'eb-draft01', slug: 'secret-draft', name: 'Unreleased Draft', price: 499, status: 'draft', description: 'DRAFT TEXT', createdAt: 1,
     sampleExcerpt: { chapter: 'Ch 1', subtitle: 's', text: 'UNRELEASED CHAPTER' } },
 ];
 const env = (extra = {}) => {
@@ -143,4 +144,164 @@ test('headers: Functions responses get the security headers (_headers does not c
   assert.match(html.headers.get('Content-Security-Policy'), /frame-ancestors 'none'/);
   const api = withSecurityHeaders(new Response('{}', { headers: { 'Content-Type': 'application/json' } }));
   assert.equal(api.headers.get('X-Content-Type-Options'), 'nosniff');
+});
+
+test('webhook: buyer cannot unlock extra books by tampering with payment notes', async () => {
+  const webhookSecret = 'hook-secret-xyz';
+  const e = env({
+    RAZORPAY_KEY_ID: 'rzp_live_x',
+    RAZORPAY_KEY_SECRET: 'rzp_sec_y',
+    RAZORPAY_WEBHOOK_SECRET: webhookSecret,
+    BREVO_API_KEY: 'test_brevo'
+  });
+
+  // Razorpay order only contains eb-onsale (price 299, amount 29900)
+  const orderNotes = { ...itemsToNotes([{ productId: 'eb-onsale', variant: 'PDF' }]), email: 'victim@gmail.com', phone: '+919876543210' };
+  
+  // Attacker puts extra book ('eb-pricey') and their own email in payment notes
+  const paymentNotes = { ...itemsToNotes([{ productId: 'eb-onsale', variant: 'PDF' }, { productId: 'eb-pricey', variant: 'PDF' }]), email: 'attacker@evil.com' };
+
+  const payload = {
+    event: 'payment.captured',
+    payload: {
+      payment: {
+        entity: {
+          id: 'pay_tamper_1',
+          order_id: 'order_honest_1',
+          amount: 29900,
+          notes: paymentNotes,
+          email: 'attacker@evil.com'
+        }
+      }
+    }
+  };
+  const bodyText = JSON.stringify(payload);
+  const sig = await hmacSha256Hex(webhookSecret, bodyText);
+
+  const mockFetch = async (url) => {
+    if (String(url).includes('api.razorpay.com/v1/orders/order_honest_1')) {
+      return new Response(JSON.stringify({
+        id: 'order_honest_1',
+        amount: 29900,
+        notes: orderNotes
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    if (String(url).includes('api.brevo.com')) {
+      return new Response('{"messageId":"ok"}', { status: 201 });
+    }
+    return new Response('{}', { status: 404 });
+  };
+
+  const req = new Request(BASE + '/api/webhook/razorpay', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-razorpay-signature': sig },
+    body: bodyText
+  });
+  const res = await route(req, e, mockFetch);
+  assert.equal(res.status, 200);
+
+  // Check fulfilled order in KV: ONLY eb-onsale must be fulfilled, and to victim@gmail.com
+  const stored = await e.TAMYIZ_STORE.get('order-fulfilled:pay_tamper_1', 'json');
+  assert.ok(stored);
+  assert.equal(stored.items.length, 1);
+  assert.equal(stored.items[0].productId, 'eb-onsale');
+  assert.equal(stored.email, 'victim@gmail.com');
+});
+
+test('webhook: refuses payment if amount paid does not match order amount', async () => {
+  const webhookSecret = 'hook-secret-xyz';
+  const e = env({
+    RAZORPAY_KEY_ID: 'rzp_live_x',
+    RAZORPAY_KEY_SECRET: 'rzp_sec_y',
+    RAZORPAY_WEBHOOK_SECRET: webhookSecret
+  });
+
+  const payload = {
+    event: 'payment.captured',
+    payload: {
+      payment: {
+        entity: {
+          id: 'pay_underpay_1',
+          order_id: 'order_underpay_1',
+          amount: 9900, // Attacker paid ₹99
+          notes: {}
+        }
+      }
+    }
+  };
+  const bodyText = JSON.stringify(payload);
+  const sig = await hmacSha256Hex(webhookSecret, bodyText);
+
+  const mockFetch = async (url) => {
+    if (String(url).includes('api.razorpay.com/v1/orders/order_underpay_1')) {
+      return new Response(JSON.stringify({
+        id: 'order_underpay_1',
+        amount: 99900, // Order was ₹999
+        notes: itemsToNotes([{ productId: 'eb-pricey', variant: 'PDF' }])
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    return new Response('{}', { status: 404 });
+  };
+
+  const req = new Request(BASE + '/api/webhook/razorpay', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-razorpay-signature': sig },
+    body: bodyText
+  });
+  const res = await route(req, e, mockFetch);
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /amount does not match/);
+});
+
+test('verify-payment: uses order email from Razorpay, not browser-supplied email', async () => {
+  const e = env({ RAZORPAY_KEY_ID: 'rzp_live_x', RAZORPAY_KEY_SECRET: 'rzp-secret', BREVO_API_KEY: 'test_brevo' });
+  const sig = await hmacSha256Hex('rzp-secret', 'order_123|pay_123');
+
+  let sentTo = null;
+  const mockFetch = async (url, opts) => {
+    if (String(url).includes('api.razorpay.com/v1/payments/pay_123')) {
+      return new Response(JSON.stringify({ id: 'pay_123', order_id: 'order_123', amount: 29900, status: 'captured' }), { status: 200 });
+    }
+    if (String(url).includes('api.razorpay.com/v1/orders/order_123')) {
+      return new Response(JSON.stringify({
+        id: 'order_123',
+        amount: 29900,
+        notes: { ...itemsToNotes([{ productId: 'eb-onsale', variant: 'PDF' }]), email: 'honest-buyer@gmail.com', phone: '+919876543210' }
+      }), { status: 200 });
+    }
+    if (String(url).includes('api.brevo.com')) {
+      const b = JSON.parse(opts.body);
+      sentTo = b.to[0].email;
+      return new Response('{"messageId":"ok"}', { status: 201 });
+    }
+    return new Response('{}', { status: 404 });
+  };
+
+  const res = await post(e, '/api/verify-payment', {
+    razorpay_order_id: 'order_123',
+    razorpay_payment_id: 'pay_123',
+    razorpay_signature: sig,
+    email: 'attacker@evil.com',
+    phone: '+911111111111'
+  }, {}, mockFetch);
+
+  assert.equal(res.status, 200);
+  const stored = await e.TAMYIZ_STORE.get('order-fulfilled:pay_123', 'json');
+  assert.equal(stored.email, 'honest-buyer@gmail.com');
+  assert.equal(sentTo, 'honest-buyer@gmail.com');
+});
+
+test('download: missing file returns 404 and does not increment download count', async () => {
+  const e = env();
+  const paymentId = 'pay_test_dl';
+  const exp = Math.floor(Date.now() / 1000) + 3600;
+  const sig = await hmacSha256Hex('test-secret', `dl|eb-onsale|${paymentId}|${exp}`);
+
+  // No file:eb-onsale uploaded in KV
+  const res = await call(e, `/api/download/eb-onsale?p=${paymentId}&e=${exp}&s=${sig}`);
+  assert.equal(res.status, 404);
+
+  // Counter must not be incremented
+  const count = await e.TAMYIZ_STORE.get(`dl-count:${paymentId}:eb-onsale`);
+  assert.equal(count, null);
 });
