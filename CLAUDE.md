@@ -211,7 +211,7 @@ Fixed in branch `fix/pre-launch-audit` (tests: `tests/security.test.js`; `npm te
 - `/api/sample` refuses drafts; leads no longer store IP address or device; one welcome email per address.
 - Abandoned bags: id = hash of the whole email; item names/prices come from the catalogue; "emailed" only if Brevo accepted.
 - Admin: logout needs a valid session; banner links must be http(s) or /path; CSV exports are formula-safe; the
-  "Admin Portal" link was removed from the footer and menu (open /admin directly).
+  "Admin Portal" link is kept in the footer and mobile menu (`1cb67a6`).
 - Coupons: the bag checks codes with `GET /api/coupon?code=` (SAMPLE10 + /admin coupons). Flat coupons can have `minOrder`.
 - Security headers for Functions responses are added in `server/security-headers.js` (Cloudflare does NOT apply
   `public/_headers` to Functions). Keep the CSP in both places in step.
@@ -221,6 +221,20 @@ Fixed in branch `fix/pre-launch-audit` (tests: `tests/security.test.js`; `npm te
 - Privacy policy rewritten to match what is really collected; Contact page names a Grievance Officer (Consumer Protection
   (E-Commerce) Rules 2020 / DPDP Act): currently Sahil Naseer, 48 h acknowledgement, 1 month resolution.
 
-Still open (needs the owners): Cloudflare rate-limit rule for /api/*, a backup/export of orders, own email domain
-(SPF/DKIM/DMARC), refund webhook (refunded payments keep their links), CSP 'unsafe-inline' (inline onclick handlers
-everywhere), "verifiedBuyer" label can be claimed by typing a buyer's email (approve reviews with care).
+Fixed in `main` on 8 Nov 2026 (`npm test` 72 of 72, `npm audit` 0):
+- `/api/webhook/razorpay`: always fetches the authoritative order from Razorpay (`GET /v1/orders/{order_id}`), ignores
+  buyer-controlled `payment.notes`, verifies `payment.amount === order.amount`, and requires `RAZORPAY_WEBHOOK_SECRET`
+  (no fallback to `RAZORPAY_KEY_SECRET`).
+- `/api/verify-payment`: uses the buyer email and phone stored on the Razorpay order rather than trusting browser input;
+  uses a deterministic order reference (`TMZ-${payment_id}`) so `verify-payment` and the webhook never generate two
+  different order numbers.
+- KV write resilience: rate-limit and download counter writes are wrapped in `try/catch` (with in-memory isolate fallback)
+  so exhausting the daily 1,000 free KV writes never blocks checkout or paid PDF downloads; missing PDF files do not
+  increment the download counter; `/api/coupon` is rate-limited.
+- Order recovery scaling: orders are additionally indexed per customer (`buyer-orders:email:<email>`,
+  `buyer-orders:phone:<digits>`) so buyers can always recover downloads even after `orders:index` rotates past 500 orders.
+- `/admin` login protection: wrong passwords use zero KV writes (in-memory rate-limit bucket) and support stateless
+  HMAC-signed 6-digit Email OTP 2FA via Brevo when `ADMIN_OTP_EMAIL` is set.
+
+Still open (optional future improvements): own email domain (SPF/DKIM/DMARC), refund webhook (`refund.processed`),
+removing `'unsafe-inline'` from `script-src` CSP once inline `onclick` handlers are refactored.
