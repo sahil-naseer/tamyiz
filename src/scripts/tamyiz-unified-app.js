@@ -1550,7 +1550,7 @@ class TamyizUnifiedApp {
             Read Free Sample (Chapter 1)
           </h3>
           <p style="font-size: 0.88rem; color: #5E5E59; line-height: 1.5; margin: 0;">
-            Enter your email to unlock the complete Chapter 1 excerpt and curriculum architecture of <strong>${escapeText(product.name)}</strong> instantly.
+            Enter your email to unlock the complete Chapter 1 excerpt and curriculum architecture of <strong>${product.name}</strong> instantly.
           </p>
         </div>
 
@@ -1682,14 +1682,14 @@ class TamyizUnifiedApp {
                 Free sample
               </span>
               <span style="font-family: var(--font-sub); font-size: 0.72rem; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.05em;">
-                ${escapeText(chapterLabel)}
+                ${chapterLabel}
               </span>
             </div>
             <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 1.35rem; line-height: 1.25; margin: 0 0 0.25rem; color: #0B0B0B;">
-              ${escapeText(product.name)}
+              ${product.name}
             </h3>
             <p style="font-size: 0.85rem; color: #5E5E59; margin: 0;">
-              ${escapeText(subtitle)}
+              ${subtitle}
             </p>
           </div>
           <button
@@ -1707,10 +1707,10 @@ class TamyizUnifiedApp {
             § 01 / Selected Excerpt
           </div>
           <h4 style="font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; margin: 0 0 1.25rem; color: #0B0B0B;">
-            ${escapeText(subtitle)}
+            ${subtitle}
           </h4>
           <div class="tamyiz-excerpt-dropcap" style="font-family: var(--font-serif, 'Georgia', serif); font-size: 1.05rem; line-height: 1.85; color: #1D1D1D; text-align: justify; white-space: pre-line;">
-            ${escapeText(text)}
+            ${text}
           </div>
           <div style="margin-top: 1.75rem; padding: 1rem 1.25rem; border-left: 3px solid #0B0B0B; background: #F1F1EE; font-family: var(--font-serif, 'Georgia', serif); font-style: italic; font-size: 0.95rem; color: #333;">
             "Distinction is not loud; it is undeniable weight and proportion."
@@ -1726,7 +1726,7 @@ class TamyizUnifiedApp {
               ${toc.map((item, idx) => `
                 <li style="display: flex; gap: 0.75rem; align-items: baseline;">
                   <span style="font-family: var(--font-mono, monospace); font-size: 0.75rem; color: #888; font-weight: 600;">0${idx + 1}</span>
-                  <span style="color: #111; font-weight: 500;">${escapeText(item)}</span>
+                  <span style="color: #111; font-weight: 500;">${item}</span>
                 </li>
               `).join('')}
             </ul>
@@ -1883,7 +1883,7 @@ class TamyizUnifiedApp {
           Reader Feedback
         </span>
         <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 1.35rem; line-height: 1.25; margin: 0 0 0.4rem; color: #0B0B0B;">
-          Review: ${escapeText(product.name)}
+          Review: ${product.name}
         </h3>
         <p style="font-size: 0.85rem; color: #5E5E59; line-height: 1.5; margin: 0 0 1.25rem;">
           Share your candid takeaways with other prospective readers. Verified purchases receive a priority badge.
