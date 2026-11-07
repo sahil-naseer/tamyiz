@@ -410,6 +410,7 @@ class TamyizUnifiedApp {
               <li><a href="/legal/terms" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.openLegalModal('terms')">Terms of Service</a></li>
               <li><a href="/legal/contact" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.openLegalModal('contact')">Contact Us</a></li>
               <li><a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E7B2E; font-weight: 700;">WhatsApp us (<span style="white-space: nowrap;">${siteConfig.phone}</span>) ↗</a></li>
+              <li><a href="/admin" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/admin')" style="font-size: 0.85em;">Admin Portal ↗</a></li>
             </ul>
           </div>
         </div>
@@ -574,6 +575,7 @@ class TamyizUnifiedApp {
                 <li><a href="/legal/terms" onclick="event.preventDefault(); window.tamyizApp.openLegalModal('terms')">Terms of Service</a></li>
                 <li><a href="/legal/contact" onclick="event.preventDefault(); window.tamyizApp.openLegalModal('contact')">Contact Us</a></li>
                 <li><a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="color: #FFFFFF; font-weight: 700;">WhatsApp us ↗</a></li>
+                <li><a href="/admin" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/admin')" style="font-size: 0.85em;">Admin Portal ↗</a></li>
               </ul>
             </div>
           </div>
