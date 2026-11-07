@@ -96,7 +96,7 @@ test('submitting sample lead unlocks chapter 1 and stores lead in KV', async () 
   const leadsData = await adminLeadsRes.json();
   assert.equal(leadsData.leads.length, 1);
   assert.equal(leadsData.leads[0].email, 'buyer@example.com');
-  assert.equal(leadsData.leads[0].phone, '+91 98765 43210');
+  assert.equal(leadsData.leads[0].phone, '+919876543210');
 
   // Check admin delete lead
   const delRes = await call(e, `/api/admin/leads/${leadsData.leads[0].id}`, {

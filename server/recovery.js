@@ -46,6 +46,10 @@ export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
     return json({ error: 'Store storage is currently unavailable. Please contact WhatsApp support.' }, 503);
   }
 
+  if (!env.BREVO_API_KEY && !env.RESEND_API_KEY) {
+    return json({ error: 'Email delivery is not set up yet. WhatsApp us on +91 95417 22379 with your payment ID and we will send your files.' }, 503);
+  }
+
   const kv = env.TAMYIZ_STORE;
   let orderIds = [];
   try {
@@ -67,96 +71,55 @@ export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
       const orderPhone = String(ord.phone || '').replace(/[^0-9]/g, '');
 
       let matched = false;
-      if (cleanEmail && orderEmail && orderEmail === cleanEmail) {
-        matched = true;
-      }
-      if (!matched && cleanPhone && cleanPhone.length >= 8 && orderPhone && orderPhone.endsWith(cleanPhone.slice(-10))) {
-        matched = true;
-      }
-
-      if (matched) {
-        matchingOrders.push(ord);
-      }
+      if (cleanEmail && orderEmail && orderEmail === cleanEmail) matched = true;
+      // Phone: the last 10 digits must match exactly (no partial-number searches).
+      if (!matched && cleanPhone.length >= 10 && orderPhone.length >= 10 && orderPhone.slice(-10) === cleanPhone.slice(-10)) matched = true;
+      if (matched && orderEmail.includes('@')) matchingOrders.push(ord);
     } catch {}
   }
 
-  if (matchingOrders.length === 0) {
-    return json({
-      ok: false,
-      error: 'No active purchases were found under this email or mobile number. If you used a different email, please try again or contact WhatsApp support (+91 95417 22379).'
-    }, 404);
-  }
-
+  // Security (7 Nov 2026): links are NEVER shown on screen and the answer is the same whether or not a purchase
+  // was found. They go only to the email address saved on the order, so knowing someone's email or phone
+  // number is not enough to download their books or to learn what they bought.
   const origin = new URL(request.url).origin;
-  const books = [];
-  const seenProds = new Set();
-
+  const byEmail = new Map();
   for (const ord of matchingOrders) {
-    const items = Array.isArray(ord.items) ? ord.items : [];
-    for (const item of items) {
+    const to = String(ord.email).trim().toLowerCase();
+    if (!byEmail.has(to)) byEmail.set(to, { books: [], seen: new Set() });
+    const entry = byEmail.get(to);
+    for (const item of Array.isArray(ord.items) ? ord.items : []) {
       const prodId = item.productId || item.id;
-      if (!prodId || seenProds.has(prodId)) continue;
-      seenProds.add(prodId);
-
-      const downloadPath = await signDownload(env, prodId, ord.paymentId || ord.orderId);
-      books.push({
-        productId: prodId,
-        name: item.name || 'TAMYIZ Monograph',
-        downloadUrl: origin + downloadPath,
-        purchasedAt: ord.createdAt,
-        orderId: ord.orderId,
+      if (!prodId || entry.seen.has(prodId)) continue;
+      entry.seen.add(prodId);
+      entry.books.push({
+        name: item.name || 'Your TAMYIZ e-book',
+        downloadUrl: origin + (await signDownload(env, prodId, ord.paymentId || ord.orderId)),
       });
     }
   }
-
-  // Best effort email delivery of recovery links
-  const targetEmail = cleanEmail || matchingOrders[0].email;
-  if (targetEmail && (env.BREVO_API_KEY || env.RESEND_API_KEY)) {
-    try {
-      sendRecoveryEmail(env, targetEmail, books, fetchImpl).catch(() => {});
-    } catch {}
-  }
-
-  const masked = maskEmail(targetEmail);
-
-  // Security guard: When recovering via phone number only, do NOT expose download URLs or raw email on screen.
-  // Delivery is routed to the customer's registered email to prevent unauthorized phone-based scraping.
-  if (!cleanEmail && cleanPhone) {
-    return json({
-      ok: true,
-      message: `Found ${books.length} e-book${books.length === 1 ? '' : 's'} in your library. For your security, your download links have been sent to your registered email (${masked}).`,
-      email: masked,
-      dispatchedToEmail: true,
-      books: books.map((b) => ({
-        productId: b.productId,
-        name: b.name,
-        purchasedAt: b.purchasedAt,
-        orderId: b.orderId,
-      })),
-    });
+  for (const [to, { books }] of byEmail) {
+    if (books.length) await sendRecoveryEmail(env, to, books, fetchImpl).catch(() => false);
   }
 
   return json({
     ok: true,
-    message: `Found ${books.length} e-book${books.length === 1 ? '' : 's'} in your library.`,
-    email: masked,
-    books,
+    message: 'If this matches a purchase, we have emailed the download links to the email address used at checkout. Check your inbox (and spam folder) in a few minutes. Nothing arrived? WhatsApp us on +91 95417 22379 with your payment ID.',
   });
 }
 
 async function sendRecoveryEmail(env, to, books, fetchImpl = fetch) {
   const fromEmail = String(env.RECEIPT_FROM || 'tamyiz.co@gmail.com').replace(/^.*<|>.*$/g, '').trim();
-  const subject = `Your TAMYIZ Digital Library Access Links`;
+  const subject = 'Your TAMYIZ download links';
   const text = [
-    `TAMYIZ™ ATELIER — LIBRARY RECOVERY`,
+    `TAMYIZ — your download links`,
     ``,
     `Here are your secure digital download links:`,
     ``,
     ...books.map((b) => `• ${b.name}\n  Download: ${b.downloadUrl}\n`),
     ``,
-    `Links are valid for 1 year. For questions or revision updates, WhatsApp us: https://wa.me/919541722379`,
+    `Links are valid for 1 year. Questions? WhatsApp us: https://wa.me/919541722379`,
     ``,
-    `TAMYIZ — Distinction is quiet.`
+    `TAMYIZ`
   ].join('\n');
 
   const html = `
@@ -168,26 +131,26 @@ async function sendRecoveryEmail(env, to, books, fetchImpl = fetch) {
         <tr>
           <td>
             <div style="font-family: monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #767670; margin-bottom: 8px;">
-              TAMYIZ™ ATELIER
+              TAMYIZ
             </div>
             <h1 style="font-size: 22px; font-weight: 700; margin: 0 0 16px; color: #0B0B0B; line-height: 1.3;">
-              Your E-Book Library Recovery
+              Your download links
             </h1>
             <p style="font-size: 14px; line-height: 1.6; color: #555; margin: 0 0 24px;">
-              Here are your active, verified download links for your purchased TAMYIZ editions:
+              Someone (hopefully you) asked for the download links to your TAMYIZ e-books. Here they are:
             </p>
             <div style="display: flex; flex-direction: column; gap: 12px;">
               ${books.map((b) => `
                 <div style="background: #FAF9F6; border: 1px solid rgba(11,11,11,0.1); border-radius: 8px; padding: 16px; margin-bottom: 12px;">
                   <strong style="display: block; font-size: 15px; color: #0B0B0B; margin-bottom: 6px;">${escapeHtml(b.name)}</strong>
-                  <a href="${b.downloadUrl}" style="display: inline-block; background: #0B0B0B; color: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 6px; letter-spacing: 0.5px;">
+                  <a href="${escapeHtml(b.downloadUrl)}" style="display: inline-block; background: #0B0B0B; color: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 6px; letter-spacing: 0.5px;">
                     Download PDF e-book ↓
                   </a>
                 </div>
               `).join('')}
             </div>
             <p style="font-size: 12px; color: #888; margin-top: 24px;">
-              Links are secured with HMAC and renewed for 12 months. Save this email for your records.
+              The links work for one year. If you did not ask for this email, you can ignore it.
             </p>
           </td>
         </tr>

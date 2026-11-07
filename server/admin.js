@@ -91,8 +91,9 @@ async function login(request, env) {
   });
 }
 
-async function logout(env) {
-  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.put) {
+async function logout(request, env) {
+  // Only a logged-in admin can sign every session out (otherwise anyone could keep kicking you out of /admin).
+  if ((await isAdmin(request, env)) && request.headers.get('X-Tamyiz-Admin') === '1' && env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.put) {
     try {
       await env.TAMYIZ_STORE.put('admin:revoked_before', String(Math.floor(Date.now() / 1000) + 1), { expirationTtl: SESSION_SECONDS });
     } catch {}
@@ -432,13 +433,15 @@ async function saveCoupon(request, env) {
   const kv = store(env);
   let body = {};
   try { body = await request.json(); } catch {}
-  const { code, type, value, label } = body;
+  const { code, type, value, label, minOrder } = body;
   if (!code || typeof code !== 'string') return json({ error: 'Coupon code is required.' }, 400);
   const cleanCode = code.toUpperCase().trim().replace(/[^A-Z0-9_-]/g, '');
   if (cleanCode.length < 3) return json({ error: 'Coupon code must be at least 3 characters.' }, 400);
 
   const numVal = Number(value);
   if (!numVal || numVal < 1) return json({ error: 'Discount value must be a positive number.' }, 400);
+  if (type !== 'flat' && numVal > 90) return json({ error: 'A percent coupon can be at most 90%.' }, 400);
+  const min = Math.max(0, Math.round(Number(minOrder) || 0));
 
   const raw = await kv.get('store:coupons');
   let coupons = {};
@@ -448,7 +451,8 @@ async function saveCoupon(request, env) {
     code: cleanCode,
     type: type === 'flat' ? 'flat' : 'percent',
     value: numVal,
-    label: label || (type === 'flat' ? `₹${numVal} off` : `${numVal}% off`),
+    label: String(label || (type === 'flat' ? `₹${numVal} off` : `${numVal}% off`)).slice(0, 80),
+    ...(type === 'flat' && min ? { minOrder: min } : {}),
     active: true,
     updatedAt: new Date().toISOString()
   };
@@ -486,7 +490,8 @@ async function saveAnnouncement(request, env) {
   const announcement = {
     enabled: Boolean(enabled),
     text: (text || '').trim().slice(0, 200),
-    link: (link || '').trim().slice(0, 150),
+    // Only web links or links inside the site (no javascript: or data: links in the banner).
+    link: /^(https:\/\/|http:\/\/|\/(?!\/))/i.test(String(link || '').trim()) ? String(link).trim().slice(0, 150) : '',
     linkText: (linkText || '').trim().slice(0, 50),
     updatedAt: new Date().toISOString()
   };
@@ -543,7 +548,7 @@ export async function handleAdmin(request, env, rest) {
   const method = request.method;
   try {
     if (rest === 'login' && method === 'POST') return await login(request, env);
-    if (rest === 'logout' && method === 'POST') return await logout(env);
+    if (rest === 'logout' && method === 'POST') return await logout(request, env);
 
     if (!(await isAdmin(request, env))) return json({ error: 'Please log in.' }, 401);
     if (method !== 'GET' && request.headers.get('X-Tamyiz-Admin') !== '1') return json({ error: 'Forbidden.' }, 403);

@@ -27,6 +27,10 @@ import { renderCheckoutPage } from './pages/checkout-page.js';
 import { renderLegalPage, legalDocs } from './pages/legal-page.js';
 import { AdminController } from './pages/admin-page.js';
 
+/** localStorage that never throws (private mode / blocked site data). */
+const safeGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+
 export const escapeText = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 class TamyizUnifiedApp {
@@ -406,7 +410,6 @@ class TamyizUnifiedApp {
               <li><a href="/legal/terms" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.openLegalModal('terms')">Terms of Service</a></li>
               <li><a href="/legal/contact" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.openLegalModal('contact')">Contact Us</a></li>
               <li><a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E7B2E; font-weight: 700;">WhatsApp us (<span style="white-space: nowrap;">${siteConfig.phone}</span>) ↗</a></li>
-              <li><a href="/admin" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/admin')" style="opacity: 0.6; font-size: 0.85em;">Admin Portal ↗</a></li>
             </ul>
           </div>
         </div>
@@ -455,7 +458,7 @@ class TamyizUnifiedApp {
           </div>
 
           <div id="cart-discount-row" style="display: none; justify-content: space-between; margin-bottom: 0.4rem; font-family: monospace; font-size: 0.78rem; text-transform: uppercase; color: #1E7B2E;">
-            <span id="cart-discount-label">Coupon Discount</span>
+            <span id="cart-discount-label">Discount</span>
             <div style="display: flex; align-items: center; gap: 0.4rem;">
               <strong id="cart-discount-val">-₹0</strong>
               <button onclick="window.tamyizApp.removeCoupon()" style="background: none; border: none; color: #888; font-size: 0.72rem; cursor: pointer;" title="Remove coupon">✕</button>
@@ -571,7 +574,6 @@ class TamyizUnifiedApp {
                 <li><a href="/legal/terms" onclick="event.preventDefault(); window.tamyizApp.openLegalModal('terms')">Terms of Service</a></li>
                 <li><a href="/legal/contact" onclick="event.preventDefault(); window.tamyizApp.openLegalModal('contact')">Contact Us</a></li>
                 <li><a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="color: #FFFFFF; font-weight: 700;">WhatsApp us ↗</a></li>
-                <li><a href="/admin" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/admin')" style="opacity: 0.5; font-size: 0.85em;">Admin Portal ↗</a></li>
               </ul>
             </div>
           </div>
@@ -1193,7 +1195,7 @@ class TamyizUnifiedApp {
     }
   }
 
-  applyCoupon() {
+  async applyCoupon() {
     const input = document.getElementById('coupon-input');
     const feedback = document.getElementById('drawer-coupon-feedback');
     if (!input) return;
@@ -1212,7 +1214,7 @@ class TamyizUnifiedApp {
       return;
     }
 
-    const success = store.applyCoupon(val);
+    const success = await store.applyCoupon(val);
     if (success) {
       input.value = '';
       if (feedback) {
@@ -1333,7 +1335,7 @@ class TamyizUnifiedApp {
           </div>
           <div class="tamyiz-modal-spread-item">
             <img src="${product.images[1] || product.images[0]}" alt="${product.name} Spread 02" loading="lazy" />
-            <div class="tamyiz-modal-spread-caption">FIG. 02 — RETINA 300DPI INTERIOR SPREAD / WORKSPACE VIEW</div>
+            <div class="tamyiz-modal-spread-caption">Sample pages</div>
           </div>
         </div>
 
@@ -1532,7 +1534,7 @@ class TamyizUnifiedApp {
     if (!product) return;
 
     // Check if unlocked previously
-    const isUnlocked = localStorage.getItem('tmz_sample_unlocked_' + product.id) === 'true';
+    const isUnlocked = safeGet('tmz_sample_unlocked_' + product.id) === 'true';
     if (isUnlocked && product.sampleExcerpt) {
       this.renderSampleReader(product, product.sampleExcerpt);
       return;
@@ -1647,8 +1649,8 @@ class TamyizUnifiedApp {
         throw new Error(data.error || 'Could not unlock sample. Please try again.');
       }
 
-      localStorage.setItem('tmz_sample_unlocked_' + product.id, 'true');
-      localStorage.setItem('tmz_user_email', email);
+      safeSet('tmz_sample_unlocked_' + product.id, 'true');
+      safeSet('tmz_user_email', email);
 
       this.showToast('Chapter 1 unlocked! Enjoy reading.', 'success');
       this.renderSampleReader(product, data.sample);
@@ -1677,7 +1679,7 @@ class TamyizUnifiedApp {
           <div>
             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
               <span style="font-family: var(--font-sub); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; background: #0B0B0B; color: #FFF; padding: 2px 8px; border-radius: 4px;">
-                Verified Reader
+                Free sample
               </span>
               <span style="font-family: var(--font-sub); font-size: 0.72rem; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.05em;">
                 ${chapterLabel}
@@ -1776,7 +1778,7 @@ class TamyizUnifiedApp {
 
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '<span>Searching verified library…</span>';
+      btn.innerHTML = '<span>Sending…</span>';
     }
     if (msgBox) msgBox.style.display = 'none';
 
@@ -1792,54 +1794,13 @@ class TamyizUnifiedApp {
         throw new Error(data.error || 'No active purchases found.');
       }
 
+      // Links are only ever emailed (never shown here), so knowing someone's email is not enough to get their books.
       if (resultsContainer) {
         resultsContainer.style.display = 'block';
         resultsContainer.innerHTML = `
-          <div style="background: #FFFFFF; border: 1.5px solid rgba(11,11,11,0.12); border-radius: 16px; padding: 2rem 1.75rem; margin-bottom: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(11,11,11,0.08); padding-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-              <div>
-                <span style="font-family: monospace; font-size: 0.72rem; color: #1E7B2E; font-weight: 700; text-transform: uppercase;">
-                  ✓ Verified Digital Library
-                </span>
-                <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 1.35rem; margin: 0.2rem 0 0; color: #0B0B0B;">
-                  Your Purchased E-Books (${data.books.length})
-                </h3>
-              </div>
-              <span style="font-size: 0.8rem; color: #767670;">Account: ${escapeText(data.email)}</span>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-              ${data.books.map(b => `
-                <div style="background: #FAF9F6; border: 1px solid rgba(11,11,11,0.08); border-radius: 10px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                  <div>
-                    <strong style="display: block; font-family: var(--font-head); font-size: 1.05rem; color: #0B0B0B; margin-bottom: 0.25rem;">
-                      ${escapeText(b.name)}
-                    </strong>
-                    <span style="font-size: 0.75rem; color: #666; font-family: monospace;">
-                      Order ID: ${escapeText(b.orderId || 'Verified')} • DRM-free PDF
-                    </span>
-                  </div>
-                  ${b.downloadUrl ? `
-                    <a
-                      href="${b.downloadUrl}"
-                      style="padding: 0.65rem 1.25rem; font-size: 0.82rem; font-family: var(--font-head); font-weight: 700; text-transform: uppercase; background: #0B0B0B; color: #FFF; text-decoration: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.4rem;"
-                    >
-                      <span>Download PDF ↓</span>
-                    </a>
-                  ` : `
-                    <span style="font-size: 0.78rem; font-weight: 600; color: #1E7B2E; background: #E3F3E7; padding: 6px 12px; border-radius: 999px;">
-                      ✓ Dispatched to your email
-                    </span>
-                  `}
-                </div>
-              `).join('')}
-            </div>
-
-            <p style="font-size: 0.78rem; color: #888; margin: 1.25rem 0 0; text-align: center;">
-              ${data.dispatchedToEmail
-                ? 'For your security, download links have been sent to your registered email address.'
-                : 'A permanent backup copy of these active download links has also been dispatched to your email address.'}
-            </p>
+          <div role="status" style="background: #E3F3E7; border: 1.5px solid rgba(30,123,46,0.25); border-radius: 16px; padding: 1.5rem 1.5rem; margin-bottom: 2rem; color: #14532D; font-size: 0.95rem; line-height: 1.55;">
+            <strong style="display: block; margin-bottom: 0.35rem;">Check your email</strong>
+            ${escapeText(data.message || 'If this matches a purchase, we have emailed your download links.')}
           </div>
         `;
         resultsContainer.scrollIntoView({ behavior: 'smooth' });
@@ -1854,7 +1815,7 @@ class TamyizUnifiedApp {
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = '<span>Retrieve Digital Access →</span>';
+        btn.innerHTML = '<span>Email me my download links →</span>';
       }
     }
   }
@@ -1872,13 +1833,14 @@ class TamyizUnifiedApp {
       const data = await res.json();
       const reviews = (data.ok && Array.isArray(data.reviews)) ? data.reviews : [];
 
-      if (countEl) countEl.textContent = `${reviews.length} Verified Reader Note${reviews.length === 1 ? '' : 's'}`;
-      if (avgEl && data.averageRating) avgEl.textContent = `${data.averageRating} / 5.0`;
+      if (countEl) countEl.textContent = reviews.length ? `${reviews.length} reader review${reviews.length === 1 ? '' : 's'}` : 'No reviews yet';
+      // Real average only; nothing is shown until there is at least one approved review.
+      if (avgEl) avgEl.innerHTML = reviews.length && data.averageRating ? `<span style="color: #B45309; letter-spacing: 2px;" aria-hidden="true">${'★'.repeat(Math.round(data.averageRating))}${'☆'.repeat(5 - Math.round(data.averageRating))}</span><span>${escapeText(data.averageRating)} / 5</span>` : '';
 
       if (reviews.length === 0) {
         listEl.innerHTML = `
           <div style="background: #FAF9F6; border: 1px dashed rgba(11,11,11,0.15); border-radius: 8px; padding: 1rem; text-align: center;">
-            <p style="font-size: 0.84rem; color: #666; margin: 0 0 0.4rem;">Have you read this monograph or preview?</p>
+            <p style="font-size: 0.84rem; color: #666; margin: 0 0 0.4rem;">Have you read this e-book?</p>
             <button onclick="window.tamyizApp.openReviewModal('${productId}')" style="background: none; border: none; font-size: 0.8rem; font-weight: 700; color: #0B0B0B; text-decoration: underline; cursor: pointer;">
               Be the first reader to share your review →
             </button>
@@ -1893,7 +1855,7 @@ class TamyizUnifiedApp {
             <div style="background: #FAF9F6; border: 1px solid rgba(11,11,11,0.08); border-radius: 8px; padding: 1rem; display: flex; flex-direction: column; gap: 0.35rem;">
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                 <div style="display: flex; align-items: center; gap: 0.4rem;">
-                  <span style="color: #F5A623; font-size: 0.9rem;">${'★'.repeat(r.rating || 5)}</span>
+                  <span style="color: #F5A623; font-size: 0.9rem;">${'★'.repeat(Math.max(1, Math.min(5, Number(r.rating) || 1)))}</span>
                   <strong style="font-size: 0.88rem; color: #0B0B0B;">${escapeText(r.name)}</strong>
                   ${r.verifiedBuyer ? '<span style="font-size: 0.68rem; font-weight: 700; background: #E8F5E9; color: #2E7D32; padding: 1px 5px; border-radius: 4px; text-transform: uppercase;">✓ Verified Reader</span>' : ''}
                 </div>
@@ -2120,7 +2082,7 @@ class TamyizUnifiedApp {
     }
   }
 
-  applyCouponFromCheckout() {
+  async applyCouponFromCheckout() {
     const input = document.getElementById('checkout-coupon-input');
     const feedback = document.getElementById('checkout-coupon-feedback');
     if (!input) return;
@@ -2139,7 +2101,7 @@ class TamyizUnifiedApp {
       return;
     }
 
-    const success = store.applyCoupon(val);
+    const success = await store.applyCoupon(val);
     if (success) {
       this.renderCurrentPage();
     } else {
@@ -2271,7 +2233,7 @@ class TamyizUnifiedApp {
     </div>
     ${order.discount ? `
       <div class="totals-row" style="color: #000; font-weight: 700;">
-        <span>Coupon Discount:</span>
+        <span>Discount:</span>
         <span>−₹${order.discount.toLocaleString('en-IN')}</span>
       </div>
     ` : ''}
@@ -2471,9 +2433,9 @@ class TamyizUnifiedApp {
 
   async trackAbandonedCart(emailOverride = null) {
     if (!store.cart || store.cart.length === 0) return;
-    const email = emailOverride || document.getElementById('bag-dispatch-email')?.value.trim() || document.getElementById('chk-email')?.value.trim() || localStorage.getItem('tamyiz_buyer_email');
+    const email = emailOverride || document.getElementById('bag-dispatch-email')?.value.trim() || document.getElementById('chk-email')?.value.trim() || safeGet('tamyiz_buyer_email');
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
-    const phone = document.getElementById('bag-dispatch-phone')?.value.trim() || document.getElementById('chk-phone')?.value.trim() || localStorage.getItem('tamyiz_buyer_phone') || '';
+    const phone = document.getElementById('bag-dispatch-phone')?.value.trim() || document.getElementById('chk-phone')?.value.trim() || safeGet('tamyiz_buyer_phone') || '';
 
     try {
       await fetch('/api/abandoned-cart', {
@@ -2510,7 +2472,7 @@ class TamyizUnifiedApp {
           }
         }
         if (coupon) {
-          store.applyCoupon(coupon);
+          store.applyCoupon(coupon).then((ok) => { if (ok) this.renderCurrentPage(); }).catch(() => {});
         }
         if (count > 0) {
           setTimeout(() => {

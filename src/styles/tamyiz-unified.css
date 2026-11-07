@@ -6741,3 +6741,26 @@ body:has(#cart-drawer.active) .tamyiz-toast-container { right: auto; left: 2rem;
 .tmz-page-loading { display: grid; gap: 0.9rem; max-width: 22rem; margin: 0 auto; padding: 8rem 1.5rem 4rem; }
 @keyframes tmz-skel-shine { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 @media (prefers-reduced-motion: reduce) { .tmz-skel { animation: none; } }
+
+/* ---------- Audit fixes (7 Nov 2026) ----------
+   --color-border (71 uses) and --font-head (137 uses in page code) were never defined, so those borders vanished
+   (checkout fields had no visible box) and those headings fell back to Inter. */
+:root {
+  --color-border: rgba(11, 11, 11, 0.14);
+  --font-head: var(--font-display);
+}
+/* Form fields need a clearly visible edge (WCAG 1.4.11: 3:1 against the page). */
+.tamyiz-form-input,
+.tamyiz-coupon-input,
+#coupon-input,
+#bag-dispatch-email,
+#bag-dispatch-phone { border: 1px solid rgba(11, 11, 11, 0.45); }
+/* Touch screens and phones: every link and button is at least 44px tall (footer links were 15-19px). */
+@media (pointer: coarse), (max-width: 639px) {
+  .tamyiz-footer a,
+  .tamyiz-footer-links a,
+  .tmz-downloads-page a { display: inline-flex; align-items: center; min-height: 44px; }
+  .tamyiz-footer-links li { margin: 0; }
+  .tamyiz-pdp-reviews-box button,
+  .tamyiz-btn-preview-trigger { min-height: 44px; }
+}

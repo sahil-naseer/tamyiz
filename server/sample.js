@@ -32,13 +32,14 @@ export async function handleSampleLead(request, env) {
     return json({ error: 'Please enter a valid email address.' }, 400);
   }
 
-  if (!productId) {
+  if (!productId || typeof productId !== 'string' || productId.length > 80) {
     return json({ error: 'Product ID is required.' }, 400);
   }
 
   const list = await loadCatalog(env);
   const rawProduct = findById(list, productId) || findBySlug(list, productId);
-  if (!rawProduct) {
+  // Drafts are private to /admin: never hand out their text (7 Nov 2026).
+  if (!rawProduct || rawProduct.status === 'draft') {
     return json({ error: 'Book not found.' }, 404);
   }
 
@@ -52,13 +53,12 @@ export async function handleSampleLead(request, env) {
     productName: pub.name,
     productSlug: pub.slug,
     email: cleanEmail.slice(0, 100),
-    phone: String(phone || '').trim().slice(0, 30),
+    phone: String(phone || '').replace(/[^0-9+]/g, '').slice(0, 16),
     name: String(name || '').trim().slice(0, 100),
-    ip: request.headers.get('CF-Connecting-IP') || request.headers.get('x-forwarded-for') || 'local',
-    userAgent: (request.headers.get('user-agent') || '').slice(0, 150),
     createdAt: now.toISOString(),
   };
 
+  let alreadyLead = false;
   if (env.TAMYIZ_STORE) {
     try {
       // Store full lead record
@@ -71,6 +71,7 @@ export async function handleSampleLead(request, env) {
         try { leadsIndex = JSON.parse(raw); } catch {}
       }
       if (!Array.isArray(leadsIndex)) leadsIndex = [];
+      alreadyLead = leadsIndex.some((l) => l && l.email === lead.email);
 
       leadsIndex.unshift({
         id: leadId,
@@ -89,10 +90,9 @@ export async function handleSampleLead(request, env) {
     }
   }
 
-  // Automated sample-to-buyer email sequence (welcome gift & 10% coupon)
-  try {
-    sendSampleWelcomeEmail(env, cleanEmail, pub).catch(() => {});
-  } catch {}
+  // One welcome email per address (so the form can't be used to flood someone's inbox or burn the email quota).
+  // Awaited: Cloudflare may cancel work that is still running after the response is sent.
+  if (!alreadyLead) await sendSampleWelcomeEmail(env, cleanEmail, pub).catch(() => false);
 
   return json({
     ok: true,
@@ -118,25 +118,26 @@ export async function handleSampleLead(request, env) {
 export async function sendSampleWelcomeEmail(env, to, product, fetchImpl = fetch) {
   if (!env || (!env.BREVO_API_KEY && !env.RESEND_API_KEY)) return false;
   const fromEmail = String(env.RECEIPT_FROM || 'tamyiz.co@gmail.com').replace(/^.*<|>.*$/g, '').trim();
-  const subject = `Your sample of "${product.name}" + a welcome gift from TAMYIZ`;
+  const plainName = String(product.name || '').replace(/&(amp|lt|gt|quot|#39);/g, (m, c) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" })[c]);
+  const subject = `Your sample of "${plainName}" + a welcome gift from TAMYIZ`;
   const bookUrl = `https://tamyiz.pages.dev/edition/${product.slug || product.id}`;
   const text = [
-    `TAMYIZ™ ATELIER`,
+    `TAMYIZ`,
     ``,
-    `Thank you for requesting a sample of "${product.name}".`,
-    `You can read Chapter 1 anytime or view the complete monograph curriculum here:`,
+    `Thank you for requesting a sample of "${plainName}".`,
+    `You can read the sample again, or see what is inside the full e-book, here:`,
     `${bookUrl}`,
     ``,
     `----------------------------------------------------`,
-    `EXCLUSIVE WELCOME GIFT: 10% OFF YOUR COMPLETE EDITION`,
+    `WELCOME GIFT: 10% OFF THE FULL E-BOOK`,
     `Use Coupon Code: SAMPLE10 at checkout`,
     `----------------------------------------------------`,
     ``,
-    `All TAMYIZ e-books include instant digital delivery, DRM-free PDF, and free revision updates.`,
+    `TAMYIZ e-books are DRM-free PDFs with an instant download after payment.`,
     ``,
-    `Questions? Message our authors directly on WhatsApp: https://wa.me/919541722379`,
+    `Questions? WhatsApp us: https://wa.me/919541722379`,
     ``,
-    `TAMYIZ — Distinction is quiet.`
+    `TAMYIZ`
   ].join('\n');
 
   const html = `
@@ -148,13 +149,13 @@ export async function sendSampleWelcomeEmail(env, to, product, fetchImpl = fetch
         <tr>
           <td>
             <div style="font-family: monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #767670; margin-bottom: 8px;">
-              TAMYIZ™ ATELIER
+              TAMYIZ
             </div>
             <h1 style="font-size: 22px; font-weight: 700; margin: 0 0 16px; color: #0B0B0B; line-height: 1.3;">
               Your Sample of "${product.name}"
             </h1>
             <p style="font-size: 15px; line-height: 1.6; color: #444; margin: 0 0 20px;">
-              Thank you for exploring our publications. You can return to your Chapter 1 sample anytime, or inspect the complete curriculum architecture.
+              Thank you for reading the sample. You can come back to it anytime, or see what is inside the full e-book.
             </p>
             <div style="background: #FAF9F6; border: 1.5px dashed #0B0B0B; border-radius: 10px; padding: 20px; text-align: center; margin: 24px 0;">
               <span style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #C00; display: block; margin-bottom: 6px;">
@@ -169,12 +170,12 @@ export async function sendSampleWelcomeEmail(env, to, product, fetchImpl = fetch
             </div>
             <div style="text-align: center; margin: 28px 0 20px;">
               <a href="${bookUrl}" style="display: inline-block; background: #0B0B0B; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 28px; border-radius: 999px; letter-spacing: 0.5px;">
-                Read Full Book Specifications →
+                See the full e-book →
               </a>
             </div>
             <hr style="border: none; border-top: 1px solid rgba(11,11,11,0.08); margin: 28px 0 20px;" />
             <p style="font-size: 12px; line-height: 1.5; color: #888; margin: 0;">
-              TAMYIZ e-books are DRM-free and optimized for iPad, Kindle, phone and desktop. Questions? Message us anytime on WhatsApp.
+              TAMYIZ e-books are DRM-free PDFs that read on phones, tablets, laptops and Kindle. Questions? WhatsApp us.
             </p>
           </td>
         </tr>

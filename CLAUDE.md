@@ -197,3 +197,30 @@ tamyiz-unified.css). Don't ship below this.
 - Add Cloudflare rate limiting rules for `/api/*` and `/api/admin/*` so abuse doesn't spend KV writes.
 - Decide whether the hard-coded `SAMPLE10` stays; it is visible to anyone reading the public repo.
 - Checked 2 Nov 2026 on commit a9939a8: `npm test` 52 of 52 pass, `npm audit` 0 vulnerabilities. Re-run both after every change.
+
+## Security and compliance audit (7 Nov 2026)
+
+Fixed in branch `fix/pre-launch-audit` (tests: `tests/security.test.js`; `npm test` 66 of 66, `npm audit` 0):
+- `/api/recover-downloads` never shows links on screen and answers the same whether or not a purchase exists; links go
+  only to the email saved on the order. Phone lookups need the full 10 digits. No email provider = honest 503.
+- `/api/verify-payment`: the "already fulfilled" shortcut runs only AFTER the Razorpay signature check (payment IDs are
+  visible in download links, so they must never unlock buyer details or links on their own).
+- `/api/reviews` (public) never returns reviewer emails; `averageRating` is null with no reviews. Reviews only for books
+  in the shop. Book structured data has NO aggregateRating unless real review numbers are passed (never a made-up count).
+  The product page shows stars only when approved reviews exist.
+- `/api/sample` refuses drafts; leads no longer store IP address or device; one welcome email per address.
+- Abandoned bags: id = hash of the whole email; item names/prices come from the catalogue; "emailed" only if Brevo accepted.
+- Admin: logout needs a valid session; banner links must be http(s) or /path; CSV exports are formula-safe; the
+  "Admin Portal" link was removed from the footer and menu (open /admin directly).
+- Coupons: the bag checks codes with `GET /api/coupon?code=` (SAMPLE10 + /admin coupons). Flat coupons can have `minOrder`.
+- Security headers for Functions responses are added in `server/security-headers.js` (Cloudflare does NOT apply
+  `public/_headers` to Functions). Keep the CSP in both places in step.
+- Emails that used to be "fire and forget" are now awaited (Cloudflare can cancel unawaited work).
+- CSS: `--color-border` and `--font-head` are now defined (they were missing: invisible input borders, wrong heading font).
+  Phones/touch: footer links 44px tall. axe: 0 violations on all pages again.
+- Privacy policy rewritten to match what is really collected; Contact page names a Grievance Officer (Consumer Protection
+  (E-Commerce) Rules 2020 / DPDP Act): currently Sahil Naseer, 48 h acknowledgement, 1 month resolution.
+
+Still open (needs the owners): Cloudflare rate-limit rule for /api/*, a backup/export of orders, own email domain
+(SPF/DKIM/DMARC), refund webhook (refunded payments keep their links), CSP 'unsafe-inline' (inline onclick handlers
+everywhere), "verifiedBuyer" label can be claimed by typing a buyer's email (approve reviews with care).

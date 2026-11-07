@@ -103,6 +103,19 @@ export async function getDynamicCoupons(env) {
   }
 }
 
+/** A valid coupon's public details (hard-coded or made on /admin), or null. */
+export async function findCoupon(env, code) {
+  const clean = String(code || '').toUpperCase().trim().slice(0, 30);
+  if (!clean) return null;
+  let c = VALID_COUPONS[clean];
+  if (!c) {
+    const dyn = await getDynamicCoupons(env);
+    if (dyn[clean] && dyn[clean].active !== false) c = dyn[clean];
+  }
+  if (!c) return null;
+  return { code: clean, type: c.type === 'flat' ? 'flat' : 'percent', value: Number(c.value) || 0, label: String(c.label || ''), minOrder: Number(c.minOrder) || 0 };
+}
+
 /** Secret used to sign download links. Sandbox-only fallback so local testing works without keys. */
 function downloadSecret(env) {
   if (env.DOWNLOAD_SECRET) return String(env.DOWNLOAD_SECRET);
@@ -426,50 +439,55 @@ export async function handleCreateOrder(request, env, fetchImpl = fetch) {
 // POST /api/verify-payment
 // ---------------------------------------------------------------------------
 
+/**
+ * A payment already fulfilled (page refreshed, or the webhook ran first): answer with the saved order instead of
+ * fulfilling twice. Security (7 Nov 2026): only called AFTER the Razorpay signature has been checked, so a
+ * payment ID alone (it is visible in every download link) can never return the buyer's details or new links.
+ */
+async function alreadyFulfilled(request, env, paymentId) {
+  if (!paymentId || !env || !env.TAMYIZ_STORE || !env.TAMYIZ_STORE.get) return null;
+  try {
+    const existingRaw = await env.TAMYIZ_STORE.get(`order-fulfilled:${paymentId}`);
+    if (!existingRaw) return null;
+    const existing = JSON.parse(existingRaw);
+    const origin = new URL(request.url).origin;
+    const downloads = await Promise.all((existing.items || []).map(async (i) => ({
+      productId: i.productId || i.id,
+      name: i.name,
+      variant: 'PDF',
+      formatType: 'ebook',
+      downloadUrl: origin + (await signDownload(env, i.productId || i.id, existing.paymentId)),
+      actionLabel: 'Download PDF ↗',
+      specs: 'PDF e-book • DRM-free',
+      price: i.price,
+    })));
+    return json({
+      verified: true,
+      mode: existing.mode,
+      referenceId: existing.referenceId,
+      paymentId: existing.paymentId,
+      orderId: existing.orderId,
+      timestamp: existing.createdAt,
+      email: existing.email,
+      phone: existing.phone,
+      itemsCount: (existing.items || []).length,
+      amount: existing.amountPaise,
+      totalINR: existing.totalINR,
+      subtotalINR: existing.subtotalINR,
+      discountINR: existing.discountINR,
+      downloads,
+      receiptEmailed: existing.receiptEmailed,
+      alreadyFulfilled: true,
+    });
+  } catch {
+    return null;
+  }
+}
+
 export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
   let body;
   try { body = await request.json(); } catch { body = {}; }
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, email, phone } = body || {};
-
-  // Idempotency: if this payment was already fulfilled (e.g. user refreshed the page or webhook ran first),
-  // return the existing fulfilled order immediately to avoid duplicate emails or reference ID conflicts.
-  if (razorpay_payment_id && env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get) {
-    try {
-      const existingRaw = await env.TAMYIZ_STORE.get(`order-fulfilled:${razorpay_payment_id}`);
-      if (existingRaw) {
-        const existing = JSON.parse(existingRaw);
-        const origin = new URL(request.url).origin;
-        const downloads = await Promise.all((existing.items || []).map(async (i) => ({
-          productId: i.productId || i.id,
-          name: i.name,
-          variant: 'PDF',
-          formatType: 'ebook',
-          downloadUrl: origin + (await signDownload(env, i.productId || i.id, existing.paymentId)),
-          actionLabel: 'Download PDF ↗',
-          specs: 'PDF e-book • DRM-free',
-          price: i.price,
-        })));
-        return json({
-          verified: true,
-          mode: existing.mode,
-          referenceId: existing.referenceId,
-          paymentId: existing.paymentId,
-          orderId: existing.orderId,
-          timestamp: existing.createdAt,
-          email: existing.email,
-          phone: existing.phone,
-          itemsCount: (existing.items || []).length,
-          amount: existing.amountPaise,
-          totalINR: existing.totalINR,
-          subtotalINR: existing.subtotalINR,
-          discountINR: existing.discountINR,
-          downloads,
-          receiptEmailed: existing.receiptEmailed,
-          alreadyFulfilled: true,
-        });
-      }
-    } catch {}
-  }
 
   let paidItems;
   let paidOrderAmount;
@@ -485,6 +503,8 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
     if (!timingSafeEqual(expected, razorpay_signature)) {
       return json({ error: 'Invalid payment signature. Verification failed.' }, 400);
     }
+    const done = await alreadyFulfilled(request, env, razorpay_payment_id);
+    if (done) return done;
     // 2. Ask Razorpay: the payment is for this order, authorized or captured, for the order's full amount.
     const [payRes, ordRes] = await Promise.all([
       fetchImpl(`https://api.razorpay.com/v1/payments/${encodeURIComponent(razorpay_payment_id)}`, { headers: { Authorization: basicAuth(env) } }),
@@ -575,7 +595,7 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
         if (orderIndex.length > 500) orderIndex = orderIndex.slice(0, 500);
         await env.TAMYIZ_STORE.put('orders:index', JSON.stringify(orderIndex));
       }
-      markCartRecovered(env, email).catch(() => {});
+      await markCartRecovered(env, cleanEmail).catch(() => {});
     } catch (e) {
       console.error('Failed to update orders:index', e);
     }
@@ -730,7 +750,7 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
         if (orderIndex.length > 500) orderIndex = orderIndex.slice(0, 500);
         await env.TAMYIZ_STORE.put('orders:index', JSON.stringify(orderIndex));
       }
-      markCartRecovered(env, cleanEmail).catch(() => {});
+      await markCartRecovered(env, cleanEmail).catch(() => {});
     } catch (e) {
       console.error('Failed to update orders:index in webhook', e);
     }

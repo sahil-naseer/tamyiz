@@ -14,12 +14,8 @@ const STORAGE_KEYS = {
   COUPON: 'tamyiz_coupon_v1'
 };
 
-// Promo codes shown in the bag. Keep in step with VALID_COUPONS in server/payments.js (the server is what counts).
-const AVAILABLE_COUPONS = {
-  SAMPLE10: { type: 'percent', value: 10, label: '10% sample reader gift' },
-};
-
-export const hasCoupons = () => Object.keys(AVAILABLE_COUPONS).length > 0;
+// Promo codes are checked by the server (GET /api/coupon): SAMPLE10 plus any coupon made on /admin.
+export const hasCoupons = () => true;
 
 class Store {
   constructor() {
@@ -78,7 +74,7 @@ class Store {
         const p = findProductBySlugOrId(i.productId || i.id);
         return { ...i, name: p.name, price: p.price, originalPrice: p.originalPrice ?? null, image: p.thumb || (p.images && p.images[0]) || i.image };
       });
-    if (this.coupon && !AVAILABLE_COUPONS[this.coupon.code]) { this.coupon = null; this.save(STORAGE_KEYS.COUPON, null); }
+    if (this.coupon && (typeof this.coupon !== 'object' || !this.coupon.code || !['percent', 'flat'].includes(this.coupon.type))) { this.coupon = null; this.save(STORAGE_KEYS.COUPON, null); }
     if (JSON.stringify(this.cart) !== before || this.load(STORAGE_KEYS.CART, null) === null) this.save(STORAGE_KEYS.CART, this.cart);
   }
 
@@ -201,14 +197,13 @@ class Store {
     const subtotal = this.getSubtotal();
     const bundleDiscount = this.getBundleDiscount();
     const remaining = subtotal - bundleDiscount;
-    const c = AVAILABLE_COUPONS[this.coupon.code];
-    if (!c) return 0;
-
+    // Same maths as calculateOrderTotal in server/payments.js (the server's total is what gets charged).
+    const c = this.coupon;
     if (c.type === 'percent') {
       return Math.round((remaining * c.value) / 100);
     }
     if (c.type === 'flat') {
-      return subtotal >= 3000 ? Math.min(remaining, c.value) : 0;
+      return !c.minOrder || subtotal >= c.minOrder ? c.value : 0;
     }
     return 0;
   }
@@ -228,7 +223,8 @@ class Store {
     return Math.max(1, subtotal + shipping - discount);
   }
 
-  applyCoupon(code) {
+  // Asks the server whether the code is valid, so coupons made on /admin work too. Returns true/false.
+  async applyCoupon(code) {
     if (this.cart.length === 0) {
       this.showToast('Please add items to your bag first.', 'error');
       return false;
@@ -240,21 +236,28 @@ class Store {
       return false;
     }
 
-    const couponData = AVAILABLE_COUPONS[cleanCode];
+    let couponData = null;
+    try {
+      const res = await fetch(`/api/coupon?code=${encodeURIComponent(cleanCode)}`);
+      if (res.ok) couponData = (await res.json()).coupon || null;
+    } catch {
+      this.showToast("Couldn't check the code. Check your connection and try again.", 'error');
+      return false;
+    }
     if (!couponData) {
       this.showToast(`The code "${cleanCode}" isn't valid. Check it and try again.`, 'error');
       return false;
     }
 
-    if (couponData.type === 'flat' && this.getSubtotal() < 3000) {
-      this.showToast('Code HORIZON500 requires minimum order of ₹3,000.', 'error');
+    if (couponData.type === 'flat' && couponData.minOrder && this.getSubtotal() < couponData.minOrder) {
+      this.showToast(`Code ${cleanCode} needs an order of at least ₹${couponData.minOrder.toLocaleString('en-IN')}.`, 'error');
       return false;
     }
 
-    this.coupon = { code: cleanCode, ...couponData };
+    this.coupon = { ...couponData, code: cleanCode };
     this.save(STORAGE_KEYS.COUPON, this.coupon);
     this.notify('coupon_applied', { coupon: this.coupon });
-    this.showToast(`Coupon applied! ${couponData.label}`, 'success');
+    this.showToast(`Coupon applied! ${couponData.label || ''}`.trim(), 'success');
     return true;
   }
 

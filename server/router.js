@@ -2,7 +2,7 @@
  * Every /api/* address in one place. Cloudflare runs it through functions/api/[[path]].js;
  * the local Vite server runs it through vite.config.js, so both behave the same.
  */
-import { json, handleCreateOrder, handleVerifyPayment, handleDownload, handleRazorpayWebhook } from './payments.js';
+import { json, handleCreateOrder, handleVerifyPayment, handleDownload, handleRazorpayWebhook, findCoupon } from './payments.js';
 import { handleAdmin } from './admin.js';
 import { publicCatalog } from './catalog.js';
 import { handleSampleLead } from './sample.js';
@@ -53,6 +53,12 @@ export async function route(request, env, fetchImpl = fetch) {
     }
     return json({ announcement });
   }
+  // Is a coupon code valid? (the bag asks before showing a discount; the server re-checks at payment anyway)
+  if (rest === 'coupon' && method === 'GET') {
+    const c = await findCoupon(env, new URL(request.url).searchParams.get('code'));
+    return c ? json({ valid: true, coupon: c }) : json({ valid: false }, 404);
+  }
+
   let m = rest.match(/^cover\/([a-z0-9-]{3,40})$/);
   if (m && method === 'GET') return cover(env, m[1], request);
   m = rest.match(/^download\/([a-z0-9-]{3,40})$/);

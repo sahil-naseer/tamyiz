@@ -8,13 +8,13 @@ export function renderDownloadsPage(appInstance) {
     <div class="tmz-downloads-page" style="padding: 3rem 1rem 6rem; max-width: 680px; margin: 0 auto; min-height: 60vh;">
       <div style="text-align: center; margin-bottom: 2.5rem;">
         <span style="font-family: var(--font-sub); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-red-ink); display: inline-block; margin-bottom: 0.4rem;">
-          Self-Service Library
+          Lost your file?
         </span>
         <h1 style="font-family: var(--font-head); font-weight: 700; font-size: 2.2rem; line-height: 1.15; margin: 0 0 0.75rem; color: #0B0B0B;">
-          Download Recovery
+          Get your download links again
         </h1>
         <p style="font-size: 0.95rem; color: #5E5E59; line-height: 1.5; margin: 0;">
-          Switched devices, cleared your cache, or misplaced your receipt email? Enter the email or mobile number you used at checkout to retrieve your active e-book downloads immediately.
+          Lost your file or your receipt email? Enter the email or mobile number you used at checkout. We will email fresh download links to the email address on your order.
         </p>
       </div>
 
@@ -36,7 +36,7 @@ export function renderDownloadsPage(appInstance) {
           </div>
 
           <div style="text-align: center; position: relative; margin: 0.2rem 0;">
-            <span style="background: #FFFFFF; padding: 0 0.75rem; font-size: 0.75rem; font-family: monospace; color: #888; position: relative; z-index: 1;">OR VIA MOBILE / WHATSAPP</span>
+            <span style="background: #FFFFFF; padding: 0 0.75rem; font-size: 0.75rem; font-family: monospace; color: #5E5E59; position: relative; z-index: 1;">OR VIA MOBILE / WHATSAPP</span>
             <div style="position: absolute; top: 50%; left: 0; right: 0; border-top: 1px solid rgba(11,11,11,0.08); z-index: 0;"></div>
           </div>
 
@@ -63,7 +63,7 @@ export function renderDownloadsPage(appInstance) {
             onmouseover="this.style.background='#222'"
             onmouseout="this.style.background='#0B0B0B'"
           >
-            <span>Retrieve Digital Access →</span>
+            <span>Email me my download links →</span>
           </button>
         </form>
       </div>
@@ -77,7 +77,7 @@ export function renderDownloadsPage(appInstance) {
           Still cannot find your purchase or paid through a different gateway?
         </p>
         <a href="https://wa.me/919541722379?text=Hi%20TAMYIZ,%20I%20need%20help%20recovering%20my%20e-book%20order" target="_blank" rel="noopener noreferrer" style="font-size: 0.85rem; font-weight: 700; color: #0B0B0B; text-decoration: underline;">
-          Chat with our authors on WhatsApp (+91 95417 22379) ↗
+          WhatsApp us (+91 95417 22379) ↗
         </a>
       </div>
     </div>

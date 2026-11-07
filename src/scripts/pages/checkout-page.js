@@ -4,6 +4,7 @@
  */
 
 import { store, hasCoupons } from '../store.js';
+import { escapeText } from '../tamyiz-unified-app.js';
 import { brandInfo } from '../../data/content.js';
 import { siteConfig } from '../../data/site-config.js';
 
@@ -48,6 +49,8 @@ export function renderCheckoutPage(appInstance) {
 
   const subtotal = store.getSubtotal();
   const discount = store.getDiscount();
+  const bundleDiscount = Math.min(discount, store.getBundleDiscount());
+  const couponDiscount = Math.max(0, discount - bundleDiscount);
   const total = store.getTotal();
   const coupon = store.coupon;
 
@@ -120,6 +123,10 @@ export function renderCheckoutPage(appInstance) {
                         />
                       </div>
                     </div>
+                    <p style="font-size: 0.78rem; color: #5E5E59; margin: 0.75rem 0 0; line-height: 1.5;">
+                      We use these to send your receipt and download links, and may remind you once if you don't finish the order.
+                      <a href="/legal/privacy" onclick="event.preventDefault(); window.tamyizApp.openLegalModal('privacy')" style="color: #0B0B0B; text-decoration: underline;">Privacy policy</a>
+                    </p>
                   </div>
                 </div>
 
@@ -240,10 +247,16 @@ export function renderCheckoutPage(appInstance) {
                     <strong class="text-neutral-900">₹${subtotal.toLocaleString('en-IN')}</strong>
                   </div>
 
-                  ${discount > 0 ? `
+                  ${bundleDiscount > 0 ? `
                     <div class="flex justify-between text-sm py-1" style="color: #1E7B2E;">
-                      <span>Coupon Discount</span>
-                      <strong>−₹${discount.toLocaleString('en-IN')}</strong>
+                      <span>Discount for ${store.cart.length >= 3 ? '3+ books (25%)' : '2 books (20%)'}</span>
+                      <strong>−₹${bundleDiscount.toLocaleString('en-IN')}</strong>
+                    </div>
+                  ` : ''}
+                  ${couponDiscount > 0 ? `
+                    <div class="flex justify-between text-sm py-1" style="color: #1E7B2E;">
+                      <span>Coupon ${coupon ? escapeText(coupon.code) : ''}</span>
+                      <strong>−₹${couponDiscount.toLocaleString('en-IN')}</strong>
                     </div>
                   ` : ''}
 
@@ -280,7 +293,8 @@ export function renderCheckoutPage(appInstance) {
  */
 export function renderOrderVaultHtml(order) {
   const currentDateStr = order.date || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-  const invoiceNumber = order.orderId;
+  // Show the TAMYIZ reference (same as the receipt email), not Razorpay's long order id.
+  const invoiceNumber = escapeText(order.referenceId || order.orderId);
 
   return `
     <div class="tamyiz-page-order-vault py-12 md:py-20">
@@ -296,7 +310,7 @@ export function renderOrderVaultHtml(order) {
           <span class="tamyiz-vault-kicker no-print">Payment received</span>
           <h1 class="tamyiz-vault-title no-print">Your e-book is ready</h1>
           <p class="tamyiz-vault-sub no-print">
-            Order <strong>#${order.orderId}</strong> • Total Paid: <strong>₹${order.total.toLocaleString('en-IN')}</strong>
+            Order <strong>${invoiceNumber}</strong> • Total Paid: <strong>₹${order.total.toLocaleString('en-IN')}</strong>
           </p>
           <p class="no-print" style="font-size: 0.9rem; color: #555; margin-bottom: 2rem;">
             Download your e-book now and keep the file. Your receipt is below. If you ever lose the file, WhatsApp us your order number and we will send it again.
@@ -310,11 +324,7 @@ export function renderOrderVaultHtml(order) {
                   <img src="${item.image}" alt="${item.name}" class="vault-item-thumb" />
                   <div class="text-left">
                     <h4 class="vault-item-title">${item.name}</h4>
-                    <span class="vault-item-spec">${item.variant} • Retina 300DPI • Lifetime License</span>
-                    <div class="vault-item-key">
-                      <span>LICENSE KEY:</span>
-                      <code>TMZ-${Math.random().toString(36).substr(2, 9).toUpperCase()}</code>
-                    </div>
+                    <span class="vault-item-spec">PDF e-book • personal licence for one person</span>
                   </div>
                 </div>
 
@@ -360,7 +370,7 @@ export function renderOrderVaultHtml(order) {
               <span>Save receipt</span>
             </button>
             <a
-              href="https://wa.me/${siteConfig.whatsappNumber}?text=Hello%20TAMYIZ,%20I%20just%20completed%20Order%20${order.orderId}%20and%20would%20like%20my%20receipt%20confirmation."
+              href="https://wa.me/${siteConfig.whatsappNumber}?text=Hello%20TAMYIZ,%20I%20just%20completed%20Order%20${encodeURIComponent(order.referenceId || order.orderId)}%20and%20would%20like%20my%20receipt%20confirmation."
               target="_blank"
               rel="noopener noreferrer"
               class="tamyiz-btn-nav-outline"
@@ -463,13 +473,13 @@ export function renderOrderVaultHtml(order) {
                 </div>
                 ${order.discount ? `
                   <div class="flex justify-between py-1 text-xs" style="color: var(--color-red-ink);">
-                    <span>Coupon Discount (${order.coupon?.code || 'APPLIED'}):</span>
+                    <span>Discount${order.coupon?.code ? ` (incl. coupon ${escapeText(order.coupon.code)})` : ''}:</span>
                     <span style="font-weight: 700;">−₹${order.discount.toLocaleString('en-IN')}</span>
                   </div>
                 ` : ''}
                 <div class="flex justify-between py-1 text-xs">
-                  <span style="color: #666;">Digital Delivery &amp; Storage:</span>
-                  <span style="color: #1E7B2E; font-weight: 700;">₹0 (Complimentary)</span>
+                  <span style="color: #666;">Delivery:</span>
+                  <span style="color: #1E7B2E; font-weight: 700;">Instant download (no charge)</span>
                 </div>
                 <div class="flex justify-between py-2 text-sm font-bold border-t border-black mt-2" style="font-family: var(--font-display);">
                   <span>Total Paid:</span>

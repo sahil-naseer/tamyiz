@@ -71,25 +71,38 @@ To ask for a refund, WhatsApp +91 95417 22379 or email tamyiz.co@gmail.com with 
     code: 'POL-03',
     title: 'Privacy & Data Security Policy',
     subtitle: 'What we collect, why we collect it, and your rights',
-    lastUpdated: 'October 2026',
+    lastUpdated: 'November 2026',
     sections: [
       {
         heading: '01. What We Collect',
-        content: `In line with India's Digital Personal Data Protection (DPDP) Act, TAMYIZ collects only the minimum data needed to deliver your e-book and help you if something goes wrong.
-We collect only: your name, email address, mobile number, and the payment reference from Razorpay.`
+        content: `In line with India's Digital Personal Data Protection (DPDP) Act, 2023, TAMYIZ collects only what it needs:
+• When you buy: your email address, mobile number, the e-books you bought and the payment reference from Razorpay. (Your name stays on your own device; it is only printed on your on-screen receipt.)
+• When you type your email in the bag or at checkout: your email, mobile number and the e-books in your bag, so we can remind you once if you don't finish the order.
+• When you ask for a free sample: your email (and mobile number if you give it).
+• When you write a review: your name, email and review. Only your name, rating and review are ever shown on the site; your email is never published.`
       },
       {
-        heading: '02. Payments',
-        content: `Payments are handled by Razorpay, a PCI-DSS certified payment gateway. We never see or store your card number, CVV, UPI PIN or bank login.`
+        heading: '02. Why We Use It',
+        content: `To deliver your e-book and receipt, to send you your download links again if you ask, to help you with an order, to send the free sample email (with one welcome discount code), and to send one reminder about an unfinished bag. We do not send marketing emails beyond these.`
       },
       {
-        heading: '03. Visitor Statistics',
-        content: `We use Cloudflare Web Analytics to count visits and see which pages are read, so we can improve the site. It uses no cookies, does not track you across other websites, and does not tell us who you are: we only see totals such as page views, country and device type.`
+        heading: '03. Who Handles It For Us',
+        content: `Payments are handled by Razorpay, a PCI-DSS certified payment gateway. We never see or store your card number, CVV, UPI PIN or bank login.
+The website and its data are hosted on Cloudflare. Emails are sent through Brevo. These services handle your details only to provide their service to us.`
       },
       {
-        heading: '04. Sharing and Your Rights',
-        content: `We never sell or rent your details, and we don't share them with advertisers. They are used only to deliver your e-book and help you with your order.
-You can ask to see or delete your details at any time by emailing tamyiz.co@gmail.com.`
+        heading: '04. Visitor Statistics and Your Device',
+        content: `We use Cloudflare Web Analytics to count visits and see which pages are read, so we can improve the site. It uses no cookies, does not track you across other websites, and does not tell us who you are: we only see totals such as page views, country and device type.
+Your bag and the details you type at checkout are saved in your own browser (local storage) so they are still there next time. You can clear them by clearing this site's data in your browser.`
+      },
+      {
+        heading: '05. How Long We Keep It',
+        content: `Order details are kept while your download links are valid and for as long as Indian tax and accounting rules require. Sample, review and unfinished-bag details are kept until you ask us to delete them or they are no longer needed.`
+      },
+      {
+        heading: '06. Sharing and Your Rights',
+        content: `We never sell or rent your details, and we don't share them with advertisers.
+You can ask to see, correct or delete your details, or withdraw your consent, at any time by emailing tamyiz.co@gmail.com. Complaints about how we handle your data go to our Grievance Officer (see Contact Us).`
       }
     ]
   },
@@ -126,7 +139,7 @@ Co-founded by Basit Majeed and Sahil Naseer.`
     code: 'POL-05',
     title: 'Contact Us',
     subtitle: 'How to reach TAMYIZ about an order, a refund or anything else',
-    lastUpdated: 'October 2026',
+    lastUpdated: 'November 2026',
     sections: [
       {
         heading: '01. Fastest: WhatsApp',
@@ -140,6 +153,14 @@ Co-founded by Basit Majeed and Sahil Naseer.`
         heading: '03. Business details',
         content: `TAMYIZ™ is run by its co-founders Basit Majeed and Sahil Naseer.
 Address: Sopore, Jammu & Kashmir 193201, India.`
+      },
+      {
+        heading: '04. Grievance Officer',
+        content: `Under the Consumer Protection (E-Commerce) Rules, 2020 and the DPDP Act, 2023, complaints about an order or about your personal data can be sent to our Grievance Officer:
+• Name: Sahil Naseer, Co-founder
+• Email: tamyiz.co@gmail.com
+• Phone / WhatsApp: +91 95417 22379
+We acknowledge every complaint within 48 hours and resolve it within one month of receiving it.`
       }
     ]
   }

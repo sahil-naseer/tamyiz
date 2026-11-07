@@ -1,8 +1,12 @@
 import { json, escapeHtml } from './payments.js';
+import { loadCatalog, findById } from './catalog.js';
 
-function getAbandonedId(email) {
+// One record per email. A hash of the whole address (the old id used only its first 18 characters, so two
+// different emails could share - and overwrite - one record).
+async function getAbandonedId(email) {
   const clean = String(email || '').trim().toLowerCase();
-  return 'ab_' + btoa(unescape(encodeURIComponent(clean))).replace(/[^a-zA-Z0-9]/g, '').slice(0, 24);
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(clean));
+  return 'ab_' + [...new Uint8Array(d)].slice(0, 12).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 export async function handleTrackAbandonedCart(request, env) {
@@ -28,7 +32,7 @@ export async function handleTrackAbandonedCart(request, env) {
     return json({ error: 'Invalid JSON request.' }, 400);
   }
 
-  const { email, phone, items, subtotal, total, coupon } = body || {};
+  const { email, phone, items, total, coupon } = body || {};
   const cleanEmail = String(email || '').trim().toLowerCase();
   const cleanPhone = String(phone || '').trim();
 
@@ -36,7 +40,7 @@ export async function handleTrackAbandonedCart(request, env) {
     return json({ error: 'Valid email required' }, 400);
   }
 
-  if (!Array.isArray(items) || items.length === 0) {
+  if (!Array.isArray(items) || items.length === 0 || items.length > 30) {
     return json({ error: 'No items in cart' }, 400);
   }
 
@@ -45,7 +49,7 @@ export async function handleTrackAbandonedCart(request, env) {
   }
 
   const kv = env.TAMYIZ_STORE;
-  const id = getAbandonedId(cleanEmail);
+  const id = await getAbandonedId(cleanEmail);
   const now = new Date().toISOString();
 
   // Check if existing
@@ -63,18 +67,24 @@ export async function handleTrackAbandonedCart(request, env) {
     }
   }
 
+  // Names and prices come from the catalogue, never from the browser (they end up in an email we send).
+  const catalog = await loadCatalog(env);
+  const cartItems = [];
+  for (const i of items) {
+    const p = findById(catalog, String((i && (i.productId || i.id)) || ''));
+    if (p && p.status !== 'draft' && !cartItems.some((c) => c.productId === p.id)) cartItems.push({ productId: p.id, name: p.name, price: p.price });
+  }
+  if (cartItems.length === 0) return json({ ok: true, stored: false });
+  const cartSubtotal = cartItems.reduce((a, i) => a + i.price, 0);
+
   const record = {
     id,
-    email: cleanEmail,
-    phone: cleanPhone || existing?.phone || '',
-    items: items.map((i) => ({
-      productId: i.productId || i.id,
-      name: i.name,
-      price: i.price,
-    })),
-    subtotal: Number(subtotal) || 0,
-    total: Number(total) || 0,
-    coupon: coupon || null,
+    email: cleanEmail.slice(0, 254),
+    phone: (cleanPhone || existing?.phone || '').replace(/[^0-9+]/g, '').slice(0, 16),
+    items: cartItems,
+    subtotal: cartSubtotal,
+    total: Math.min(cartSubtotal, Math.max(0, Number(total) || cartSubtotal)),
+    coupon: typeof coupon === 'string' ? coupon.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 30) || null : null,
     status: existing?.status === 'recovered' ? 'abandoned' : (existing?.status || 'abandoned'),
     emailSent: existing ? Boolean(existing.emailSent) : false,
     emailedAt: existing?.emailedAt || null,
@@ -105,7 +115,7 @@ export async function handleTrackAbandonedCart(request, env) {
 
 export async function markCartRecovered(env, email) {
   if (!env || !env.TAMYIZ_STORE || !email) return;
-  const id = getAbandonedId(email);
+  const id = await getAbandonedId(email);
   try {
     const raw = await env.TAMYIZ_STORE.get(`store:abandoned:${id}`);
     if (raw) {
@@ -178,22 +188,22 @@ export async function sendAbandonedCartRecoveryEmail(request, env, fetchImpl = f
   const resumeUrl = `https://tamyiz.pages.dev/checkout?resume=${resumeParam}&coupon=SAMPLE10`;
 
   const fromEmail = String(env.RECEIPT_FROM || 'tamyiz.co@gmail.com').replace(/^.*<|>.*$/g, '').trim();
-  const subject = `Your TAMYIZ e-books are waiting (+ 10% discount reserved)`;
+  const subject = 'Your TAMYIZ bag is saved (+ 10% off with SAMPLE10)';
 
   const text = [
-    `TAMYIZ™ ATELIER`,
+    `TAMYIZ`,
     ``,
     `You left items in your reading bag:`,
-    ...items.map((i) => `• ${i.name} (₹${i.price})`),
+    ...items.map((i) => `• ${i.name} (₹${Number(i.price) || 0})`),
     ``,
-    `We have reserved your bag and applied a 10% discount for you:`,
-    `Resume Order & Claim 10% Off: ${resumeUrl}`,
+    `Your bag is saved. Use code SAMPLE10 for 10% off:`,
+    `Open your bag: ${resumeUrl}`,
     ``,
     `Coupon code: SAMPLE10`,
     ``,
-    `All TAMYIZ monographs are DRM-free and ready for instant digital reading.`,
+    `TAMYIZ e-books are DRM-free PDFs with an instant download after payment.`,
     ``,
-    `TAMYIZ — Distinction is quiet.`
+    `TAMYIZ`
   ].join('\n');
 
   const html = `
@@ -205,25 +215,25 @@ export async function sendAbandonedCartRecoveryEmail(request, env, fetchImpl = f
         <tr>
           <td>
             <div style="font-family: monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #767670; margin-bottom: 8px;">
-              TAMYIZ™ ATELIER
+              TAMYIZ
             </div>
             <h1 style="font-size: 22px; font-weight: 700; margin: 0 0 16px; color: #0B0B0B; line-height: 1.3;">
               Your E-Books Are Waiting In Your Bag
             </h1>
             <p style="font-size: 15px; line-height: 1.6; color: #444; margin: 0 0 20px;">
-              You were exploring our publications but didn't finish checking out. We have saved your bag and reserved an exclusive <strong>10% discount</strong> for you.
+              You didn't finish checking out. Your bag is saved, and code SAMPLE10 gives you <strong>10% off</strong>.
             </p>
             <div style="background: #FAF9F6; border: 1px solid rgba(11,11,11,0.1); border-radius: 8px; padding: 18px; margin-bottom: 24px;">
-              <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; letter-spacing: 1px; color: #767670; margin-bottom: 8px;">Reserved Items:</div>
+              <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; letter-spacing: 1px; color: #767670; margin-bottom: 8px;">In your bag:</div>
               ${items.map((i) => `
                 <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px;">
                   <strong style="color: #0B0B0B;">${escapeHtml(i.name)}</strong>
-                  <span style="color: #555;">₹${i.price}</span>
+                  <span style="color: #555;">₹${escapeHtml(Number(i.price) || 0)}</span>
                 </div>
               `).join('')}
             </div>
             <div style="text-align: center; margin: 24px 0;">
-              <a href="${resumeUrl}" style="display: inline-block; background: #0B0B0B; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600; padding: 14px 32px; border-radius: 999px; letter-spacing: 0.5px;">
+              <a href="${escapeHtml(resumeUrl)}" style="display: inline-block; background: #0B0B0B; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600; padding: 14px 32px; border-radius: 999px; letter-spacing: 0.5px;">
                 Resume My Bag With 10% Off →
               </a>
             </div>
@@ -237,7 +247,9 @@ export async function sendAbandonedCartRecoveryEmail(request, env, fetchImpl = f
     </html>
   `;
 
-  if (env.BREVO_API_KEY || env.RESEND_API_KEY) {
+  if (!env.BREVO_API_KEY && !env.RESEND_API_KEY) return json({ error: 'Email is not set up (BREVO_API_KEY).' }, 503);
+  let sent = false;
+  {
     try {
       const res = env.BREVO_API_KEY
         ? await fetchImpl('https://api.brevo.com/v3/smtp/email', {
@@ -250,12 +262,14 @@ export async function sendAbandonedCartRecoveryEmail(request, env, fetchImpl = f
           headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ from: env.RECEIPT_FROM || 'TAMYIZ <onboarding@resend.dev>', to: [targetEmail], reply_to: 'tamyiz.co@gmail.com', subject, html, text }),
         });
+      sent = res.ok;
       if (!res.ok) console.warn('Recovery email send response code:', res.status);
     } catch (err) {
       console.warn('Recovery email send error:', err.message);
     }
   }
 
+  if (!sent) return json({ error: 'The email provider refused the email. Try again later.' }, 502);
   // Update record
   rec.emailSent = true;
   rec.emailedAt = new Date().toISOString();

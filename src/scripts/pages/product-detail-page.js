@@ -330,12 +330,10 @@ export function renderProductDetailPage(slug, appInstance) {
                 <div class="tamyiz-pdp-reviews-box" style="margin-top: 2rem; border-top: 1.5px solid rgba(11,11,11,0.1); padding-top: 1.5rem;">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
                     <div>
-                      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem;">
-                        <span style="color: #F5A623; font-size: 1.1rem; letter-spacing: 2px;">★★★★★</span>
-                        <span style="font-weight: 800; font-size: 0.95rem; color: #0B0B0B;" id="pdp-rating-avg-${product.id}">5.0 / 5.0</span>
-                      </div>
-                      <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; font-family: monospace; color: #767670;" id="pdp-reviews-count-${product.id}">
-                        Verified Reader Notes
+                      <!-- Stars appear only when real approved reviews exist (filled in by loadProductReviews). -->
+                      <div id="pdp-rating-avg-${product.id}" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem; font-weight: 800; font-size: 0.95rem; color: #0B0B0B;"></div>
+                      <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; font-family: monospace; color: #5E5E59;" id="pdp-reviews-count-${product.id}">
+                        Reader reviews
                       </span>
                     </div>
                     <button

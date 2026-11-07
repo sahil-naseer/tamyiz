@@ -84,65 +84,70 @@ test('customer download recovery: rejects invalid inputs', async () => {
   assert.equal(res.status, 400);
 });
 
-test('customer download recovery: returns 404 if no orders found', async () => {
-  const e = env();
-  const res = await call(e, '/api/recover-downloads', {
+// Fake Brevo: records every email "sent".
+const sentEmails = [];
+const fakeBrevo = async (url, opts = {}) => {
+  sentEmails.push({ url: String(url), body: JSON.parse(opts.body || '{}') });
+  return new Response('{}', { status: 201 });
+};
+const callWithMail = (e, path, opts = {}) => route(new Request(BASE + path, opts), e, fakeBrevo);
+
+test('customer download recovery: same answer whether or not a purchase exists (no lookup of who bought what)', async () => {
+  const e = env({ BREVO_API_KEY: 'test' });
+  sentEmails.length = 0;
+  const res = await callWithMail(e, '/api/recover-downloads', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'buyer@example.com' }),
   });
-  assert.equal(res.status, 404);
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.equal(data.books, undefined);
+  assert.equal(sentEmails.length, 0);
 });
 
-test('customer download recovery: retrieves active library with signed download links', async () => {
-  const e = env();
+test('customer download recovery: links are only emailed to the order email, never shown on screen', async () => {
+  const e = env({ BREVO_API_KEY: 'test' });
   const cookie = await login(e);
   const book = await addEbook(e, cookie, 'Monograph on Architectural Silence', '499');
 
-  // Create a complimentary gift / verified order in KV for buyer@test.com
   const orderRes = await call(e, '/api/admin/orders/gift', {
     method: 'POST',
     headers: authed(cookie, { 'Content-Type': 'application/json' }),
-    body: JSON.stringify({
-      email: 'verified.buyer@test.com',
-      phone: '+919876543210',
-      productId: book.id,
-      note: 'VIP Reviewer',
-    }),
+    body: JSON.stringify({ email: 'verified.buyer@test.com', phone: '+919876543210', productId: book.id, note: 'VIP Reviewer' }),
   });
   assert.equal(orderRes.status, 200);
 
-  // Now recover downloads as the customer using their email
-  const recoveryRes = await call(e, '/api/recover-downloads', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'verified.buyer@test.com' }),
-  });
+  for (const lookup of [{ email: 'verified.buyer@test.com' }, { phone: '+91 98765 43210' }]) {
+    sentEmails.length = 0;
+    const r = await callWithMail(e, '/api/recover-downloads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(lookup),
+    });
+    assert.equal(r.status, 200);
+    const text = await r.text();
+    assert.ok(!text.includes('/api/download/'), 'no download link in the response');
+    assert.ok(!text.includes('verified.buyer'), 'no email in the response');
+    assert.equal(sentEmails.length, 1);
+    assert.equal(sentEmails[0].body.to[0].email, 'verified.buyer@test.com');
+    // The emailed link works.
+    const link = sentEmails[0].body.textContent.match(/https:\/\/shop\.test(\/api\/download\/[^\s]+)/)[1];
+    const dl = await call(e, link);
+    assert.equal(dl.status, 200);
+    assert.equal(dl.headers.get('Content-Type'), 'application/pdf');
+  }
 
-  assert.equal(recoveryRes.status, 200);
-  const data = await recoveryRes.json();
-  assert.equal(data.ok, true);
-  assert.equal(data.books.length, 1);
-  assert.equal(data.books[0].productId, book.id);
-  assert.match(data.books[0].downloadUrl, /\/api\/download\//);
+  // Part of a phone number is not enough.
+  sentEmails.length = 0;
+  await callWithMail(e, '/api/recover-downloads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: '76543210' }) });
+  assert.equal(sentEmails.length, 0);
+});
 
-  // Verify that the generated download link works!
-  const dlPath = new URL(data.books[0].downloadUrl).pathname + new URL(data.books[0].downloadUrl).search;
-  const dlRes = await call(e, dlPath);
-  assert.equal(dlRes.status, 200);
-  assert.equal(dlRes.headers.get('Content-Type'), 'application/pdf');
-
-  // Security check: phone-only recovery MUST NOT expose download links or unmasked email on screen
-  const phoneRecoveryRes = await call(e, '/api/recover-downloads', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone: '+919876543210' }),
-  });
-  assert.equal(phoneRecoveryRes.status, 200);
-  const phoneData = await phoneRecoveryRes.json();
-  assert.equal(phoneData.dispatchedToEmail, true);
-  assert.equal(phoneData.email, 'v***r@test.com');
-  assert.equal(phoneData.books[0].downloadUrl, undefined); // download URLs withheld from screen for security!
+test('customer download recovery: honest error when email is not set up', async () => {
+  const e = env();
+  const res = await call(e, '/api/recover-downloads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'a@b.co' }) });
+  assert.equal(res.status, 503);
 });
 
 // ---------------------------------------------------------------------------

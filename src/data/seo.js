@@ -124,13 +124,10 @@ export function productSchema(product) {
     brand: { '@type': 'Brand', name: 'TAMYIZ' },
     category: product.category || 'Non-Fiction / Digital Monograph',
     url: `${SITE_URL}/edition/${product.slug}`,
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '5.0',
-      reviewCount: String(product.reviewsCount || 12),
-      bestRating: '5',
-      worstRating: '1',
-    },
+    // aggregateRating is added only from real approved reviews (never a made-up count): see below.
+    ...(product.reviewCount > 0 && product.ratingValue
+      ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: String(product.ratingValue), reviewCount: String(product.reviewCount), bestRating: '5', worstRating: '1' } }
+      : {}),
     offers: {
       '@type': 'Offer',
       price: product.price,

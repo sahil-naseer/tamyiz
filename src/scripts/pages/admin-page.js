@@ -1025,16 +1025,18 @@ export class AdminController {
     document.getElementById('tmz-export-abandoned-btn')?.addEventListener('click', () => {
       if (list.length === 0) return alert('No abandoned carts to export.');
       const headers = ['Last Seen', 'Email', 'Phone', 'Total (INR)', 'Items', 'Status'];
+      // Cells starting with = + - @ are prefixed with ' so Excel/Sheets never run them as formulas.
+      const cell = (v) => { let t = String(v ?? ''); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; };
       const rows = list.map(c => [
-        `"${c.lastSeenAt || ''}"`,
-        `"${(c.email || '').replace(/"/g, '""')}"`,
-        `"${(c.phone || '').replace(/"/g, '""')}"`,
-        `"${c.total || c.subtotal || 0}"`,
-        `"${(c.items || []).map(i => i.name).join(' | ').replace(/"/g, '""')}"`,
-        `"${c.status || 'abandoned'}"`,
+        cell(c.lastSeenAt || ''),
+        cell(c.email || ''),
+        cell(c.phone || ''),
+        cell(c.total || c.subtotal || 0),
+        cell((c.items || []).map(i => i.name).join(' | ')),
+        cell(c.status || 'abandoned'),
       ]);
       const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-      const encodedUri = encodeURI(csvContent);
+      const encodedUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent.slice('data:text/csv;charset=utf-8,'.length));
       const link = document.createElement('a');
       link.setAttribute('href', encodedUri);
       link.setAttribute('download', `tamyiz-abandoned-carts-${new Date().toISOString().slice(0, 10)}.csv`);
@@ -1298,15 +1300,10 @@ export class AdminController {
     document.getElementById('tmz-export-leads-btn')?.addEventListener('click', () => {
       if (leads.length === 0) return alert('No leads to export.');
       const headers = ['Date', 'Email', 'Phone', 'Product Name', 'Product ID'];
-      const rows = leads.map(l => [
-        `"${l.createdAt || ''}"`,
-        `"${(l.email || '').replace(/"/g, '""')}"`,
-        `"${(l.phone || '').replace(/"/g, '""')}"`,
-        `"${(l.productName || '').replace(/"/g, '""')}"`,
-        `"${(l.productId || '').replace(/"/g, '""')}"`,
-      ]);
+      const cell = (v) => { let t = String(v ?? ''); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; };
+      const rows = leads.map(l => [cell(l.createdAt), cell(l.email), cell(l.phone), cell(l.productName), cell(l.productId)]);
       const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-      const encodedUri = encodeURI(csvContent);
+      const encodedUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent.slice('data:text/csv;charset=utf-8,'.length));
       const link = document.createElement('a');
       link.setAttribute('href', encodedUri);
       link.setAttribute('download', `tamyiz-sample-leads-${todayStr}.csv`);

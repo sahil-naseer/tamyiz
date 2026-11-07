@@ -13,7 +13,7 @@ function api(env) {
     req.on('end', async () => {
       try {
         const hasBody = !['GET', 'HEAD'].includes(req.method);
-        const request = new Request(`http://localhost${req.url}`, {
+        const request = new Request(`http://${req.headers.host || 'localhost'}${req.url}`, {
           method: req.method,
           headers: req.headers,
           body: hasBody ? Buffer.concat(chunks) : undefined,

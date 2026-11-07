@@ -6,12 +6,21 @@ import { markCartRecovered } from '../server/abandoned.js';
 
 const PASSWORD = 'correct-horse-battery';
 const BASE = 'https://shop.test';
-const env = (extra = {}) => ({
-  TAMYIZ_STORE: devKV(),
-  ADMIN_PASSWORD: PASSWORD,
-  DOWNLOAD_SECRET: 'test-secret',
-  ...extra,
-});
+const CATALOG = [
+  { id: 'eb-01', slug: 'monograph-01', name: 'Monograph 01', price: 499, status: 'on-sale', fileSize: 10, createdAt: 2 },
+  { id: 'eb-02', slug: 'monograph-02', name: 'Monograph 02', price: 499, status: 'on-sale', fileSize: 10, createdAt: 1 },
+];
+const env = (extra = {}) => {
+  const kv = devKV();
+  kv.put('products', JSON.stringify(CATALOG));
+  return { TAMYIZ_STORE: kv, ADMIN_PASSWORD: PASSWORD, DOWNLOAD_SECRET: 'test-secret', BREVO_API_KEY: 'test-brevo', ...extra };
+};
+// Emails are "sent" to a fake Brevo that records them.
+const sentEmails = [];
+globalThis.fetch = async (url, opts = {}) => {
+  sentEmails.push({ url: String(url), body: JSON.parse(opts.body || '{}') });
+  return new Response('{}', { status: 201 });
+};
 
 const call = (e, path, opts = {}) => route(new Request(BASE + path, opts), e);
 
@@ -108,3 +117,45 @@ test('admin abandoned cart: list, send recovery email, and mark recovered upon p
   assert.equal(adminData3.totalLostRevenue, 0); // recovered revenue is no longer lost
 });
 
+
+test('abandoned cart: names and prices come from the catalogue, never from the browser (no HTML injection)', async () => {
+  const e = env();
+  const cookie = await login(e);
+  const r = await call(e, '/api/abandoned-cart', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'victim@example.com', items: [{ productId: 'eb-01', name: '<b>FAKE</b>', price: '<a href="https://evil.example">Claim refund</a>' }] }),
+  });
+  const { id } = await r.json();
+  const list = await (await call(e, '/api/admin/abandoned', { headers: authed(cookie) })).json();
+  assert.equal(list.list[0].items[0].name, 'Monograph 01');
+  assert.equal(list.list[0].items[0].price, 499);
+  sentEmails.length = 0;
+  await call(e, '/api/admin/abandoned/send', { method: 'POST', headers: authed(cookie, { 'Content-Type': 'application/json' }), body: JSON.stringify({ id }) });
+  assert.equal(sentEmails.length, 1);
+  assert.ok(!sentEmails[0].body.htmlContent.includes('evil.example'));
+});
+
+test('abandoned cart: two emails that start the same get separate records', async () => {
+  const e = env();
+  const cookie = await login(e);
+  for (const email of ['john.smith.work.24@gmail.com', 'john.smith.work.24@yahoo.com']) {
+    await call(e, '/api/abandoned-cart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, items: [{ productId: 'eb-01' }] }) });
+  }
+  const list = await (await call(e, '/api/admin/abandoned', { headers: authed(cookie) })).json();
+  assert.equal(list.list.length, 2);
+});
+
+test('abandoned cart: not marked "emailed" when the email provider refuses', async () => {
+  const e = env();
+  const cookie = await login(e);
+  const r = await call(e, '/api/abandoned-cart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'a@example.com', items: [{ productId: 'eb-01' }] }) });
+  const { id } = await r.json();
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response('no', { status: 401 });
+  const send = await call(e, '/api/admin/abandoned/send', { method: 'POST', headers: authed(cookie, { 'Content-Type': 'application/json' }), body: JSON.stringify({ id }) });
+  globalThis.fetch = realFetch;
+  assert.equal(send.status, 502);
+  const list = await (await call(e, '/api/admin/abandoned', { headers: authed(cookie) })).json();
+  assert.equal(list.list[0].emailSent, false);
+});

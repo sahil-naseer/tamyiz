@@ -34,15 +34,22 @@ async function getApprovedReviews(env, productId) {
   }
 
   const count = filtered.length;
-  const sum = filtered.reduce((acc, r) => acc + (Number(r.rating) || 5), 0);
-  const averageRating = count > 0 ? (sum / count).toFixed(1) : '5.0';
+  const sum = filtered.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+  // No reviews = no rating (never a made-up 5.0).
+  const averageRating = count > 0 ? Number((sum / count).toFixed(1)) : null;
 
-  return json({
-    ok: true,
-    reviews: filtered,
-    count,
-    averageRating: Number(averageRating),
-  });
+  // Public view only: never the reviewer's email (privacy, 7 Nov 2026).
+  const reviews = filtered.map((r) => ({
+    id: r.id,
+    productId: r.productId,
+    name: r.name,
+    rating: r.rating,
+    comment: r.comment,
+    verifiedBuyer: Boolean(r.verifiedBuyer),
+    createdAt: r.createdAt,
+  }));
+
+  return json({ ok: true, reviews, count, averageRating });
 }
 
 async function submitReview(request, env) {
@@ -69,9 +76,10 @@ async function submitReview(request, env) {
   const cleanName = String(name || '').trim().slice(0, 60);
   const cleanEmail = String(email || '').trim().toLowerCase().slice(0, 100);
   const cleanComment = String(comment || '').trim().slice(0, 1000);
-  const numRating = Math.max(1, Math.min(5, parseInt(rating, 10) || 5));
+  const numRating = parseInt(rating, 10);
+  if (!(numRating >= 1 && numRating <= 5)) return json({ error: 'Please choose a rating from 1 to 5 stars.' }, 400);
 
-  if (!productId) return json({ error: 'Product ID is required.' }, 400);
+  if (!productId || typeof productId !== 'string' || productId.length > 80) return json({ error: 'Product ID is required.' }, 400);
   if (cleanName.length < 2) return json({ error: 'Please enter your name.' }, 400);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cleanEmail)) {
     return json({ error: 'Please enter a valid email address.' }, 400);
@@ -83,7 +91,9 @@ async function submitReview(request, env) {
   // Check if book exists
   const catalog = await loadCatalog(env);
   const book = findById(catalog, productId) || findBySlug(catalog, productId);
-  const bookName = book ? book.name : 'TAMYIZ Monograph';
+  // Reviews only for e-books that are in the shop (not drafts, not made-up ids).
+  if (!book || book.status === 'draft') return json({ error: 'That e-book was not found.' }, 404);
+  const bookName = book.name;
 
   // Check if verified buyer from orders:index
   let isVerifiedBuyer = false;
@@ -97,7 +107,7 @@ async function submitReview(request, env) {
           if (!oRaw) continue;
           const ord = JSON.parse(oRaw);
           if (ord.email && ord.email.toLowerCase() === cleanEmail) {
-            const hasItem = (ord.items || []).some((i) => i.productId === productId || i.productId === book?.id);
+            const hasItem = (ord.items || []).some((i) => i.productId === book.id);
             if (hasItem && (ord.status === 'paid' || ord.status === 'gift' || ord.paymentId)) {
               isVerifiedBuyer = true;
               break;
@@ -111,7 +121,7 @@ async function submitReview(request, env) {
   const reviewId = `rev_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   const review = {
     id: reviewId,
-    productId: book ? book.id : productId,
+    productId: book.id,
     bookName,
     name: cleanName,
     email: cleanEmail,
