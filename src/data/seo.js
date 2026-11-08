@@ -21,6 +21,11 @@ const STATIC_PAGES = {
     title: `All e-books | ${BRAND}`,
     description: 'All TAMYIZ™ e-books: practical guides you can download the moment you buy.',
   },
+  films: {
+    path: '/films',
+    title: `TAMYIZ FILMS | Ideas deserve to be seen`,
+    description: 'Explore the thinking, stories, and cinematic perspectives behind TAMYIZ™ publications.',
+  },
   philosophy: {
     path: '/philosophy',
     title: `Philosophy and format guide | ${BRAND}`,
@@ -95,7 +100,7 @@ export function pageMeta(page, slug) {
 /** Every real page address, for the build script and the sitemap. */
 export function allPages() {
   return [
-    ...['home', 'editions', 'philosophy', 'atelier', 'downloads', 'checkout', 'admin'].map((page) => ({ page, slug: null })),
+    ...['home', 'editions', 'films', 'philosophy', 'atelier', 'downloads', 'checkout', 'admin'].map((page) => ({ page, slug: null })),
     ...products.map((p) => ({ page: 'edition', slug: p.slug })),
     ...Object.keys(legalDocs).map((slug) => ({ page: 'legal', slug })),
   ];

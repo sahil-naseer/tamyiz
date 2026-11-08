@@ -19,6 +19,7 @@ import { store, hasCoupons } from './store.js';
 
 import { renderHomePage } from './pages/home-page.js';
 import { renderEditionsPage } from './pages/editions-page.js';
+import { renderFilmsPage } from './pages/films-page.js';
 import { renderProductDetailPage } from './pages/product-detail-page.js';
 import { renderPhilosophyPage } from './pages/philosophy-page.js';
 import { renderAtelierPage } from './pages/atelier-page.js';
@@ -156,6 +157,9 @@ class TamyizUnifiedApp {
     if (cleanPath === '/editions') {
       return { page: 'editions', slug: null, anchor: hash };
     }
+    if (cleanPath === '/films') {
+      return { page: 'films', slug: null, anchor: hash };
+    }
     if (cleanPath.startsWith('/edition/')) {
       const slug = cleanPath.replace('/edition/', '').split('/')[0];
       return { page: 'edition', slug, anchor: hash };
@@ -242,8 +246,8 @@ class TamyizUnifiedApp {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
-    // Render if template changed or if on editions, legal tabs, or edition detail
-    if (previousPage !== this.currentPage || this.currentPage === 'editions' || this.currentPage === 'legal' || this.currentPage === 'edition') {
+    // Render if template changed or if on editions, films, legal tabs, or edition detail
+    if (previousPage !== this.currentPage || this.currentPage === 'editions' || this.currentPage === 'films' || this.currentPage === 'legal' || this.currentPage === 'edition') {
       this.renderCurrentPage();
     } else {
       this.updateActiveNavIndicators();
@@ -352,6 +356,7 @@ class TamyizUnifiedApp {
           <nav class="tamyiz-header-nav" id="desktop-nav" aria-label="Primary Navigation">
             <a href="/" class="tamyiz-header-nav-link" id="nav-link-home" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/')">Home</a>
             <a href="/editions" class="tamyiz-header-nav-link" id="nav-link-editions" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')">E-books</a>
+            <a href="/films" class="tamyiz-header-nav-link" id="nav-link-films" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/films')">Films</a>
             <a href="/#philosophy" class="tamyiz-header-nav-link" id="nav-link-philosophy" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#philosophy')">How we write</a>
             <a href="/atelier" class="tamyiz-header-nav-link" id="nav-link-atelier" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/atelier')">About us</a>
             <a href="/#format-guide" class="tamyiz-header-nav-link" id="nav-link-formats" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#format-guide')">Read anywhere</a>
@@ -384,6 +389,7 @@ class TamyizUnifiedApp {
             <ul class="tamyiz-mobile-nav-list">
               <li><a href="/" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/')">Home <span>→</span></a></li>
               <li><a href="/editions" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/editions')">All e-books <span>→</span></a></li>
+              <li><a href="/films" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/films')">Films <span>→</span></a></li>
               <li><a href="/#philosophy" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/#philosophy')">How we write <span>→</span></a></li>
               <li><a href="/atelier" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/atelier')">About us <span>→</span></a></li>
               <li><a href="/#format-guide" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.scrollToFormatGuide()">How to read our e-books <span>→</span></a></li>
@@ -551,6 +557,7 @@ class TamyizUnifiedApp {
               <ul class="tamyiz-footer-links">
                 <li><a href="/" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/')">Home</a></li>
                 <li><a href="/editions" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')">All e-books</a></li>
+                <li><a href="/films" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/films')">Films</a></li>
                 <li><a href="/#philosophy" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#philosophy')">How we write</a></li>
                 <li><a href="/atelier" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/atelier')">About us</a></li>
                 <li>${anyAvailable() ? `<a href="#cart" onclick="event.preventDefault(); window.tamyizApp.handleInstantCheckoutNav()" style="color: var(--color-red-on-dark); font-weight: 700;">Checkout →</a>` : `<a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--color-red-on-dark); font-weight: 700;">Pre-order on WhatsApp ↗</a>`}</li>
@@ -644,6 +651,10 @@ class TamyizUnifiedApp {
         mainEl.innerHTML = renderEditionsPage(this);
         break;
 
+      case 'films':
+        mainEl.innerHTML = renderFilmsPage(this);
+        break;
+
       case 'edition': {
         mainEl.innerHTML = renderProductDetailPage(this.currentSlug, this);
         const prod = findProductBySlugOrId(this.currentSlug);
@@ -708,6 +719,7 @@ class TamyizUnifiedApp {
     const links = {
       'home': document.getElementById('nav-link-home'),
       'editions': document.getElementById('nav-link-editions'),
+      'films': document.getElementById('nav-link-films'),
       'philosophy': document.getElementById('nav-link-philosophy'),
       'atelier': document.getElementById('nav-link-atelier'),
       'formats': document.getElementById('nav-link-formats')
@@ -722,6 +734,8 @@ class TamyizUnifiedApp {
       links.home && links.home.classList.add('active');
     } else if (this.currentPage === 'editions' || this.currentPage === 'edition') {
       links.editions && links.editions.classList.add('active');
+    } else if (this.currentPage === 'films') {
+      links.films && links.films.classList.add('active');
     } else if (this.currentPage === 'philosophy') {
       if (isFormatsHash) {
         links.formats && links.formats.classList.add('active');

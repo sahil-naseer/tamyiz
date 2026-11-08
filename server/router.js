@@ -9,6 +9,7 @@ import { handleSampleLead } from './sample.js';
 import { handleRecoverDownloads } from './recovery.js';
 import { handleReviews } from './reviews.js';
 import { handleTrackAbandonedCart } from './abandoned.js';
+import { handlePublicFilms, handleFeaturedFilm, handleSingleFilm } from './films.js';
 
 async function cover(env, id, request) {
   if (!env.TAMYIZ_STORE) return new Response('Not found', { status: 404 });
@@ -85,6 +86,16 @@ export async function route(request, env, fetchImpl = fetch) {
 
   if (rest === 'abandoned-cart' && method === 'POST') {
     return handleTrackAbandonedCart(request, env);
+  }
+
+  if (rest === 'films' && method === 'GET') {
+    return handlePublicFilms(request, env);
+  }
+  if (rest === 'films/featured' && method === 'GET') {
+    return handleFeaturedFilm(request, env);
+  }
+  if (rest.startsWith('films/') && method === 'GET') {
+    return handleSingleFilm(request, env, rest.slice(6));
   }
 
   if (rest === 'create-order' || rest === 'verify-payment' || rest === 'webhook/razorpay' || rest === 'razorpay-webhook') {

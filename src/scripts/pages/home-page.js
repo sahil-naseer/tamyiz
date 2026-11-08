@@ -7,6 +7,8 @@ import { products, isAvailable, anyAvailable, buyLabel, loadState } from '../../
 import { siteConfig } from '../../data/site-config.js';
 import { store } from '../store.js';
 import { principlesSection, formatGuideSection } from './sections.js';
+import { escapeText } from '../tamyiz-unified-app.js';
+import { openVideoModal } from '../components/video-modal.js';
 
 /** True facts only, counted from the catalogue on /admin: number of e-books, total pages (when every book has a page count). */
 function heroProof() {
@@ -52,7 +54,7 @@ export function renderHomePage(appInstance) {
   // Newest 3 ebooks (the list from /admin is newest first)
   const featuredProducts = products.slice(0, 3);
 
-  return `
+  const html = `
     <div class="tamyiz-page-home">
       <!-- 1. HERO: the name's meaning as the headline; "About us" (the two founders) on the right. Nothing here is tied to one product. -->
       <section class="tmz-hero" id="hero">
@@ -184,6 +186,9 @@ export function renderHomePage(appInstance) {
         </div>
       </section>
 
+      <!-- 3B. TAMYIZ FILMS: VIDEO SHOWCASE PREVIEW -->
+      <div id="tmz-home-films-mount"></div>
+
       <!-- 4. HOW WE WRITE -->
 ${principlesSection({ id: 'philosophy' })}
 
@@ -194,6 +199,173 @@ ${formatGuideSection()}
 
     </div>
   `;
+
+  // Asynchronously populate the films showcase section without blocking render
+  setTimeout(() => loadHomeFilmsShowcase(), 0);
+
+  return html;
+}
+
+export async function loadHomeFilmsShowcase() {
+  const mount = document.getElementById('tmz-home-films-mount');
+  if (!mount) return;
+  try {
+    const res = await fetch('/api/films');
+    if (!res.ok) {
+      mount.innerHTML = '';
+      return;
+    }
+    const data = await res.json();
+    const films = Array.isArray(data.videos) ? data.videos : [];
+    const visibleFilms = films.filter((v) => v.homepageVisible !== false);
+    if (!visibleFilms.length) {
+      mount.innerHTML = '';
+      return;
+    }
+
+    const featured = visibleFilms.find((v) => v.featured) || visibleFilms[0];
+    const secondary = visibleFilms.filter((v) => v.id !== featured.id).slice(0, 2);
+
+    window._homeFilms = visibleFilms;
+    window.playHomeFilm = (id) => {
+      const f = window._homeFilms?.find((item) => item.id === id);
+      if (f && window.openTamyizVideoModal) window.openTamyizVideoModal(f);
+    };
+
+    mount.innerHTML = `
+      <section id="films" class="tamyiz-section tmz-films-home-section py-14 md:py-24 scroll-mt-24">
+        <div class="container">
+          <div class="tamyiz-shop-header" style="align-items: flex-end; margin-bottom: 2.5rem;">
+            <div>
+              <span style="color: var(--color-red-ink); font-family: var(--font-sub); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; display: inline-block; margin-bottom: 0.5rem;">TAMYIZ FILMS</span>
+              <h2 style="font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; text-transform: uppercase;">Ideas deserve to be seen.</h2>
+              <p style="color: var(--color-muted); font-size: 1rem; max-width: 620px; margin-top: 0.5rem;">Explore the thinking, stories and perspectives behind our publications.</p>
+            </div>
+            <button class="tamyiz-btn-nav-outline" onclick="window.tamyizApp.navigateTo('/films')">
+              <span>Explore all films</span>
+              <span>→</span>
+            </button>
+          </div>
+
+          <div class="tmz-home-films-layout">
+            <!-- Featured Video -->
+            <div class="tmz-home-film-lead">
+              <div
+                class="tmz-home-film-thumb-wrap"
+                role="button"
+                tabindex="0"
+                aria-label="Play ${escapeText(featured.title)}"
+                onclick="window.playHomeFilm('${escapeText(featured.id)}')"
+                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); window.playHomeFilm('${escapeText(featured.id)}');}"
+              >
+                <img
+                  src="${escapeText(featured.thumbnailUrl || (featured.provider === 'youtube' && featured.videoId ? `https://img.youtube.com/vi/${featured.videoId}/hqdefault.jpg` : '/og/tamyiz.jpg'))}"
+                  alt="${escapeText(featured.title)}"
+                  class="tmz-home-film-img"
+                  loading="lazy"
+                />
+                <div class="tmz-home-film-overlay">
+                  <div class="tmz-home-film-play-btn" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                  </div>
+                  <span class="tmz-home-film-watch-label">WATCH FILM</span>
+                </div>
+                <div class="tmz-film-meta-bar">
+                  <span class="tmz-film-badge-cat">${escapeText(featured.category || 'Film')}</span>
+                  ${featured.duration ? `<span class="tmz-film-badge-dur">${escapeText(featured.duration)}</span>` : ''}
+                </div>
+              </div>
+
+              <div class="tmz-home-film-info">
+                <h3 class="tmz-home-film-title">
+                  <a href="#" onclick="event.preventDefault(); window.playHomeFilm('${escapeText(featured.id)}')">
+                    ${escapeText(featured.title)}
+                  </a>
+                </h3>
+                ${featured.description ? `<p class="tmz-home-film-desc">${escapeText(featured.description)}</p>` : ''}
+                ${featured.book ? `
+                  <a
+                    href="/edition/${escapeText(featured.book.slug)}"
+                    class="tmz-film-book-link"
+                    onclick="event.preventDefault(); window.tamyizApp.navigateTo('/edition/${escapeText(featured.book.slug)}')"
+                  >
+                    <div class="tmz-film-card-book">
+                      <img src="${escapeText(featured.book.coverThumb || `/api/cover/${featured.book.id}?s=sm`)}" alt="" width="20" height="28" class="tmz-film-book-thumb" />
+                      <span>${escapeText(featured.book.name)}</span>
+                      <span class="tmz-film-book-arrow" aria-hidden="true">→</span>
+                    </div>
+                  </a>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Secondary Videos Column -->
+            ${secondary.length ? `
+              <div class="tmz-home-films-sidebar">
+                ${secondary.map((sec) => `
+                  <div class="tmz-home-film-side-card">
+                    <div
+                      class="tmz-home-side-thumb-wrap"
+                      role="button"
+                      tabindex="0"
+                      aria-label="Play ${escapeText(sec.title)}"
+                      onclick="window.playHomeFilm('${escapeText(sec.id)}')"
+                      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); window.playHomeFilm('${escapeText(sec.id)}');}"
+                    >
+                      <img
+                        src="${escapeText(sec.thumbnailUrl || (sec.provider === 'youtube' && sec.videoId ? `https://img.youtube.com/vi/${sec.videoId}/hqdefault.jpg` : '/og/tamyiz.jpg'))}"
+                        alt="${escapeText(sec.title)}"
+                        class="tmz-home-side-img"
+                        loading="lazy"
+                      />
+                      <div class="tmz-film-play-overlay">
+                        <div class="tmz-film-play-btn tmz-film-play-btn-sm" aria-hidden="true">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tmz-home-side-info">
+                      <div class="tmz-home-side-meta">
+                        <span class="tmz-badge-cat-sm">${escapeText(sec.category || 'Film')}</span>
+                        ${sec.duration ? `<span class="tmz-badge-dur-sm">${escapeText(sec.duration)}</span>` : ''}
+                      </div>
+                      <h4 class="tmz-home-side-title">
+                        <a href="#" onclick="event.preventDefault(); window.playHomeFilm('${escapeText(sec.id)}')">
+                          ${escapeText(sec.title)}
+                        </a>
+                      </h4>
+                      ${sec.book ? `
+                        <a
+                          href="/edition/${escapeText(sec.book.slug)}"
+                          class="tmz-home-side-book"
+                          onclick="event.preventDefault(); window.tamyizApp.navigateTo('/edition/${escapeText(sec.book.slug)}')"
+                        >
+                          ${escapeText(sec.book.name)} →
+                        </a>
+                      ` : ''}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+
+          <div style="text-align: center; margin-top: 3rem;">
+            <button class="tamyiz-btn-primary-large" onclick="window.tamyizApp.navigateTo('/films')">
+              <span>EXPLORE ALL FILMS</span>
+              <span>→</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    `;
+  } catch {
+    mount.innerHTML = '';
+  }
 }
 
 /**

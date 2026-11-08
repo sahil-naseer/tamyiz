@@ -5,9 +5,11 @@
  */
 export const CSP =
   "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; " +
-  'frame-src https://api.razorpay.com https://checkout.razorpay.com; ' +
+  'frame-src https://api.razorpay.com https://checkout.razorpay.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com; ' +
   "connect-src 'self' https://lumberjack.razorpay.com https://api.razorpay.com; " +
-  "img-src 'self' data: blob: https://*.razorpay.com; style-src 'self' 'unsafe-inline'; font-src 'self'; " +
+  "img-src 'self' data: blob: https://*.razorpay.com https://i.ytimg.com https://img.youtube.com https://i.vimeocdn.com https://images.unsplash.com; " +
+  "media-src 'self' blob: https:; " +
+  "style-src 'self' 'unsafe-inline'; font-src 'self'; " +
   "object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
 
 const COMMON = {

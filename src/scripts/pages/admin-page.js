@@ -14,6 +14,7 @@
 
 import { siteConfig } from '../../data/site-config.js';
 import { escapeText } from '../tamyiz-unified-app.js';
+import { openVideoModal } from '../components/video-modal.js';
 
 const STATUS_MAP = { draft: 'Draft', soon: 'Coming soon', 'on-sale': 'On sale' };
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
@@ -25,9 +26,11 @@ export class AdminController {
     this.isAuthenticated = false;
     this.activeTab = 'overview';
     this.editingProduct = null;
+    this.editingFilm = null;
     this.coverBlob = null;
     this.thumbBlob = null;
     this.products = [];
+    this.films = [];
     this.orders = [];
     this.customers = [];
     this.coupons = {};
@@ -63,7 +66,7 @@ export class AdminController {
 
   render(container, subRoute = 'overview') {
     this.container = container;
-    const allowed = ['products', 'orders', 'coupons', 'announcement', 'customers', 'analytics', 'settings'];
+    const allowed = ['overview', 'products', 'films', 'orders', 'abandoned', 'coupons', 'leads', 'reviews', 'announcement', 'customers', 'analytics', 'settings'];
     this.activeTab = allowed.includes(subRoute) ? subRoute : 'overview';
 
     container.innerHTML = `
@@ -198,6 +201,7 @@ export class AdminController {
         ${[
           { id: 'overview', label: 'Overview' },
           { id: 'products', label: 'E-Books & Catalog' },
+          { id: 'films', label: 'Films & Video Showcase' },
           { id: 'orders', label: 'Orders & Payments' },
           { id: 'abandoned', label: 'Abandoned Bags' },
           { id: 'coupons', label: 'Coupons & Discounts' },
@@ -258,6 +262,9 @@ export class AdminController {
         break;
       case 'products':
         await this.renderProductsTab(tabBody);
+        break;
+      case 'films':
+        await this.renderFilmsTab(tabBody);
         break;
       case 'orders':
         await this.renderOrdersTab(tabBody);
@@ -744,6 +751,513 @@ export class AdminController {
     canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', quality));
     return { blob, canvas };
+  }
+
+  // ---------------------------------------------------------------- FILMS & VIDEO SHOWCASE TAB
+  async renderFilmsTab(mount) {
+    if (!this.products.length) {
+      const pRes = await this.api('products');
+      this.products = pRes.ok && Array.isArray(pRes.data?.products) ? pRes.data.products : [];
+    }
+
+    const res = await this.api('films');
+    this.films = res.ok && Array.isArray(res.data?.videos) ? res.data.videos : [];
+
+    const totalFilms = this.films.length;
+    const publishedCount = this.films.filter(f => f.published).length;
+    const featuredCount = this.films.filter(f => f.featured).length;
+    const homepageCount = this.films.filter(f => f.homepageVisible).length;
+
+    mount.innerHTML = `
+      <div style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
+          <div>
+            <p style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #5E5E59; margin: 0 0 4px;">Cinematic Discovery</p>
+            <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 24px; margin: 0; color: #0B0B0B;">Films &amp; Video Showcase</h2>
+            <p style="font-size: 14px; color: #5E5E59; margin: 4px 0 0;">Manage motion graphics, trailers, and visual essays published on /films and the homepage showcase.</p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <a href="/films" target="_blank" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: #FFFFFF; color: #0B0B0B; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+              View Showcase ↗
+            </a>
+            <button id="tmz-add-film-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 10px 22px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              + Add New Film
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Mini Stats -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px;">
+          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 16px; padding: 14px 18px;">
+            <div style="font-size: 12px; color: #5E5E59; font-weight: 600; text-transform: uppercase;">Total Films</div>
+            <div style="font-family: var(--font-head); font-size: 24px; font-weight: 800; margin-top: 4px;">${totalFilms}</div>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 16px; padding: 14px 18px;">
+            <div style="font-size: 12px; color: #1E7B2E; font-weight: 600; text-transform: uppercase;">Published</div>
+            <div style="font-family: var(--font-head); font-size: 24px; font-weight: 800; margin-top: 4px; color: #1E7B2E;">${publishedCount}</div>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 16px; padding: 14px 18px;">
+            <div style="font-size: 12px; color: #B3261E; font-weight: 600; text-transform: uppercase;">Featured</div>
+            <div style="font-family: var(--font-head); font-size: 24px; font-weight: 800; margin-top: 4px; color: #B3261E;">${featuredCount}</div>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 16px; padding: 14px 18px;">
+            <div style="font-size: 12px; color: #0284C7; font-weight: 600; text-transform: uppercase;">Homepage Visible</div>
+            <div style="font-family: var(--font-head); font-size: 24px; font-weight: 800; margin-top: 4px; color: #0284C7;">${homepageCount}</div>
+          </div>
+        </div>
+
+        <!-- Film Editor Drawer/Box -->
+        <div id="tmz-film-form-box" style="display: ${this.editingFilm ? 'block' : 'none'}; background: #FFFFFF; border: 1px solid rgba(11,11,11,0.15); border-radius: 20px; padding: 24px; margin-bottom: 28px; box-shadow: 0 10px 30px -15px rgba(0,0,0,0.1);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0;">
+              ${this.editingFilm?.id ? `Edit Film: ${escapeText(this.editingFilm.title)}` : 'Add New Film'}
+            </h3>
+            <button type="button" id="tmz-cancel-film-top" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #888;">✕</button>
+          </div>
+
+          <form id="tmz-film-form">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 16px;">
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Film Title *</label>
+                <input type="text" id="tmz-film-title" required maxlength="140" placeholder="e.g. The Architecture of Distinction" value="${escapeText(this.editingFilm?.title || '')}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px;" />
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Video URL (YouTube, Vimeo, or MP4) *</label>
+                <input type="url" id="tmz-film-url" required placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..." value="${escapeText(this.editingFilm?.videoUrl || '')}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px;" />
+                <span style="display: block; font-size: 11px; color: #71716D; margin-top: 4px;">Supports YouTube (embeds in privacy mode), Vimeo, or direct HTTPS MP4 stream.</span>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Category</label>
+                <input type="text" list="tmz-cat-presets" id="tmz-film-cat" placeholder="Book Trailers" value="${escapeText(this.editingFilm?.category || 'Book Trailers')}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px;" />
+                <datalist id="tmz-cat-presets">
+                  <option value="Book Trailers"></option>
+                  <option value="Motion Graphics"></option>
+                  <option value="Ideas &amp; Concepts"></option>
+                  <option value="Educational Films"></option>
+                  <option value="Brand Stories"></option>
+                </datalist>
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Associated Publication (Book)</label>
+                <select id="tmz-film-product" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px;">
+                  <option value="">None (Independent Brand Film)</option>
+                  ${this.products.map(p => `
+                    <option value="${escapeText(p.id)}" ${(this.editingFilm?.productId === p.id) ? 'selected' : ''}>
+                      ${escapeText(p.name)} (₹${escapeText(p.price)})
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Duration (e.g. 02:45)</label>
+                <input type="text" id="tmz-film-dur" maxlength="20" placeholder="02:30" value="${escapeText(this.editingFilm?.duration || '')}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px;" />
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Custom Thumbnail URL</label>
+                <input type="url" id="tmz-film-thumb" placeholder="https://... (Leave empty for auto YouTube thumbnail)" value="${escapeText(this.editingFilm?.thumbnailUrl || '')}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px;" />
+              </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Short Description</label>
+              <textarea id="tmz-film-desc" rows="3" maxlength="1000" placeholder="Brief visual summary of this film..." style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px; font-family: inherit;">${escapeText(this.editingFilm?.description || '')}</textarea>
+            </div>
+
+            <!-- Status Checkboxes -->
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; padding: 14px; background: #F7F7F5; border-radius: 12px;">
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                <input type="checkbox" id="tmz-film-published" ${this.editingFilm?.published ? 'checked' : (!this.editingFilm ? 'checked' : '')} />
+                <span>Published (Live in collection)</span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                <input type="checkbox" id="tmz-film-featured" ${this.editingFilm?.featured ? 'checked' : ''} />
+                <span>Featured Film (Hero slot)</span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                <input type="checkbox" id="tmz-film-homepage" ${this.editingFilm?.homepageVisible !== false ? 'checked' : ''} />
+                <span>Show on Homepage</span>
+              </label>
+
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;">
+                <label for="tmz-film-order">Display Order:</label>
+                <input type="number" id="tmz-film-order" min="0" max="999" value="${this.editingFilm?.displayOrder || 1}" style="width: 60px; padding: 4px 8px; border-radius: 6px; border: 1.5px solid rgba(11,11,11,0.2);" />
+              </div>
+            </div>
+
+            <div id="tmz-film-msg" style="display: none; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px;"></div>
+
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="submit" id="tmz-save-film-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 11px 24px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+                ${this.editingFilm?.id ? 'Update Film' : 'Publish Film'}
+              </button>
+              <button type="button" id="tmz-preview-film-form-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 11px 20px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; color: #0B0B0B; cursor: pointer;">
+                Preview Player
+              </button>
+              <button type="button" id="tmz-cancel-film-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 11px 20px; border: none; background: transparent; color: #5E5E59; cursor: pointer;">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Video Collection Grid/Table -->
+        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 20px; padding: 20px; overflow-x: auto;">
+          ${!this.films.length ? `
+            <div style="text-align: center; padding: 48px 16px; color: #5E5E59;">
+              <div style="font-size: 32px; margin-bottom: 8px;">🎬</div>
+              <h3 style="font-family: var(--font-head); font-size: 18px; font-weight: 700; color: #0B0B0B; margin: 0 0 6px;">No films published yet</h3>
+              <p style="font-size: 14px; margin: 0 0 16px;">Create your first film trailer, motion graphic, or concept visual for TAMYIZ.</p>
+              <button type="button" id="tmz-add-first-film-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; border-radius: 999px; padding: 10px 20px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+                + Add First Film
+              </button>
+            </div>
+          ` : `
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+              <thead>
+                <tr style="border-bottom: 1.5px solid rgba(11,11,11,0.1); color: #5E5E59; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <th style="padding: 12px 14px; width: 140px;">Preview</th>
+                  <th style="padding: 12px 14px;">Film Title &amp; Details</th>
+                  <th style="padding: 12px 14px;">Category</th>
+                  <th style="padding: 12px 14px;">Associated Publication</th>
+                  <th style="padding: 12px 14px;">Status</th>
+                  <th style="padding: 12px 14px; text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${this.films.map(f => {
+                  const thumb = f.thumbnailUrl || (f.provider === 'youtube' && f.videoId ? `https://img.youtube.com/vi/${f.videoId}/hqdefault.jpg` : '/og/tamyiz.jpg');
+                  return `
+                    <tr style="border-bottom: 1px solid rgba(11,11,11,0.06); transition: background 0.1s ease;">
+                      <td style="padding: 12px 14px; vertical-align: top;">
+                        <div style="width: 120px; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; position: relative;">
+                          <img src="${escapeText(thumb)}" alt="" style="width: 100%; height: 100%; object-fit: cover;" />
+                          ${f.duration ? `
+                            <span style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.8); color: #FFF; font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 4px; font-family: monospace;">
+                              ${escapeText(f.duration)}
+                            </span>
+                          ` : ''}
+                        </div>
+                      </td>
+                      <td style="padding: 12px 14px; vertical-align: top;">
+                        <div style="font-weight: 700; color: #0B0B0B; font-size: 15px; margin-bottom: 4px;">
+                          ${escapeText(f.title)}
+                        </div>
+                        <div style="font-size: 12px; color: #71716D; margin-bottom: 6px; max-width: 380px;">
+                          ${escapeText(f.description || 'No description.')}
+                        </div>
+                        <div style="display: flex; gap: 6px; align-items: center; font-size: 11px;">
+                          <span style="background: rgba(11,11,11,0.06); padding: 2px 6px; border-radius: 4px; font-family: monospace; text-transform: uppercase;">
+                            ${escapeText(f.provider || 'video')}
+                          </span>
+                          <span style="color: #888;">Order: #${f.displayOrder || 1}</span>
+                        </div>
+                      </td>
+                      <td style="padding: 12px 14px; vertical-align: top;">
+                        <span style="display: inline-block; padding: 3px 8px; border-radius: 6px; background: rgba(11,11,11,0.05); font-weight: 600; font-size: 12px;">
+                          ${escapeText(f.category || 'General')}
+                        </span>
+                      </td>
+                      <td style="padding: 12px 14px; vertical-align: top;">
+                        ${f.bookName ? `
+                          <div style="font-weight: 600; color: #0B0B0B; font-size: 13px;">${escapeText(f.bookName)}</div>
+                          <span style="font-size: 11px; color: #71716D; font-family: monospace;">${escapeText(f.productId)}</span>
+                        ` : `
+                          <span style="color: #71716D; font-size: 13px;">Independent Film</span>
+                        `}
+                      </td>
+                      <td style="padding: 12px 14px; vertical-align: top;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                          <span style="display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; width: fit-content; ${f.published ? 'background: #E8F5E9; color: #1E7B2E;' : 'background: #F0F0EE; color: #71716D;'}">
+                            ${f.published ? '● Published' : '○ Draft'}
+                          </span>
+                          ${f.featured ? `
+                            <span style="display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #FFF8E1; color: #B3261E; width: fit-content;">
+                              ★ Featured
+                            </span>
+                          ` : ''}
+                          ${f.homepageVisible ? `
+                            <span style="display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #E0F2FE; color: #0284C7; width: fit-content;">
+                              🏠 Homepage
+                            </span>
+                          ` : ''}
+                        </div>
+                      </td>
+                      <td style="padding: 12px 14px; vertical-align: top; text-align: right;">
+                        <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;">
+                          <button
+                            type="button"
+                            class="tmz-preview-film-row-btn"
+                            data-id="${escapeText(f.id)}"
+                            style="padding: 6px 12px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; font-size: 12px; font-weight: 600; cursor: pointer;"
+                          >
+                            Preview
+                          </button>
+                          <button
+                            type="button"
+                            class="tmz-edit-film-row-btn"
+                            data-id="${escapeText(f.id)}"
+                            style="padding: 6px 12px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; font-size: 12px; font-weight: 600; cursor: pointer;"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            class="tmz-toggle-pub-row-btn"
+                            data-id="${escapeText(f.id)}"
+                            data-pub="${f.published ? '1' : '0'}"
+                            style="padding: 6px 12px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; font-size: 12px; font-weight: 600; cursor: pointer;"
+                          >
+                            ${f.published ? 'Unpublish' : 'Publish'}
+                          </button>
+                          <button
+                            type="button"
+                            class="tmz-del-film-row-btn"
+                            data-id="${escapeText(f.id)}"
+                            data-title="${escapeText(f.title)}"
+                            style="padding: 6px 10px; border-radius: 999px; border: 1.5px solid rgba(179,38,30,0.3); background: transparent; color: #B3261E; font-size: 12px; font-weight: 600; cursor: pointer;"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          `}
+        </div>
+      </div>
+    `;
+
+    this.bindFilmsTabEvents(mount);
+  }
+
+  bindFilmsTabEvents(mount) {
+    const addBtn = document.getElementById('tmz-add-film-btn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+        this.editingFilm = {};
+        this.renderFilmsTab(mount);
+        const formBox = document.getElementById('tmz-film-form-box');
+        if (formBox) formBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+
+    const addFirstBtn = document.getElementById('tmz-add-first-film-btn');
+    if (addFirstBtn) {
+      addFirstBtn.addEventListener('click', () => {
+        this.editingFilm = {};
+        this.renderFilmsTab(mount);
+        const formBox = document.getElementById('tmz-film-form-box');
+        if (formBox) formBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+
+    const cancelTop = document.getElementById('tmz-cancel-film-top');
+    if (cancelTop) {
+      cancelTop.addEventListener('click', () => {
+        this.editingFilm = null;
+        this.renderFilmsTab(mount);
+      });
+    }
+
+    const cancelBtn = document.getElementById('tmz-cancel-film-btn');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        this.editingFilm = null;
+        this.renderFilmsTab(mount);
+      });
+    }
+
+    // Row preview button
+    mount.querySelectorAll('.tmz-preview-film-row-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const film = this.films.find(f => f.id === id);
+        if (film && window.openTamyizVideoModal) {
+          window.openTamyizVideoModal(film);
+        }
+      });
+    });
+
+    // Row edit button
+    mount.querySelectorAll('.tmz-edit-film-row-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const film = this.films.find(f => f.id === id);
+        if (film) {
+          this.editingFilm = { ...film };
+          this.renderFilmsTab(mount);
+          const formBox = document.getElementById('tmz-film-form-box');
+          if (formBox) formBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    });
+
+    // Row toggle publish button
+    mount.querySelectorAll('.tmz-toggle-pub-row-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const film = this.films.find(f => f.id === id);
+        if (!film) return;
+        const newPub = !film.published;
+        btn.disabled = true;
+        btn.textContent = 'Updating…';
+        const res = await this.api(`films/${id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...film, published: newPub })
+        });
+        if (res.ok) {
+          this.renderFilmsTab(mount);
+        } else {
+          alert(res.data?.error || 'Failed to update film status.');
+          btn.disabled = false;
+        }
+      });
+    });
+
+    // Row delete button
+    mount.querySelectorAll('.tmz-del-film-row-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const title = btn.dataset.title;
+        if (!confirm(`Are you sure you want to delete the film "${title}"? This cannot be undone.`)) return;
+        btn.disabled = true;
+        btn.textContent = 'Deleting…';
+        const res = await this.api(`films/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          this.renderFilmsTab(mount);
+        } else {
+          alert(res.data?.error || 'Failed to delete film.');
+          btn.disabled = false;
+        }
+      });
+    });
+
+    // Preview button inside form
+    const formPreviewBtn = document.getElementById('tmz-preview-film-form-btn');
+    if (formPreviewBtn) {
+      formPreviewBtn.addEventListener('click', () => {
+        const title = document.getElementById('tmz-film-title')?.value || 'Preview Film';
+        const videoUrl = document.getElementById('tmz-film-url')?.value;
+        const category = document.getElementById('tmz-film-cat')?.value || 'Film';
+        const duration = document.getElementById('tmz-film-dur')?.value;
+        const description = document.getElementById('tmz-film-desc')?.value;
+        const prodId = document.getElementById('tmz-film-product')?.value;
+        const book = prodId ? this.products.find(p => p.id === prodId) : null;
+
+        if (!videoUrl) {
+          alert('Please enter a video URL to preview.');
+          return;
+        }
+
+        let provider = 'mp4';
+        let videoId = null;
+        let embedUrl = videoUrl;
+        if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+          provider = 'youtube';
+          if (videoUrl.includes('youtu.be/')) videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0];
+          else if (videoUrl.includes('v=')) videoId = new URL(videoUrl).searchParams.get('v');
+          embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`;
+        } else if (videoUrl.includes('vimeo.com')) {
+          provider = 'vimeo';
+          const parts = videoUrl.split('/').filter(Boolean);
+          videoId = parts[parts.length - 1];
+          embedUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1`;
+        }
+
+        const previewData = {
+          title,
+          videoUrl,
+          provider,
+          videoId,
+          embedUrl,
+          category,
+          duration,
+          description,
+          book: book ? { id: book.id, name: book.name, slug: book.slug, price: book.price } : null
+        };
+
+        if (window.openTamyizVideoModal) window.openTamyizVideoModal(previewData);
+      });
+    }
+
+    // Submit form
+    const form = document.getElementById('tmz-film-form');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const msg = document.getElementById('tmz-film-msg');
+        const submitBtn = document.getElementById('tmz-save-film-btn');
+
+        const title = document.getElementById('tmz-film-title').value.trim();
+        const videoUrl = document.getElementById('tmz-film-url').value.trim();
+        const category = document.getElementById('tmz-film-cat').value.trim() || 'General';
+        const productId = document.getElementById('tmz-film-product').value || null;
+        const duration = document.getElementById('tmz-film-dur').value.trim();
+        const thumbnailUrl = document.getElementById('tmz-film-thumb').value.trim();
+        const description = document.getElementById('tmz-film-desc').value.trim();
+        const published = document.getElementById('tmz-film-published').checked;
+        const featured = document.getElementById('tmz-film-featured').checked;
+        const homepageVisible = document.getElementById('tmz-film-homepage').checked;
+        const displayOrder = Number(document.getElementById('tmz-film-order').value) || 1;
+
+        if (msg) {
+          msg.style.display = 'block';
+          msg.style.background = '#E0F2FE';
+          msg.style.color = '#0369A1';
+          msg.textContent = 'Saving film…';
+        }
+        submitBtn.disabled = true;
+
+        const payload = {
+          title,
+          videoUrl,
+          category,
+          productId,
+          duration,
+          thumbnailUrl,
+          description,
+          published,
+          featured,
+          homepageVisible,
+          displayOrder
+        };
+
+        const isEdit = Boolean(this.editingFilm?.id);
+        const endpoint = isEdit ? `films/${this.editingFilm.id}` : 'films';
+
+        const res = await this.api(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          this.editingFilm = null;
+          this.renderFilmsTab(mount);
+        } else {
+          if (msg) {
+            msg.style.display = 'block';
+            msg.style.background = '#FEE2E2';
+            msg.style.color = '#B91C1C';
+            msg.textContent = res.data?.error || 'Failed to save film. Please check fields.';
+          }
+          submitBtn.disabled = false;
+        }
+      });
+    }
   }
 
   // ---------------------------------------------------------------- ORDERS TAB
