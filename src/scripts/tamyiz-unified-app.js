@@ -29,7 +29,7 @@ import { AdminController } from './pages/admin-page.js';
 
 /** localStorage that never throws (private mode / blocked site data). */
 const safeGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
-const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch { } };
 
 export const escapeText = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
@@ -112,7 +112,7 @@ class TamyizUnifiedApp {
           </a>
         ` : ''}
       `;
-    } catch {}
+    } catch { }
   }
 
   // Parse path & hash for zero-crash routing
@@ -1186,7 +1186,7 @@ class TamyizUnifiedApp {
         const savedPhone = localStorage.getItem('tamyiz_buyer_phone');
         if (savedPhone) phoneInput.value = savedPhone;
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   removeFromBag(cartItemId) {
@@ -2043,7 +2043,7 @@ class TamyizUnifiedApp {
       localStorage.setItem('tamyiz_buyer_name', name);
       localStorage.setItem('tamyiz_buyer_email', email);
       localStorage.setItem('tamyiz_buyer_phone', phone);
-    } catch (_) {}
+    } catch (_) { }
 
     const submitBtn = document.querySelector('.tamyiz-btn-submit-order');
     const submitLabel = document.getElementById('checkout-submit-label');
@@ -2453,7 +2453,7 @@ class TamyizUnifiedApp {
           coupon: store.coupon ? store.coupon.code : null,
         }),
       });
-    } catch {}
+    } catch { }
   }
 
   checkResumeCart() {
@@ -2474,7 +2474,7 @@ class TamyizUnifiedApp {
           }
         }
         if (coupon) {
-          store.applyCoupon(coupon).then((ok) => { if (ok) this.renderCurrentPage(); }).catch(() => {});
+          store.applyCoupon(coupon).then((ok) => { if (ok) this.renderCurrentPage(); }).catch(() => { });
         }
         if (count > 0) {
           setTimeout(() => {
@@ -2483,7 +2483,7 @@ class TamyizUnifiedApp {
           }, 350);
         }
       }
-    } catch {}
+    } catch { }
   }
 
   validateDispatchInputs() {
@@ -2522,7 +2522,7 @@ class TamyizUnifiedApp {
     try {
       localStorage.setItem('tamyiz_buyer_email', email);
       localStorage.setItem('tamyiz_buyer_phone', phone);
-    } catch (_) {}
+    } catch (_) { }
 
     return { valid: true, email, phone };
   }
