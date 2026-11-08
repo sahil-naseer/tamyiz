@@ -66,7 +66,7 @@ export const siteConfig = {
     instagram: "https://www.instagram.com/tamyiz.co/",
     linkedin: "https://www.linkedin.com/in/sahil-naseer-03717b350/",
     x: "https://x.com/sahilnaseer0123",
-    github: "https://github.com/sahilnaseer0123-png/tamyiz"
+    github: "https://github.com/sahil-naseer/tamyiz"
   }
 };
 
