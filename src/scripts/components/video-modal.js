@@ -191,3 +191,4 @@ export function closeVideoModal() {
 // Expose globally for inline DOM click events
 window.openTamyizVideoModal = openVideoModal;
 window.closeTamyizVideoModal = closeVideoModal;
+

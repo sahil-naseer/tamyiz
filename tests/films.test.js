@@ -225,3 +225,4 @@ test('films: reorder endpoint updates sequence of videos', async () => {
   assert.equal(pubVideos[0].title, 'Film 2');
   assert.equal(pubVideos[1].title, 'Film 1');
 });
+
