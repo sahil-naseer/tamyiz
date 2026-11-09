@@ -425,9 +425,15 @@ export class AdminController {
                   <span>·</span>
                   <span>${b.fileSize ? `PDF ${mb(b.fileSize)}` : '<span style="color:#B3261E">Missing PDF</span>'}</span>
                   ${b.pages ? `<span>·</span><span>${b.pages} pages</span>` : ''}
+                  ${b.videoUrl ? `<span>·</span><span style="color:#0284C7; font-weight:700; display:inline-flex; align-items:center; gap:3px;">▶ Video attached</span>` : ''}
                 </div>
               </div>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                ${b.videoUrl ? `
+                  <button type="button" class="tmz-preview-book-video-btn" data-id="${b.id}" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 14px; border-radius: 999px; border: 1.5px solid rgba(2,132,199,0.3); background: #F0F9FF; color: #0284C7; cursor: pointer;">
+                    ▶ Preview Video
+                  </button>
+                ` : ''}
                 <button type="button" class="tmz-edit-book-btn" data-id="${b.id}" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; cursor: pointer;">
                   Edit
                 </button>
@@ -463,6 +469,20 @@ export class AdminController {
       btn.addEventListener('click', () => {
         const p = this.products.find((x) => x.id === btn.dataset.id);
         if (p) this.openProductForm(p);
+      });
+    });
+
+    mount.querySelectorAll('.tmz-preview-book-video-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const p = this.products.find((x) => x.id === btn.dataset.id);
+        if (p && p.videoUrl && window.openTamyizVideoModal) {
+          window.openTamyizVideoModal({
+            title: `${p.name} — Preview Video`,
+            videoUrl: p.videoUrl,
+            category: 'Book Preview',
+            book: { id: p.id, name: p.name, slug: p.slug, price: p.price, coverThumb: p.coverUrl }
+          });
+        }
       });
     });
 
@@ -554,6 +574,18 @@ export class AdminController {
             <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Chapter 1 Text</label>
             <textarea id="tmz-f-sample-text" rows="4" placeholder="Paste the introductory chapter or excerpt text here..." style="width: 100%; box-sizing: border-box; font-size: 14px; padding: 10px 12px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF; resize: vertical;">${b && b.sampleExcerpt && b.sampleExcerpt.text ? escapeText(b.sampleExcerpt.text) : ''}</textarea>
           </div>
+        </div>
+
+        <div style="margin-bottom: 18px; background: #F7F7F5; border: 1.5px solid rgba(11,11,11,0.12); border-radius: 12px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; color: #0B0B0B; margin: 0;">Book Preview / Trailer Video (Optional)</label>
+            <button type="button" id="tmz-test-book-video-btn" style="background: none; border: none; color: #0284C7; font-weight: 700; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0;">
+              ▶ Test Video
+            </button>
+          </div>
+          <p style="font-size: 12px; color: #5E5E59; margin: 0 0 10px;">Attach a video preview, teaser, or walkthrough of this book. Customers will see it on the book's detail page before buying so they feel confident purchasing.</p>
+          <input type="url" id="tmz-f-video" placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/... or https://.../video.mp4" value="${b && b.videoUrl ? escapeText(b.videoUrl) : ''}" style="width: 100%; box-sizing: border-box; font-size: 14px; padding: 10px 12px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF;" />
+          <span style="display: block; font-size: 11px; color: #71716D; margin-top: 4px;">Supports YouTube (embeds in privacy mode), Vimeo, and direct HTTPS MP4 files.</span>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 22px;">
@@ -659,6 +691,25 @@ export class AdminController {
       document.getElementById('tmz-pdf-note').textContent = `Ready to upload: ${file.name} (${mb(file.size)})`;
     });
 
+    const testVideoBtn = document.getElementById('tmz-test-book-video-btn');
+    if (testVideoBtn) {
+      testVideoBtn.addEventListener('click', () => {
+        const vUrl = document.getElementById('tmz-f-video')?.value.trim();
+        if (!vUrl) {
+          alert('Please enter a YouTube, Vimeo, or direct MP4 URL first.');
+          return;
+        }
+        if (window.openTamyizVideoModal) {
+          window.openTamyizVideoModal({
+            title: `${document.getElementById('tmz-f-name')?.value.trim() || (b && b.name) || 'Book'} — Preview`,
+            videoUrl: vUrl,
+            category: 'Book Preview',
+            book: b ? { id: b.id, name: b.name, slug: b.slug, price: b.price, coverThumb: b.coverUrl } : null
+          });
+        }
+      });
+    }
+
     document.getElementById('tmz-book-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const msg = document.getElementById('tmz-form-msg');
@@ -691,6 +742,9 @@ export class AdminController {
       formData.append('description', document.getElementById('tmz-f-desc').value);
       formData.append('contents', document.getElementById('tmz-f-contents').value);
       formData.append('status', status);
+
+      const videoVal = document.getElementById('tmz-f-video')?.value.trim();
+      formData.append('videoUrl', videoVal || '');
 
       const sampleText = document.getElementById('tmz-f-sample-text')?.value.trim();
       const sampleChap = document.getElementById('tmz-f-sample-chapter')?.value.trim();

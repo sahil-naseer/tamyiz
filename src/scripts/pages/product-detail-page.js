@@ -88,6 +88,41 @@ export function renderProductDetailPage(slug, appInstance) {
                 </div>
               ` : ''}
 
+              <!-- CINEMATIC ON-PAGE BOOK PREVIEW VIDEO CARD -->
+              ${product.video ? `
+                <div class="tamyiz-pdp-video-box mt-6" id="pdp-video-preview">
+                  <div
+                    class="tamyiz-pdp-video-card"
+                    onclick="window.tamyizApp.playProductVideo('${product.id}')"
+                    role="button"
+                    tabindex="0"
+                    aria-label="Watch video preview of ${product.name}"
+                    onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); window.tamyizApp.playProductVideo('${product.id}');}"
+                  >
+                    <div class="tamyiz-pdp-video-thumb-container">
+                      <img
+                        src="${product.video.thumbnailUrl || product.thumb || product.images[0]}"
+                        alt="${product.name} video preview"
+                        class="tamyiz-pdp-video-thumb"
+                        loading="lazy"
+                      />
+                      <div class="tamyiz-pdp-video-play-layer">
+                        <div class="tamyiz-pdp-video-play-btn" aria-hidden="true">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                          </svg>
+                        </div>
+                        <div class="tamyiz-pdp-video-play-text">
+                          <strong class="tamyiz-pdp-video-label">WATCH BOOK PREVIEW VIDEO</strong>
+                          <span class="tamyiz-pdp-video-sub">See inside this edition before purchasing</span>
+                        </div>
+                      </div>
+                      <span class="tamyiz-pdp-video-badge-corner">VIDEO PREVIEW</span>
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
+
               <!-- INTERACTIVE ON-PAGE SAMPLE VIEWER -->
               ${hasSample ? `
                 <div class="tamyiz-pdp-sample-box mt-8">
@@ -222,6 +257,23 @@ export function renderProductDetailPage(slug, appInstance) {
                     <span>Buy Now • Direct Checkout →</span>
                   </button>` : ''}
 
+                  ${product.video ? `
+                    <button
+                      type="button"
+                      class="tamyiz-pdp-btn-video-action"
+                      onclick="window.tamyizApp.playProductVideo('${product.id}')"
+                      id="pdp-open-video-btn"
+                    >
+                      <span class="tamyiz-pdp-video-icon-circle" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                      </span>
+                      <span>Watch Book Preview Video</span>
+                      <span class="tamyiz-pdp-pill-tag">WATCH</span>
+                    </button>
+                  ` : ''}
+
                   <button
                     type="button"
                     class="tamyiz-pdp-btn-sample"
@@ -263,6 +315,17 @@ export function renderProductDetailPage(slug, appInstance) {
                     </span>
                     <span>Questions about the book? WhatsApp us: the authors reply themselves.</span>
                   </div>
+                  ${product.video ? `
+                    <div class="tamyiz-guarantee-item">
+                      <span style="display:inline-flex; align-items:center;" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                          <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                        </svg>
+                      </span>
+                      <span>Video walkthrough available: watch video preview before ordering.</span>
+                    </div>
+                  ` : ''}
                 </div>
 
                 <!-- Description -->

@@ -239,3 +239,58 @@ test('admin overview, orders and settings endpoints require login', async () => 
   assert.ok('storeConfig' in setData);
   assert.equal(setData.storeConfig.hasStorage, true);
 });
+
+test('e-book preview video: attach videoUrl to book, validate invalid video, and verify video in public catalog & fallback', async () => {
+  const e = env();
+  const cookie = await session(e);
+
+  // 1. Invalid video URL is rejected with 400
+  const badVideo = await save(e, cookie, form({ videoUrl: 'https://unsafe-site.xyz/bad' }));
+  assert.equal(badVideo.status, 400);
+
+  // 2. Valid YouTube preview attaches successfully
+  const res = await save(e, cookie, form({
+    name: 'The Architecture of Distinction',
+    status: 'soon',
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  }, { cover: [JPEG, 'c.jpg'] }));
+  assert.equal(res.status, 201);
+  const { product } = await res.json();
+  assert.equal(product.videoUrl, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+
+  // 3. Public catalog contains enriched video object
+  const shopRes = await call(e, '/api/products');
+  const shop = (await shopRes.json()).products;
+  const item = shop.find((x) => x.id === product.id);
+  assert.ok(item.video);
+  assert.equal(item.video.provider, 'youtube');
+  assert.equal(item.video.videoId, 'dQw4w9WgXcQ');
+  assert.ok(item.video.embedUrl.includes('youtube-nocookie.com'));
+
+  // 4. Update book to remove videoUrl
+  const updateRes = await save(e, cookie, form({
+    name: 'The Architecture of Distinction',
+    status: 'soon',
+    videoUrl: '',
+  }), product.id);
+  assert.equal(updateRes.status, 200);
+
+  // 5. Fallback test: add a published film in showcase:videos linked to this product ID
+  await call(e, '/api/admin/films', {
+    method: 'POST',
+    headers: authed(cookie),
+    body: JSON.stringify({
+      title: 'Distinction Cinematic Trailer',
+      videoUrl: 'https://vimeo.com/76979871',
+      category: 'Book Trailers',
+      productId: product.id,
+      published: true,
+    }),
+  });
+
+  const shopAfterFilm = (await (await call(e, '/api/products')).json()).products;
+  const itemAfterFilm = shopAfterFilm.find((x) => x.id === product.id);
+  assert.ok(itemAfterFilm.video);
+  assert.equal(itemAfterFilm.video.provider, 'vimeo');
+  assert.equal(itemAfterFilm.video.title, 'Distinction Cinematic Trailer');
+});

@@ -410,6 +410,22 @@ export function renderProductCardHtml(p, appInstance) {
             <span class="tamyiz-price-orig line-through" id="orig-price-${p.id}" style="${currentOrigPrice ? '' : 'display:none;'}">${currentOrigPrice ? `₹${currentOrigPrice.toLocaleString('en-IN')}` : ''}</span>
           </div>
 
+          ${p.video ? `
+            <div style="margin: 0.5rem 0 0.2rem;">
+              <button
+                type="button"
+                class="tamyiz-card-video-pill-btn"
+                onclick="event.stopPropagation(); window.tamyizApp.playProductVideo('${p.id}')"
+                title="Watch preview video of ${p.name}"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span>Watch video preview</span>
+              </button>
+            </div>
+          ` : ''}
+
           ${hasVariants ? `
             <div class="tamyiz-size-selector-wrap" onclick="event.stopPropagation()">
               <div class="tamyiz-size-selector-label font-mono text-[11px] uppercase tracking-wider mb-1 flex items-center gap-1.5">

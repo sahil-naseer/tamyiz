@@ -13,6 +13,8 @@
  *   on-sale  can be bought; needs a PDF. The payment server only sells "on-sale" ebooks.
  */
 
+import { parseVideoSource } from './films.js';
+
 export const STATUSES = ['draft', 'soon', 'on-sale'];
 export const MAX_PDF_BYTES = 25 * 1024 * 1024; // Cloudflare KV limit per value (25 MiB)
 export const MAX_COVER_BYTES = 2 * 1024 * 1024;
@@ -55,13 +57,43 @@ export const findBySlug = (list, slug) => list.find((p) => p.slug === String(slu
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 /** What the shop (and anyone) may see: no drafts, no file keys. Text is HTML-escaped (the shop draws with innerHTML). */
-export function publicProduct(p) {
+export function publicProduct(p, filmsList = null) {
   const cover = p.coverType ? `/api/cover/${p.id}?v=${p.updatedAt}` : '/og/tamyiz.jpg';
   // Cards and the bag use the small version when it exists (about a quarter of the bytes); the product page uses the full cover.
   const thumb = p.thumbType ? `/api/cover/${p.id}?s=sm&v=${p.thumbAt || p.updatedAt}` : cover;
   const specs = [{ label: 'Format', value: 'PDF e-book, instant download after payment' }];
   if (p.pages) specs.push({ label: 'Pages', value: `${p.pages}` });
   specs.push({ label: 'Reads on', value: 'Phone, tablet, laptop, Kindle (send-to-Kindle), Apple Books' });
+
+  // Associated preview/trailer video
+  let video = null;
+  if (p.videoUrl) {
+    const parsed = parseVideoSource(p.videoUrl);
+    if (parsed.valid) {
+      video = {
+        title: `${esc(p.name)} — Preview`,
+        videoUrl: parsed.videoUrl,
+        provider: parsed.provider,
+        videoId: parsed.videoId,
+        embedUrl: parsed.embedUrl,
+        thumbnailUrl: parsed.defaultThumbnail || '',
+      };
+    }
+  }
+  if (!video && filmsList && Array.isArray(filmsList)) {
+    const match = filmsList.find((f) => f.productId === p.id && f.published);
+    if (match) {
+      video = {
+        title: esc(match.title),
+        videoUrl: match.videoUrl,
+        provider: match.provider,
+        videoId: match.videoId,
+        embedUrl: match.embedUrl,
+        thumbnailUrl: match.thumbnailUrl || match.defaultThumbnail || '',
+        duration: match.duration || '',
+      };
+    }
+  }
 
   // Sample excerpt for the lead-capture sample reader
   let sampleExcerpt = null;
@@ -102,6 +134,7 @@ export function publicProduct(p) {
     status: p.status,
     images: [cover],
     thumb,
+    video,
     tableOfContents: Array.isArray(p.contents) ? p.contents.map(esc) : [],
     sampleExcerpt,
     specifications: specs,
@@ -113,7 +146,14 @@ export function publicProduct(p) {
 }
 
 export async function publicCatalog(env) {
-  return (await loadCatalog(env, { cached: true })).filter((p) => p.status !== 'draft').map(publicProduct);
+  let films = [];
+  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get) {
+    try {
+      const raw = await env.TAMYIZ_STORE.get('showcase:videos');
+      if (raw) films = JSON.parse(raw);
+    } catch {}
+  }
+  return (await loadCatalog(env, { cached: true })).filter((p) => p.status !== 'draft').map((p) => publicProduct(p, films));
 }
 
 // ---------------------------------------------------------------------------
@@ -139,6 +179,15 @@ export function readFields(form) {
   const status = clean(form.get('status'), 10) || 'draft';
   if (!STATUSES.includes(status)) throw new Error('Unknown status.');
   const contents = clean(form.get('contents'), 4000).split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 40);
+
+  const rawVideo = clean(form.get('videoUrl') || form.get('video'), 500);
+  let videoUrl = null;
+  if (rawVideo) {
+    const parsed = parseVideoSource(rawVideo);
+    if (!parsed.valid) throw new Error(parsed.error);
+    videoUrl = parsed.videoUrl;
+  }
+
   const fields = {
     name,
     tagline: clean(form.get('tagline'), 200),
@@ -147,6 +196,7 @@ export function readFields(form) {
     pages,
     contents,
     status,
+    videoUrl,
   };
   const hasSampleField = form.has('sampleExcerpt') || form.has('sample');
   if (hasSampleField) {

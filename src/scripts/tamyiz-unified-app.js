@@ -27,6 +27,7 @@ import { renderDownloadsPage } from './pages/downloads-page.js';
 import { renderCheckoutPage } from './pages/checkout-page.js';
 import { renderLegalPage, legalDocs } from './pages/legal-page.js';
 import { AdminController } from './pages/admin-page.js';
+import { openVideoModal } from './components/video-modal.js';
 
 /** localStorage that never throws (private mode / blocked site data). */
 const safeGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -1542,6 +1543,31 @@ class TamyizUnifiedApp {
       content.classList.toggle('open', !isOpen);
       if (text) text.textContent = isOpen ? 'Expand Preview' : 'Collapse Preview';
       if (icon) icon.textContent = isOpen ? '↓' : '↑';
+    }
+  }
+
+  playProductVideo(productId) {
+    const product = findProductBySlugOrId(productId);
+    if (!product || !product.video) return;
+    const videoData = {
+      title: `${product.name} — Preview Video`,
+      videoUrl: product.video.videoUrl,
+      provider: product.video.provider,
+      videoId: product.video.videoId,
+      embedUrl: product.video.embedUrl,
+      category: 'Book Preview',
+      duration: product.video.duration || '',
+      description: product.tagline || product.description,
+      book: {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        price: product.price,
+        coverThumb: product.thumb || (product.images && product.images[0]) || `/api/cover/${product.id}?s=sm`
+      }
+    };
+    if (window.openTamyizVideoModal) {
+      window.openTamyizVideoModal(videoData);
     }
   }
 
