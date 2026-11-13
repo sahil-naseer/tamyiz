@@ -7,6 +7,7 @@ import { products, isAvailable, anyAvailable, buyLabel, loadState } from '../../
 import { siteConfig } from '../../data/site-config.js';
 import { store } from '../store.js';
 import { principlesSection, formatGuideSection } from './sections.js';
+import { heroArt } from '../illustrations.js';
 import { escapeText } from '../tamyiz-unified-app.js';
 import { openVideoModal } from '../components/video-modal.js';
 
@@ -14,9 +15,10 @@ import { openVideoModal } from '../components/video-modal.js';
 function heroProof() {
   if (loadState.loading) return '<li>Written by Sahil &amp; Basit</li>';
   const items = [];
-  if (products.length) items.push(`${products.length} e-book${products.length === 1 ? '' : 's'}`);
+  // Numbers are wrapped so the motion layer can count them up (the real number is always in the markup).
+  if (products.length) items.push(`<b data-count="${products.length}">${products.length}</b> e-book${products.length === 1 ? '' : 's'}`);
   const pages = products.map((p) => Number(((p.specifications || []).find((s) => s.label === 'Pages') || {}).value));
-  if (products.length && pages.every((n) => n > 0)) items.push(`${pages.reduce((a, b) => a + b, 0)} pages`);
+  if (products.length && pages.every((n) => n > 0)) { const total = pages.reduce((a, b) => a + b, 0); items.push(`<b data-count="${total}">${total}</b> pages`); }
   items.push('Written by Sahil &amp; Basit');
   items.push(anyAvailable() ? 'Instant PDF download' : 'Pre-order on WhatsApp');
   return items.map((t) => `<li>${t}</li>`).join('');
@@ -56,48 +58,58 @@ export function renderHomePage(appInstance) {
 
   const html = `
     <div class="tamyiz-page-home">
-      <!-- 1. HERO: the name's meaning as the headline; "About us" (the two founders) on the right. Nothing here is tied to one product. -->
+      <!-- 1. HERO (14 Nov 2026): the name's meaning as the headline, with the key words bracketed; a line drawing of
+           loose pages becoming one tidy stack. Nothing here is tied to one product. -->
       <section class="tmz-hero" id="hero">
+        <canvas class="tmz-dots" aria-hidden="true"></canvas>
         <div class="tmz-hero-inner">
-          <div class="tmz-hero-copy">
-            <p class="tmz-hero-meaning"><strong>Tamyiz</strong> (<span lang="ar">تمييز</span>): the ability to tell things apart.</p>
-            <h1 class="tmz-hero-title">Learn to tell <span class="tmz-nowrap">the difference.</span></h1>
-            <p class="tmz-hero-lede">Short, practical e-books on AI and the digital world, written for beginners. Download the PDF and start reading in a minute.</p>
-            <div class="tmz-hero-ctas">
-              <a href="/#editions" class="tmz-btn tmz-btn-solid" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#editions')">Browse the e-books <span aria-hidden="true">↓</span></a>
-              <a href="/#philosophy" class="tmz-btn tmz-btn-line" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#philosophy')">How we write</a>
+          <div class="tmz-hero-top">
+            <div class="tmz-hero-copy">
+              <p class="tmz-hero-meaning"><strong>Tamyiz</strong> (<span lang="ar">تمييز</span>): the ability to tell things apart.</p>
+              <h1 class="tmz-hero-title"><span class="tmz-line"><span>Learn to tell</span></span> <span class="tmz-line"><span><span class="tmz-mark tmz-nowrap">the difference.</span></span></span></h1>
             </div>
-            <ul class="tmz-hero-proof">${heroProof()}</ul>
+            <div class="tmz-hero-side">
+              <p class="tmz-hero-lede">Short, practical e-books on AI and the digital world, written for beginners. Download the PDF and start reading in a minute.</p>
+              <div class="tmz-hero-ctas">
+                <a href="/#editions" class="tmz-btn tmz-btn-solid" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#editions')">Browse the e-books <span class="tmz-btn-arrow" aria-hidden="true">↓</span></a>
+                <a href="/#philosophy" class="tmz-btn tmz-btn-line" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#philosophy')">How we write</a>
+              </div>
+            </div>
           </div>
+          <div class="tmz-hero-art" data-draw>${heroArt()}</div>
+          <ul class="tmz-hero-proof">${heroProof()}</ul>
+        </div>
+      </section>
 
-          <aside class="tmz-about-card" aria-labelledby="hero-about-title">
-            <div class="tmz-about-head">
-              <h2 id="hero-about-title">About us</h2>
-              <span>The two people behind every TAMYIZ product</span>
-            </div>
-            <div class="tmz-about-people">
-              <figure>
-                <img src="/assets/images/founders/basit-portrait.webp" alt="Basit Majeed" width="480" height="600" loading="eager" decoding="async" />
-                <figcaption>
-                  <strong>Basit Majeed</strong>
-                  <span>Co-founder · Security &amp; Research</span>
-                  <q>Knowledge carries responsibility.</q>
-                </figcaption>
-              </figure>
-              <figure>
-                <img src="/assets/images/founders/sahil-portrait.webp" alt="Sahil Naseer" width="480" height="600" loading="eager" decoding="async" />
-                <figcaption>
-                  <strong>Sahil Naseer</strong>
-                  <span>Co-founder · AI/ML &amp; Build</span>
-                  <q>Nothing stays unless it earns its place.</q>
-                </figcaption>
-              </figure>
-            </div>
-            <div class="tmz-about-foot">
-              <a href="/atelier" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/atelier')">Read the full story <span aria-hidden="true">→</span></a>
-              <a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tmz-about-wa">Questions? WhatsApp us, we reply ourselves.</a>
-            </div>
-          </aside>
+      <!-- 1B. ABOUT US: the two founders, in a frame right under the hero (the full story is on /atelier). -->
+      <section class="tmz-founders" aria-labelledby="hero-about-title">
+        <div class="tmz-founders-inner">
+          <div class="tmz-founders-head">
+            <h2 class="tmz-label" id="hero-about-title">About us</h2>
+            <p class="tmz-founders-lead">TAMYIZ is two people, Basit and Sahil, writing the clear, practical guides we wished we'd had.</p>
+          </div>
+          <div class="tmz-frame tmz-about-people">
+            <figure>
+              <img src="/assets/images/founders/basit-portrait.webp" alt="Basit Majeed" width="480" height="600" loading="eager" decoding="async" />
+              <figcaption>
+                <strong>Basit Majeed</strong>
+                <span>Co-founder · Security &amp; Research</span>
+                <q>Knowledge carries responsibility.</q>
+              </figcaption>
+            </figure>
+            <figure>
+              <img src="/assets/images/founders/sahil-portrait.webp" alt="Sahil Naseer" width="480" height="600" loading="eager" decoding="async" />
+              <figcaption>
+                <strong>Sahil Naseer</strong>
+                <span>Co-founder · AI/ML &amp; Build</span>
+                <q>Nothing stays unless it earns its place.</q>
+              </figcaption>
+            </figure>
+          </div>
+          <div class="tmz-about-foot">
+            <a href="/atelier" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/atelier')">Read the full story <span aria-hidden="true">→</span></a>
+            <a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tmz-about-wa">Questions? WhatsApp us, we reply ourselves.</a>
+          </div>
         </div>
       </section>
 
@@ -163,7 +175,7 @@ export function renderHomePage(appInstance) {
         <div class="container">
           <div class="tamyiz-shop-header" style="align-items: flex-end; margin-bottom: 2.5rem;">
             <div>
-              <span style="color: var(--color-red-ink); font-family: var(--font-sub); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; display: inline-block; margin-bottom: 0.5rem;">The shop</span>
+              <span class="tmz-label">The shop</span>
               <h2 style="font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; text-transform: uppercase;">Latest e-books</h2>
             </div>
             ${products.length > 3 ? `<button class="tamyiz-btn-nav-outline" onclick="window.tamyizApp.navigateTo('/editions')">
@@ -179,7 +191,7 @@ export function renderHomePage(appInstance) {
 
           ${products.length > 3 ? `<div style="text-align: center; margin-top: 3.5rem;">
             <button class="tamyiz-btn-primary-large" onclick="window.tamyizApp.navigateTo('/editions')">
-              <span>SEE ALL ${products.length} E-BOOKS</span>
+              <span>See all ${products.length} e-books</span>
               <span>→</span>
             </button>
           </div>` : ''}
@@ -196,6 +208,23 @@ ${principlesSection({ id: 'philosophy' })}
 
       <!-- 5B. FORMAT GUIDE -->
 ${formatGuideSection()}
+
+      <!-- 6. CLOSING LINE: one last, plain invitation. Honest about whether anything can be bought yet. -->
+      <section class="tmz-closing">
+        <div class="container">
+          <span class="tmz-label">${anyAvailable() ? 'Start here' : 'Coming soon'}</span>
+          ${anyAvailable()
+            ? `<h2 class="tmz-closing-title">Pick an e-book and <span class="tmz-mark tmz-nowrap">start reading</span> in a minute.</h2>
+          <div class="tmz-hero-ctas">
+            <a href="/editions" class="tmz-btn tmz-btn-solid" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')">See all the e-books <span aria-hidden="true">→</span></a>
+            <a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tmz-btn tmz-btn-line">Ask us on WhatsApp ↗</a>
+          </div>`
+            : `<h2 class="tmz-closing-title">The first e-books are <span class="tmz-mark tmz-nowrap">on the way.</span></h2>
+          <div class="tmz-hero-ctas">
+            <a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tmz-btn tmz-btn-solid">Tell me when it's out ↗</a>
+          </div>`}
+        </div>
+      </section>
 
     </div>
   `;
@@ -237,7 +266,7 @@ export async function loadHomeFilmsShowcase() {
         <div class="container">
           <div class="tamyiz-shop-header" style="align-items: flex-end; margin-bottom: 2.5rem;">
             <div>
-              <span style="color: var(--color-red-ink); font-family: var(--font-sub); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; display: inline-block; margin-bottom: 0.5rem;">TAMYIZ FILMS</span>
+              <span class="tmz-label">TAMYIZ FILMS</span>
               <h2 style="font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; text-transform: uppercase;">Ideas deserve to be seen.</h2>
               <p style="color: var(--color-muted); font-size: 1rem; max-width: 620px; margin-top: 0.5rem;">Explore the thinking, stories and perspectives behind our publications.</p>
             </div>
@@ -356,7 +385,7 @@ export async function loadHomeFilmsShowcase() {
 
           <div style="text-align: center; margin-top: 3rem;">
             <button class="tamyiz-btn-primary-large" onclick="window.tamyizApp.navigateTo('/films')">
-              <span>EXPLORE ALL FILMS</span>
+              <span>Explore all films</span>
               <span>→</span>
             </button>
           </div>

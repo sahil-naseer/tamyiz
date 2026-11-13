@@ -7411,3 +7411,506 @@ body.tmz-modal-open { overflow: hidden; }
     transition: none !important; animation: none !important;
   }
 }
+
+/* ==========================================================================
+   REDESIGN 14 Nov 2026: "paper and hairlines" (pairs with src/scripts/motion.js and illustrations.js).
+   Light paper background, thin lines, square corners, small [bracketed] labels, corner brackets round the
+   key words of a headline, line drawings that draw themselves, a pinned "How we write" section.
+   Black, white and ONE accent: highlighter yellow (--tmz-yellow, Sahil's call 14 Nov 2026). Yellow is only ever
+   a background or a fill behind black (never yellow text on a light background). Still Inter + Space Grotesk.
+   Rules of this block:
+     - Only opacity / transform / line drawing are animated (no layout shift).
+     - NOTHING loops forever, and no blur or mask sits over moving content. Measured 14 Nov 2026 with the
+       processor slowed 4x: a canvas redrawn every frame, endless SVG loops and the blurred sticky header
+       together halved the frame rate. Animations run once, or only while the visitor scrolls / moves the mouse.
+     - Nothing is hidden for a reveal unless motion.js has run (`html.mo`), and everything is switched off by
+       "reduce motion" (all motion sits inside one `prefers-reduced-motion: no-preference` block).
+     - No backdrop-filter on cards; never `transition: all`.
+   Phone and tablet rules are at the end of this block.
+   ========================================================================== */
+:root {
+  --mo-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --tmz-paper: #F1F1EF;
+  --tmz-hair: rgba(0, 0, 0, 0.12);
+  --tmz-soft: #6A6A64;            /* large grey headline words: 4.9:1 on paper */
+  --tmz-r: 4px;
+  --tmz-yellow: #FFD60A;
+  --color-offwhite: #F1F1EF;
+}
+
+/* Sticky things (the header, the pinned section) need the page itself to be the only scroller.
+   `overflow-x: hidden` on body and #app quietly made each of them a scroller, so the header never stuck.
+   `clip` hides sideways overflow without that side effect (older browsers keep `hidden`). */
+body, #app { overflow-x: hidden; overflow-x: clip; }
+
+::selection { background: var(--tmz-yellow); color: #000; }
+
+/* ---------- Small pieces used everywhere ---------- */
+/* [ LABEL ] */
+.tmz-label, #main-content h2.tmz-label {
+  display: inline-flex;
+  gap: 0.6em;
+  margin: 0 0 1rem;
+  font-family: var(--font-sub);
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase !important;
+  color: var(--tmz-graphite);
+}
+.tmz-label::before { content: '['; content: '[' / ''; }
+.tmz-label::after { content: ']'; content: ']' / ''; }
+
+/* Corner brackets round the words that matter. */
+.tmz-mark {
+  position: relative;
+  display: inline-block;
+  padding: 0 0.17em;
+  color: #000;
+  background: linear-gradient(var(--tmz-yellow), var(--tmz-yellow)) no-repeat 0 50% / 100% 100%;   /* the highlighter */
+}
+.tmz-mark::before, .tmz-mark::after {
+  content: '';
+  position: absolute;
+  width: 0.22em;
+  height: 0.22em;
+  border: 0.05em solid #000;
+}
+.tmz-mark::before { top: 0.06em; left: -0.05em; border-right: 0; border-bottom: 0; }
+.tmz-mark::after { bottom: -0.04em; right: -0.05em; border-left: 0; border-top: 0; }
+
+/* A frame with crosshair corners. */
+.tmz-frame {
+  --c: rgba(0, 0, 0, 0.55);
+  --l: 14px;
+  position: relative;
+  border: 1px solid var(--tmz-hair);
+  background:
+    linear-gradient(var(--c), var(--c)) 9px 9px / var(--l) 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) 9px 9px / 1px var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) calc(100% - 9px) 9px / var(--l) 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) calc(100% - 9px) 9px / 1px var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) 9px calc(100% - 9px) / var(--l) 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) 9px calc(100% - 9px) / 1px var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) calc(100% - 9px) calc(100% - 9px) / var(--l) 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) calc(100% - 9px) calc(100% - 9px) / 1px var(--l) no-repeat,
+    var(--tmz-paper);
+}
+
+/* Buttons: square, quiet. */
+.tmz-btn {
+  min-height: 48px;
+  padding: 0 1.35rem;
+  border-radius: var(--tmz-r);
+  font-size: 0.95rem;
+  transition: transform 0.25s var(--mo-ease), background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.tmz-btn-solid:hover { background: var(--tmz-yellow); color: #000; }
+.tmz-btn-line { border: 1px solid rgba(0, 0, 0, 0.28); background: #fff; }
+.tmz-btn-line:hover { background: #000; border-color: #000; color: #fff; }
+.tmz-btn-arrow { display: inline-block; }
+.tamyiz-btn-nav-outline, .tamyiz-btn-primary-large {
+  border-radius: var(--tmz-r);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: none;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.3s var(--mo-ease);
+}
+.tamyiz-btn-nav-outline { background: #fff; border-color: rgba(0, 0, 0, 0.28); }
+.tamyiz-btn-primary-large:hover { background: var(--tmz-yellow); color: #000; box-shadow: none; }
+.tamyiz-btn-nav-outline > span:last-child, .tamyiz-btn-primary-large > span:last-child { display: inline-block; transition: transform 0.3s var(--mo-ease); }
+.tamyiz-btn-nav-outline:hover > span:last-child, .tamyiz-btn-primary-large:hover > span:last-child { transform: translateX(5px); }
+
+/* ---------- Header ---------- */
+/* Solid, not frosted: the header now really sticks, and a blur over a scrolling page was the most expensive
+   thing on it (see the smoothness note at the top of this block). */
+.tamyiz-header {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: var(--tmz-paper);
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -20px rgba(0, 0, 0, 0.35); }
+.tamyiz-header-menu-btn, .tamyiz-cart-btn { border-radius: var(--tmz-r); }
+.tamyiz-header-nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 100%;
+  height: 1px;
+  background: #000;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.35s var(--mo-ease);
+}
+.tamyiz-header-nav-link:hover::after, .tamyiz-header-nav-link.active::after { transform: scaleX(1); transform-origin: left center; }
+.tmz-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  width: 100%;
+  height: 3px;
+  background: var(--tmz-yellow);
+  transform: scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+/* ---------- Hero ---------- */
+.tmz-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-bottom: 1px solid var(--tmz-hair);
+  /* The dot grid is a still background (22px, same as GAP in motion.js), fading out toward the headline. */
+  background:
+    linear-gradient(180deg, var(--tmz-paper) 0%, rgba(241, 241, 239, 0) 70%),
+    radial-gradient(rgba(0, 0, 0, 0.2) 1px, transparent 1.4px) 0 0 / 22px 22px,
+    var(--tmz-paper);
+}
+/* Only the dots near the mouse are drawn here (laptops), and only while it moves. */
+.tmz-dots { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; }
+.tmz-hero-inner { display: block; max-width: 80rem; margin: 0 auto; padding: 4.5rem 3.5rem 0; }
+.tmz-hero-top { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr); gap: 4rem; align-items: end; }
+.tmz-hero-meaning { margin: 0 0 1.5rem; font-size: 0.92rem; color: var(--tmz-graphite); }
+.tmz-hero-title { font-weight: 500; font-size: clamp(2.7rem, 5.4vw, 5rem); line-height: 1.05; letter-spacing: -0.045em; color: var(--tmz-soft); }
+/* Each line is a window the words rise into: clipped top and bottom only, so a long line is never cut at the side. */
+.tmz-line { display: block; padding: 0.06em 0 0.14em; margin: -0.06em 0 -0.14em; clip-path: inset(0 -100vw); }
+.tmz-line > span { display: inline-block; }
+.tmz-hero-side { padding-bottom: 0.5rem; }
+.tmz-hero-lede { margin: 0; max-width: 27rem; font-size: 1.05rem; line-height: 1.55; color: #2B2B29; }
+.tmz-hero-ctas { margin-top: 1.6rem; }
+.tmz-hero-art { max-width: 64rem; margin: 3.5rem auto 0; }
+.tmz-hero-proof {
+  margin: 3rem 0 0;
+  padding: 1.1rem 0 1.2rem;
+  border-top: 1px solid var(--tmz-hair);
+  justify-content: space-between;
+  gap: 0.6rem 2rem;
+  font-family: var(--font-sub);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tmz-graphite);
+}
+.tmz-hero-proof li::before { width: 7px; height: 7px; border-radius: 0; background: var(--tmz-yellow); box-shadow: inset 0 0 0 1px #000; }
+.tmz-hero-proof b { color: #000; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------- Illustrations (drawn in illustrations.js) ---------- */
+.tmz-il { display: block; width: 100%; height: auto; overflow: visible; }
+.tmz-il .ln { stroke: #111; stroke-width: 1.2; fill: #F8F8F6; stroke-linejoin: round; stroke-linecap: round; }
+.tmz-il .ln.open { fill: none; }
+.tmz-il .ln.thin { stroke: #5A5A55; stroke-width: 0.9; }
+.tmz-il .ln.faint { stroke: #CDCDC8; stroke-width: 0.8; }
+.tmz-il .ln.flow { stroke: #5A5A55; stroke-width: 1; stroke-dasharray: 0.035 0.035; }
+.tmz-il .ln.ghost { stroke: #A9A9A3; fill: none; stroke-dasharray: 0.02 0.02; }
+.tmz-il .ln.bold { stroke-width: 3; }
+.tmz-il .ln.hot { fill: var(--tmz-yellow); }
+.tmz-il-step .ln { stroke-width: 1; }
+.tmz-il-step .ln.thin { stroke-width: 0.75; }
+.tmz-il-step .ln.bold { stroke-width: 2.4; }
+
+/* ---------- About us: the founders, framed, under the hero ---------- */
+.tmz-founders { background: #fff; border-bottom: 1px solid var(--tmz-hair); }
+.tmz-founders-inner {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 5.5rem 3.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 33rem);
+  grid-template-rows: 1fr auto;
+  gap: 2rem 5rem;
+}
+.tmz-founders-head { grid-column: 1; grid-row: 1; }
+.tmz-founders-lead { margin: 0; max-width: 34rem; font-family: var(--font-sub); font-size: clamp(1.5rem, 2.6vw, 2.25rem); font-weight: 500; line-height: 1.22; letter-spacing: -0.03em; color: #000; }
+.tmz-founders .tmz-about-people { grid-column: 2; grid-row: 1 / span 2; padding: 1.5rem; gap: 1.25rem; }
+.tmz-about-people img { border-radius: 2px; background: #E4E4E0; }
+.tmz-founders .tmz-about-foot { grid-column: 1; grid-row: 2; align-self: end; margin-top: 0; border-top-color: var(--tmz-hair); }
+.tmz-about-foot a:first-child span { display: inline-block; transition: transform 0.3s var(--mo-ease); }
+.tmz-about-foot a:first-child:hover span { transform: translateX(4px); }
+
+/* ---------- Promise strip: a light band with boxed icons ---------- */
+.tamyiz-promise-strip { background: var(--tmz-paper); color: #000; border-bottom: 1px solid var(--tmz-hair); }
+.tamyiz-promise-grid > .tamyiz-promise-item:not([hidden]) ~ .tamyiz-promise-item:not([hidden]) { border-color: var(--tmz-hair) !important; }
+.tamyiz-promise-item strong { color: #000; text-transform: none; letter-spacing: -0.01em; font-size: 1rem; font-weight: 600; }
+.tamyiz-promise-item p { color: var(--tmz-graphite); font-size: 0.85rem; }
+.tamyiz-promise-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-top: 0;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: var(--tmz-r);
+  background: #fff;
+  color: #000;
+  transition: background-color 0.25s ease, color 0.25s ease, transform 0.35s var(--mo-ease);
+}
+
+/* ---------- Book cards ---------- */
+.tamyiz-product-card {
+  border-radius: 6px;
+  border-color: var(--tmz-hair);
+  transition: transform 0.45s var(--mo-ease), box-shadow 0.45s var(--mo-ease), border-color 0.25s ease;
+}
+.tamyiz-badge-digital { border-radius: 2px; }
+.tamyiz-badge-digital::before { border-radius: 0; background: var(--tmz-yellow); box-shadow: none; }
+.tamyiz-btn-quick-add {
+  border-radius: var(--tmz-r) !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 0.92rem !important;
+  font-weight: 600 !important;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.25s var(--mo-ease);
+}
+.tamyiz-btn-quick-add:hover { background: var(--tmz-yellow) !important; color: #000; }
+.tamyiz-btn-quick-add:active, .tamyiz-btn-preview-trigger:active { transform: scale(0.98); }
+.tamyiz-btn-preview-trigger {
+  border-radius: var(--tmz-r);
+  border-color: rgba(0, 0, 0, 0.18);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.25s var(--mo-ease);
+}
+.tamyiz-btn-preview-trigger:hover { color: #000; }
+
+/* ---------- "How we write": three cards; pinned and stepped on a laptop (motion.js adds .is-pinned) ---------- */
+.tmz-steps { padding: 5rem 0; background: #fff; border-top: 1px solid var(--tmz-hair); border-bottom: 1px solid var(--tmz-hair); }
+.tmz-steps-meta { display: none; }
+.tmz-steps-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; }
+.tmz-step { display: flex; flex-direction: column; }
+.tmz-step-art { display: grid; place-items: center; aspect-ratio: 5 / 4; padding: 2rem; }
+.tmz-step-art .tmz-il { max-width: 15rem; max-height: 100%; }
+.tmz-step-copy { padding-top: 1.5rem; }
+.tmz-step-num { display: block; margin-bottom: 0.6rem; font-family: var(--font-sub); font-size: 0.74rem; font-weight: 500; letter-spacing: 0.14em; color: var(--tmz-graphite); }
+.tmz-step-title { margin: 0 0 0.5rem; font-family: var(--font-sub); font-size: 1.35rem; font-weight: 600; letter-spacing: -0.02em; color: #000; }
+.tmz-step-desc { margin: 0; max-width: 26rem; color: var(--tmz-graphite); line-height: 1.6; }
+.tmz-steps .tamyiz-section-foot { margin-top: 3rem; }
+
+.tmz-steps.is-pinned { padding: 0 0 4.5rem; }
+.tmz-steps.is-pinned .tmz-steps-track { height: calc(100vh - 4rem + 170vh); }
+.tmz-steps.is-pinned .tmz-steps-pin { position: sticky; top: 4rem; height: calc(100vh - 4rem); display: flex; align-items: center; }
+.tmz-steps.is-pinned .tmz-steps-pin > .container { width: 100%; }
+.tmz-steps.is-pinned .tmz-steps-head { max-width: none; margin: 0 0 2rem; text-align: left; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 5rem; align-items: end; }
+.tmz-steps.is-pinned .tmz-steps-head .tmz-label { grid-column: 1 / -1; justify-self: start; }
+.tmz-steps.is-pinned .tmz-steps-head .tamyiz-section-sub { margin: 0; text-align: left; }
+.tmz-steps.is-pinned .tmz-steps-stage { --meta-top: clamp(1.5rem, 8vh, 4.5rem); position: relative; height: min(52vh, 430px); }
+.tmz-steps.is-pinned .tmz-steps-meta {
+  position: absolute;
+  top: var(--meta-top);
+  left: calc(50% + 2.5rem);
+  right: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 0.9rem;
+  font-family: var(--font-sub);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tmz-graphite);
+}
+.tmz-steps-count b { color: #000; font-weight: 600; }
+.tmz-steps-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--tmz-hair); }
+.tmz-steps-bar > i { display: block; height: 100%; background: #000; transform: scaleX(0.333); transform-origin: left center; transition: transform 0.25s ease-out; }
+.tmz-steps.is-pinned .tmz-steps-list { display: block; position: relative; height: 100%; }
+.tmz-steps.is-pinned .tmz-step {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 5rem;
+  align-items: start;
+}
+.tmz-steps.is-pinned .tmz-step-art { height: 100%; aspect-ratio: auto; }
+.tmz-steps.is-pinned .tmz-step-art .tmz-il { max-width: 19rem; }
+.tmz-steps.is-pinned .tmz-step-copy { padding-top: calc(var(--meta-top) + 3.6rem); }
+.tmz-steps.is-pinned .tmz-step-num { display: none; }
+.tmz-steps.is-pinned .tmz-step-title { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 500; letter-spacing: -0.035em; margin-bottom: 0.9rem; }
+.tmz-steps.is-pinned .tmz-step-desc { font-size: 1.05rem; }
+
+/* ---------- "Read it anywhere" ---------- */
+.tmz-formats { background: var(--tmz-paper); border-bottom: 1px solid var(--tmz-hair); }
+.tamyiz-matrix-card { border-radius: 6px; border-color: var(--tmz-hair); transition: transform 0.45s var(--mo-ease), box-shadow 0.45s var(--mo-ease); }
+.matrix-icon {
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: var(--tmz-r);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+.comp-tag { border-radius: 2px; }
+
+/* ---------- Closing line ---------- */
+.tmz-closing {
+  padding: 7.5rem 0;
+  text-align: center;
+  /* a still dot grid that clears behind the words (a plain gradient on top, no mask) */
+  background:
+    radial-gradient(ellipse 60% 75% at 50% 50%, #fff 35%, rgba(255, 255, 255, 0) 100%),
+    radial-gradient(rgba(0, 0, 0, 0.2) 1px, transparent 1.3px) 50% 50% / 22px 22px,
+    #fff;
+}
+.tmz-closing-title { max-width: 46rem; margin: 0 auto; font-family: var(--font-display); font-size: clamp(2rem, 4.4vw, 3.6rem); font-weight: 500; line-height: 1.12; letter-spacing: -0.04em; color: var(--tmz-soft); }
+.tmz-closing .tmz-hero-ctas { justify-content: center; margin-top: 2.25rem; }
+
+/* ---------- Footer: the wordmark, very large, at the bottom ---------- */
+.tmz-footer-giant { margin: 1rem 0 2.5rem; overflow: hidden; }
+.tmz-footer-giant img { display: block; width: 100%; height: auto; filter: invert(1); opacity: 0.92; }
+.tamyiz-footer-links a { transition: color 0.2s ease, transform 0.3s var(--mo-ease); }
+.tamyiz-footer { --color-red-on-dark: var(--tmz-yellow); }           /* the bold footer links (Checkout, phone) */
+.tamyiz-footer .tamyiz-trust-bar-dot { color: var(--tmz-yellow); }
+
+@media (hover: hover) {
+  .tamyiz-promise-item:hover .tamyiz-promise-icon { background: var(--tmz-yellow); border-color: #000; transform: translateY(-2px); }
+  .tamyiz-product-card:hover { transform: translateY(-6px); box-shadow: 0 30px 50px -30px rgba(0, 0, 0, 0.35); border-color: rgba(0, 0, 0, 0.22); }
+  .tamyiz-matrix-card:hover { transform: translateY(-6px); box-shadow: 0 30px 50px -32px rgba(0, 0, 0, 0.3); }
+  .tamyiz-matrix-card:hover .matrix-icon { background: var(--tmz-yellow); border-color: #000; }
+  .tamyiz-btn-quick-add:hover { transform: translateY(-1px); }
+  .tamyiz-footer-links a:hover { transform: translateX(4px); color: var(--tmz-yellow); }
+}
+/* The leaning cover (laptop with a mouse; motion.js sets --tx / --ty from the pointer). */
+@media (min-width: 640px) and (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .tamyiz-product-thumb { perspective: 900px; }
+  .tamyiz-product-thumb .tamyiz-img-primary { transition-duration: 0.5s; }
+  .tamyiz-product-card:hover .tamyiz-product-thumb .tamyiz-img-primary {
+    transform: translateY(-8px) rotateY(calc(var(--tx, 0) * 22deg)) rotateX(calc(var(--ty, 0) * -14deg)) scale(1.04);
+    box-shadow: calc(var(--tx, 0) * -30px) 34px 40px -20px rgba(0, 0, 0, 0.55), 0 6px 14px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* ---------- Motion (only when the visitor has not asked for less of it) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  /* Page arrival. `--mo-t` is the time since the visit to this page began (motion.js), so a page that is
+     drawn again a moment later (when the e-books arrive, or the bag changes) carries on instead of replaying. */
+  html.mo #main-content > * { animation: mo-page 0.4s ease-out backwards; animation-delay: calc(0ms - var(--mo-t, 0ms)); }
+  html.mo .tmz-hero-meaning { animation: mo-up 0.7s var(--mo-ease) backwards; animation-delay: calc(0ms - var(--mo-t, 0ms)); }
+  html.mo .tmz-hero .tmz-line > span { animation: mo-rise 0.9s var(--mo-ease) backwards; animation-delay: calc(60ms - var(--mo-t, 0ms)); }
+  html.mo .tmz-hero .tmz-line + .tmz-line > span { animation-delay: calc(160ms - var(--mo-t, 0ms)); }
+  html.mo .tmz-hero .tmz-mark { animation: mo-wipe 0.7s var(--mo-ease) backwards; animation-delay: calc(700ms - var(--mo-t, 0ms)); }
+  html.mo .tmz-hero .tmz-mark::before { animation: mo-corner-a 0.7s var(--mo-ease) backwards; animation-delay: calc(750ms - var(--mo-t, 0ms)); }
+  html.mo .tmz-hero .tmz-mark::after { animation: mo-corner-b 0.7s var(--mo-ease) backwards; animation-delay: calc(750ms - var(--mo-t, 0ms)); }
+  html.mo .tmz-hero-lede { animation: mo-up 0.7s var(--mo-ease) backwards; animation-delay: calc(260ms - var(--mo-t, 0ms)); }
+  html.mo .tmz-hero-ctas { animation: mo-up 0.7s var(--mo-ease) backwards; animation-delay: calc(340ms - var(--mo-t, 0ms)); }
+  html.mo .tmz-hero-proof { animation: mo-up 0.7s var(--mo-ease) backwards; animation-delay: calc(500ms - var(--mo-t, 0ms)); }
+  .tmz-btn:hover .tmz-btn-arrow { animation: mo-nudge 0.6s ease-in-out; }
+
+  /* Scroll reveals: motion.js marks the element (data-mo) and adds .is-in when it comes into view. */
+  html.mo [data-mo] { opacity: 0; transform: translateY(28px); }
+  html.mo [data-mo].is-in {
+    opacity: 1;
+    transform: none;
+    transition: opacity 0.8s var(--mo-ease), transform 0.8s var(--mo-ease);
+    transition-delay: calc(var(--mo-i, 0) * 80ms);
+  }
+  html.mo [data-mo] .tmz-mark { background-size: 0% 100%; }
+  html.mo [data-mo].is-in .tmz-mark { animation: mo-wipe 0.7s var(--mo-ease) 0.45s backwards; background-size: 100% 100%; }
+  html.mo [data-mo] .tmz-mark::before, html.mo [data-mo] .tmz-mark::after { opacity: 0; }
+  html.mo [data-mo].is-in .tmz-mark::before { animation: mo-corner-a 0.7s var(--mo-ease) 0.5s backwards; opacity: 1; }
+  html.mo [data-mo].is-in .tmz-mark::after { animation: mo-corner-b 0.7s var(--mo-ease) 0.5s backwards; opacity: 1; }
+  html.mo .tmz-footer-giant[data-mo] { opacity: 1; transform: none; }
+  html.mo .tmz-footer-giant[data-mo] img { transform: translateY(105%); }
+  html.mo .tmz-footer-giant[data-mo].is-in img { transform: none; transition: transform 1.2s var(--mo-ease); }
+
+  /* Line drawings. On phones and touch screens the whole drawing simply fades up (one cheap move). */
+  html.mo [data-draw] .tmz-il { opacity: 0; transform: translateY(16px); }
+  html.mo [data-draw].is-drawn .tmz-il { opacity: 1; transform: none; transition: opacity 0.8s var(--mo-ease) var(--il-wait, 0ms), transform 0.8s var(--mo-ease) var(--il-wait, 0ms); }
+  html.mo [data-draw].is-drawn.is-instant .tmz-il { transition: none; }
+  .tmz-hero-art { --il-wait: 200ms; --il-step: 7ms; }
+}
+/* On a laptop with a mouse every line draws itself, one after another (--d is the line's number), and the loose
+   pages drift into place once. Kept off phones: animating ~100 lines at once is main-thread work, and on a slow
+   phone it added about 150 ms of blocked time while the page was loading (measured 14 Nov 2026). */
+@media (prefers-reduced-motion: no-preference) and (min-width: 900px) and (hover: hover) and (pointer: fine) {
+  html.mo [data-draw] .tmz-il { opacity: 1; transform: none; }
+  html.mo [data-draw] .ln { stroke-dasharray: 1; stroke-dashoffset: 1; fill-opacity: 0; }
+  html.mo [data-draw] .ln.flow, html.mo [data-draw] .ln.ghost { stroke-dashoffset: 0; opacity: 0; }
+  html.mo [data-draw] .ln.flow { stroke-dasharray: 0.035 0.035; }
+  html.mo [data-draw] .ln.ghost { stroke-dasharray: 0.02 0.02; }
+  html.mo [data-draw].is-drawn .ln {
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+    opacity: 1;
+    transition:
+      stroke-dashoffset 1.1s var(--mo-ease) calc(var(--il-wait, 0ms) + var(--d) * var(--il-step, 14ms)),
+      fill-opacity 0.5s ease calc(var(--il-wait, 0ms) + var(--d) * var(--il-step, 14ms) + 350ms),
+      opacity 0.6s ease calc(var(--il-wait, 0ms) + var(--d) * var(--il-step, 14ms));
+  }
+  html.mo [data-draw].is-drawn.is-instant .ln { transition: none; }
+  html.mo [data-draw] .il-float { transform: translateY(18px); }
+  html.mo [data-draw].is-drawn .il-float { transform: none; transition: transform 1.6s var(--mo-ease) calc(var(--il-wait, 0ms) + var(--f, 0) * 60ms); }
+  html.mo [data-draw].is-drawn.is-instant .il-float { transition: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* The pinned steps: one shows, the others wait above or below. */
+  html.mo .tmz-steps.is-pinned .tmz-step { opacity: 0; transform: translateY(26px); pointer-events: none; transition: opacity 0.45s ease, transform 0.6s var(--mo-ease); }
+  html.mo .tmz-steps.is-pinned .tmz-step.is-past { transform: translateY(-26px); }
+  html.mo .tmz-steps.is-pinned .tmz-step.is-active { opacity: 1; transform: none; pointer-events: auto; }
+}
+@keyframes mo-page { from { opacity: 0; } }
+@keyframes mo-up { from { opacity: 0; transform: translateY(22px); } }
+@keyframes mo-rise { from { transform: translateY(115%); } }
+@keyframes mo-corner-a { from { opacity: 0; transform: translate(0.45em, 0.45em); } }
+@keyframes mo-corner-b { from { opacity: 0; transform: translate(-0.45em, -0.45em); } }
+@keyframes mo-wipe { from { background-size: 0% 100%; } }
+@keyframes mo-nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+@media print { html.mo [data-mo] { opacity: 1 !important; transform: none !important; } .tmz-progress, .tmz-dots { display: none; } }
+
+/* Tablets and small laptops: the hero and the founders stack */
+@media (max-width: 1099px) {
+  .tmz-hero-inner { padding: 3.5rem 2rem 0; }
+  .tmz-hero-top { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; align-items: start; }
+  .tmz-hero-title { font-size: clamp(2.7rem, 8vw, 4.6rem); }
+  .tmz-hero-lede { max-width: 34rem; }
+  .tmz-founders-inner { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; padding: 4rem 2rem; gap: 2rem; }
+  .tmz-founders-head, .tmz-founders .tmz-about-people, .tmz-founders .tmz-about-foot { grid-column: 1; grid-row: auto; }
+  .tmz-founders .tmz-about-people { max-width: 36rem; }
+}
+@media (max-width: 899px) {
+  .tmz-steps-list { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+  .tmz-step { display: grid; grid-template-columns: 11rem minmax(0, 1fr); column-gap: 1.5rem; align-items: center; }
+  .tmz-step-art { padding: 1.25rem; }
+  .tmz-step-copy { padding-top: 0; }
+}
+/* PHONES (up to 639px) */
+@media (max-width: 639px) {
+  .tmz-hero-inner { padding: 2.25rem 1rem 0; }
+  .tmz-hero-meaning { margin-bottom: 1rem; font-size: 0.85rem; }
+  .tmz-hero-title { font-size: 2.6rem; }
+  .tmz-hero-lede { font-size: 1.02rem; }
+  .tmz-hero-ctas { margin-top: 1.4rem; }
+  .tmz-hero-art { margin-top: 2.25rem; }
+  .tmz-il-hero .ln { stroke-width: 2.4; }      /* the drawing is shown at about a third of its size here */
+  .tmz-il-hero .ln.thin { stroke-width: 1.7; }
+  .tmz-il-hero .ln.faint { stroke-width: 1.6; }
+  .tmz-il-hero .ln.flow { stroke-width: 2; }
+  .tmz-hero-proof { margin-top: 2rem; justify-content: flex-start; gap: 0.5rem 1.25rem; font-size: 0.7rem; }
+  .tmz-founders-inner { padding: 2.5rem 1rem; gap: 1.5rem; }
+  .tmz-founders .tmz-about-people { padding: 1rem; gap: 0.75rem; }
+  .tmz-steps { padding: 2.5rem 0; }
+  .tmz-step { grid-template-columns: 6.5rem minmax(0, 1fr); column-gap: 1rem; }
+  .tmz-step-art { padding: 0.9rem; }
+  .tmz-step-title { font-size: 1.15rem; }
+  .tmz-step-desc { font-size: 0.92rem; }
+  .tmz-steps .tamyiz-section-foot { margin-top: 2rem; }
+  .tamyiz-promise-icon, .matrix-icon { width: 38px; height: 38px; }
+  .tmz-closing { padding: 4rem 0; }
+  .tmz-closing .tmz-hero-ctas { flex-direction: column; align-items: stretch; padding: 0 1rem; }
+  .tmz-closing .tmz-btn { justify-content: center; }
+  .tmz-footer-giant { margin: 0.5rem 0 1.5rem; }
+}
+/* Inner page banners match the hero: paper, medium weight. */
+.tamyiz-page-header { background: var(--tmz-paper); border-bottom: 1px solid var(--tmz-hair); }
+.tamyiz-page-title { font-weight: 500; letter-spacing: -0.045em; }

@@ -28,6 +28,7 @@ import { renderCheckoutPage } from './pages/checkout-page.js';
 import { renderLegalPage, legalDocs } from './pages/legal-page.js';
 import { AdminController } from './pages/admin-page.js';
 import { openVideoModal } from './components/video-modal.js';
+import { initMotion } from './motion.js';
 
 /** localStorage that never throws (private mode / blocked site data). */
 const safeGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -587,6 +588,8 @@ class TamyizUnifiedApp {
               </ul>
             </div>
           </div>
+
+          <div class="tmz-footer-giant" aria-hidden="true"><img src="/assets/brand/tamyiz-wordmark.svg" alt="" width="1200" height="200" loading="lazy" /></div>
 
           <div class="tamyiz-footer-bottom">
             <div>
@@ -3100,11 +3103,13 @@ class TamyizUnifiedApp {
   }
 }
 
-// Safe DOM-ready instantiation
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    if (!window.tamyizApp) window.tamyizApp = new TamyizUnifiedApp();
-  });
-} else {
+// Safe DOM-ready instantiation. The motion layer is decoration only: if it fails, the shop must still work.
+function startApp() {
   if (!window.tamyizApp) window.tamyizApp = new TamyizUnifiedApp();
+  try { initMotion(); } catch (err) { console.warn('Motion layer off:', err); document.documentElement.classList.remove('mo'); }
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startApp);
+} else {
+  startApp();
 }

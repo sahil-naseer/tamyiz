@@ -3,43 +3,61 @@
  * how the e-books are made, and how to read them on each device.
  */
 
-const kicker = (text) => `<span style="color: var(--color-red-ink); font-family: var(--font-sub); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; display: inline-block; margin-bottom: 0.5rem;">${text}</span>`;
+import { stepArt } from '../illustrations.js';
 
+const kicker = (text) => `<span class="tmz-label">${text}</span>`;
+
+const promises = [
+  ['Practical, not padded', 'Every chapter ends with something you can do today. No filler written to reach a page count.'],
+  ['Plain English', 'Written for beginners, with real examples and short sections that read easily on a phone.'],
+  ['Yours instantly', 'A DRM-free PDF you download right after paying. Keep it, read it on any device, print the pages you need.'],
+];
+
+/**
+ * "How we write": three promises. Plain markup = three cards side by side (stacked on phones).
+ * On a laptop the motion layer pins the section and steps 01 → 02 → 03 as you scroll (see `steps()` in motion.js).
+ */
 export function principlesSection({ id = '', withButton = true } = {}) {
   return `
-      <section ${id ? `id="${id}"` : ''} class="tamyiz-section py-14 md:py-24 scroll-mt-24" style="background: #FFFFFF; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border);">
+      <section ${id ? `id="${id}"` : ''} class="tamyiz-section tmz-steps scroll-mt-24" data-steps>
+        <div class="tmz-steps-track">
+          <div class="tmz-steps-pin">
+            <div class="container">
+              <div class="tamyiz-section-head tmz-steps-head">
+                ${kicker('How we write')}
+                <h2 class="tamyiz-section-title">Three promises in every book</h2>
+                <p class="tamyiz-section-sub">Short, clear and useful. If a page doesn't help you do something, it doesn't go in.</p>
+              </div>
+              <div class="tmz-steps-stage">
+              <div class="tmz-steps-meta" aria-hidden="true">
+                <span>Our promise</span>
+                <span class="tmz-steps-count"><b>01</b> / 0${promises.length}</span>
+                <i class="tmz-steps-bar"><i></i></i>
+              </div>
+              <ol class="tmz-steps-list">
+                ${promises.map(([title, text], i) => `
+                <li class="tmz-step${i === 0 ? ' is-active' : ''}">
+                  <div class="tmz-frame tmz-step-art" data-draw>${stepArt[i]()}</div>
+                  <div class="tmz-step-copy">
+                    <span class="tmz-step-num" aria-hidden="true">0${i + 1}</span>
+                    <h3 class="tmz-step-title">${title}</h3>
+                    <p class="tmz-step-desc">${text}</p>
+                  </div>
+                </li>`).join('')}
+              </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+        ${withButton ? `
         <div class="container">
-          <div class="tamyiz-section-head">
-            ${kicker('How we write')}
-            <h2 class="tamyiz-section-title">Three promises in every book</h2>
-            <p class="tamyiz-section-sub">Short, clear and useful. If a page doesn't help you do something, it doesn't go in.</p>
-          </div>
-
-          <div class="tamyiz-values-grid grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8" style="margin-top: 0;">
-            <div class="tamyiz-value-card">
-              <div class="tamyiz-value-num">01</div>
-              <h3 class="tamyiz-value-title">Practical, not padded</h3>
-              <p class="tamyiz-value-desc">Every chapter ends with something you can do today. No filler written to reach a page count.</p>
-            </div>
-            <div class="tamyiz-value-card">
-              <div class="tamyiz-value-num">02</div>
-              <h3 class="tamyiz-value-title">Plain English</h3>
-              <p class="tamyiz-value-desc">Written for beginners, with real examples and short sections that read easily on a phone.</p>
-            </div>
-            <div class="tamyiz-value-card">
-              <div class="tamyiz-value-num">03</div>
-              <h3 class="tamyiz-value-title">Yours instantly</h3>
-              <p class="tamyiz-value-desc">A DRM-free PDF you download right after paying. Keep it, read it on any device, print the pages you need.</p>
-            </div>
-          </div>
-          ${withButton ? `
           <div class="tamyiz-section-foot">
             <a class="tamyiz-btn-nav-outline" href="/#format-guide" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#format-guide')">
               <span>How to read on your device</span>
               <span>→</span>
             </a>
-          </div>` : ''}
-        </div>
+          </div>
+        </div>` : ''}
       </section>`;
 }
 
@@ -61,7 +79,7 @@ const svg = (paths) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="no
 
 export function formatGuideSection({ id = 'format-guide' } = {}) {
   return `
-      <section id="${id}" class="tamyiz-section py-14 md:py-24 scroll-mt-24" style="background: var(--color-offwhite); border-bottom: 1px solid var(--color-border);">
+      <section id="${id}" class="tamyiz-section tmz-formats py-14 md:py-24 scroll-mt-24">
         <div class="container">
           <div class="tamyiz-section-head">
             ${kicker('Format guide')}

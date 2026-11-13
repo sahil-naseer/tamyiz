@@ -147,6 +147,53 @@ The contact form has no mail server: it opens WhatsApp with the message filled i
   phones stutter (100 ms frames). Only the header keeps a glass blur (lighter on touch screens). Never use
   `transition: all`; list the properties (opacity, transform, colours...).
 
+## Redesign 14 Nov 2026: "paper and hairlines" (approved by Sahil and pushed to `main` on 14 Nov 2026)
+
+Look taken from a reference Sahil picked (Zajno's Zettafleet shot on Dribbble), redrawn for TAMYIZ: light paper
+background, thin lines, square corners, small `[ BRACKETED ]` labels (`.tmz-label`), corner brackets round the key
+words of a headline (`.tmz-mark`), frames with crosshair corners (`.tmz-frame`). Still Inter + Space Grotesk.
+Colour (Sahil's call, 14 Nov 2026): black, white and ONE accent, highlighter yellow `--tmz-yellow` (#FFD60A). This
+replaces "black and white only" above. Yellow is only a background or fill behind black (the highlighted headline
+words, the one thing that matters in each drawing, button and icon hovers, the progress line, small squares, bold
+footer links). Never yellow text on a light background (unreadable). The logo's red and the covers stay as they are. All of it is in the "REDESIGN 14 Nov 2026" block at the end of tamyiz-unified.css (new rules
+go there; its phone rules are at the end of that block).
+
+- Home, top to bottom: hero (meaning line, headline "Learn to tell ⌜the difference.⌟", lede + two buttons on the
+  right, a line drawing of loose pages passing through a lens into one tidy stack, proof line) → "About us" panel
+  with both founders (moved out of the hero; same portraits, quotes and links) → promise strip (now light) → latest
+  e-books → "How we write" → "Read it anywhere" → closing line (wording depends on `anyAvailable()`) → footer with
+  the wordmark very large. This replaces the 24 Oct hero layout above; the hero is still not tied to any product
+  and still has no logo or book covers in it.
+- `src/scripts/illustrations.js`: the line drawings, made in code (no image files). Original drawings; do not copy
+  the reference's artwork.
+- `src/scripts/motion.js` (started from `startApp()` in tamyiz-unified-app.js): scroll reveals, drawings that draw
+  themselves, the dot grid behind the hero (reacts to the mouse), numbers that count up, book covers that lean
+  toward the mouse, the yellow progress line at the top, and the pinned "How we write" section (on screens at least
+  1024 x 640 it stays put and steps 01 → 03 as you scroll; otherwise three plain cards).
+  Rules: it is decoration only (the page must work if it fails); nothing is hidden unless it has run (`html.mo`);
+  "reduce motion" turns all of it off; animate only opacity, transform and line drawing; the app redraws pages
+  with innerHTML, so `--mo-t` (time since the page was opened) keeps a redraw from replaying the arrival animation.
+- Smoothness (measured 14 Nov 2026, home page, processor slowed 4x on a laptop size and 6x on a phone size): the
+  first version ran at 27-29 frames a second while scrolling (the live site: 60). Three things caused it: a canvas
+  that redrew every dot on every frame, SVG animations that looped forever, and the frosted (blurred) header now
+  that it really sticks. Fixed: 60 frames a second while scrolling, 53-57 during the opening drawing. Rules that
+  keep it there: NOTHING loops forever (animations run once, or only while the visitor scrolls or moves the mouse);
+  no `backdrop-filter` and no `mask-image` over moving content; the header is solid paper, not glass (this replaces
+  "frosted glass: the header only" above); the hero's dot grid is a still CSS background and the canvas only draws
+  the few dots near the mouse while it moves. Re-measure with the same method before adding any new animation.
+- Sticky header fix: `body` and `#app` had `overflow-x: hidden`, which silently stopped `position: sticky` (the
+  header scrolled away). They are now `overflow-x: clip`. Do not put `overflow: hidden/auto` on an ancestor of the
+  header or of `.tmz-steps-pin`.
+- Checked 14 Nov 2026 (local): `npm test` 77 of 77, `npm audit` 0, axe 0 violations on home, /editions, an e-book
+  page, /atelier, /philosophy, a policy page, /checkout, /downloads (laptop and phone). /films with no films has one
+  older axe note (heading order in the empty state: an h3 with no h2 before it; still to fix).
+  Lighthouse mobile, local build, median of 5 runs: home performance 92 (the 24 Oct design scored 94 on the same
+  machine), /editions 92, an e-book page 94; accessibility, best practices and SEO 100 on all three; CLS 0 to 0.06.
+- Phones and touch screens get a lighter version on purpose: each drawing fades up as one piece (no line-by-line
+  drawing), numbers do not count up, and nothing follows the finger. Line-by-line drawing is for screens 900px and
+  wider with a mouse. Do not read `window.innerWidth`, `scrollHeight` or `getBoundingClientRect()` in code that runs
+  on every redraw: it forces the whole page to be laid out early (this cost about 50 ms on a slow phone).
+
 ## Phone layout and shared content (24 Oct 2026)
 
 - Phones (<640px): one spacing scale in the "PHONES (up to 639px)" blocks at the end of tamyiz-unified.css: sections
