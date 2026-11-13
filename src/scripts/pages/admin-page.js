@@ -109,11 +109,11 @@ export class AdminController {
     this.activeTab = allowed.includes(subRoute) ? subRoute : 'overview';
 
     container.innerHTML = `
-      <div class="tmz-admin-root" style="min-height: 85vh; background: #F2F2EF; color: #0B0B0B; font-family: var(--font-body, system-ui, sans-serif);">
-        <div id="tmz-admin-content" style="max-width: 1240px; margin: 0 auto; padding: 24px 16px 80px;">
-          <div style="text-align: center; padding: 60px 0;">
-            <p style="font-family: var(--font-head); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; color: #5E5E59;">TAMYIZ™ Administrative Portal</p>
-            <p style="color: #71716D; font-size: 15px; margin-top: 8px;">Authenticating secure session…</p>
+      <div class="tmz-admin-root">
+        <div id="tmz-admin-content" class="tmz-admin-container">
+          <div class="tmz-admin-loading tmz-frame">
+            <p class="tmz-label">TAMYIZ // ADMIN CONSOLE</p>
+            <p>Authenticating secure session…</p>
           </div>
         </div>
       </div>
@@ -133,29 +133,34 @@ export class AdminController {
     if (!mount) return;
 
     mount.innerHTML = `
-      <div class="tmz-admin-login-card" style="max-width: 420px; margin: 8vh auto 0; background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 24px; padding: 32px 28px; box-shadow: 0 20px 45px -20px rgba(0,0,0,0.2);">
-        <div style="width: 48px; height: 48px; border-radius: 14px; background: #0B0B0B; display: grid; place-items: center; margin-bottom: 20px;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <div class="tmz-admin-login-card tmz-frame">
+        <div class="tmz-admin-eyebrow-row">
+          <span class="tmz-label">RESTRICTED ACCESS</span>
+          <span class="tmz-admin-tag-yellow">INTERNAL DESK</span>
+        </div>
+
+        <div class="tmz-admin-login-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="4" y="11" width="16" height="10" rx="2"></rect>
             <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
           </svg>
         </div>
-        <p style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #5E5E59; margin: 0 0 6px;">TAMYIZ™ Console</p>
-        <h1 style="font-family: var(--font-head); font-weight: 700; font-size: 26px; line-height: 1.2; letter-spacing: -0.5px; margin: 0 0 8px; color: #0B0B0B;">Administrator Access</h1>
-        <p style="color: #5E5E59; font-size: 14px; margin: 0 0 24px; line-height: 1.45;">Enter your administrative password to manage the store catalog, customer orders, and operations.</p>
+
+        <h1 class="tmz-admin-login-title">TAMYIZ <span class="tmz-mark">Admin Console</span></h1>
+        <p class="tmz-admin-login-sub">Enter your administrative password to manage the e-book catalog, customer fulfillment, and editorial operations.</p>
         
         <form id="tmz-admin-login-form">
-          <div id="tmz-admin-pass-group">
-            <label for="tmz-admin-pass" style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 8px;">Master Password</label>
-            <input type="password" id="tmz-admin-pass" autocomplete="current-password" required placeholder="Enter password…" style="width: 100%; box-sizing: border-box; font-size: 15px; padding: 12px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 12px; background: #FFFFFF; color: #0B0B0B; outline: none; margin-bottom: 14px;" />
+          <div id="tmz-admin-pass-group" class="tmz-admin-field">
+            <label for="tmz-admin-pass" class="tmz-admin-field-label">Master Password</label>
+            <input type="password" id="tmz-admin-pass" class="tmz-admin-input" autocomplete="current-password" required placeholder="Enter password…" />
           </div>
-          <div id="tmz-admin-otp-group" style="display: none; margin-bottom: 14px;">
-            <label for="tmz-admin-otp" style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">6-Digit Email Security Code</label>
-            <p id="tmz-admin-otp-hint" style="font-size: 12px; color: #1E7B2E; margin: 0 0 8px; font-weight: 500;"></p>
-            <input type="text" id="tmz-admin-otp" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="123456" style="width: 100%; box-sizing: border-box; font-family: monospace; font-size: 22px; font-weight: 700; letter-spacing: 6px; text-align: center; padding: 12px 14px; border: 1.5px solid #0B0B0B; border-radius: 12px; background: #F7F7F5; color: #0B0B0B; outline: none;" />
+          <div id="tmz-admin-otp-group" class="tmz-admin-field" style="display: none;">
+            <label for="tmz-admin-otp" class="tmz-admin-field-label">6-Digit Email Security Code</label>
+            <p id="tmz-admin-otp-hint" style="font-size: 12px; color: #166224; margin: 0 0 8px; font-weight: 500;"></p>
+            <input type="text" id="tmz-admin-otp" class="tmz-admin-input tmz-admin-otp-input" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="123456" />
           </div>
-          <div id="tmz-admin-login-msg" style="margin-bottom: 14px; font-size: 14px; font-weight: 500;"></div>
-          <button type="submit" id="tmz-admin-login-btn" style="width: 100%; font-family: var(--font-head); font-weight: 600; font-size: 15px; border-radius: 999px; padding: 12px 20px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer; transition: background 0.15s ease;">Sign In to Dashboard</button>
+          <div id="tmz-admin-login-msg" class="tmz-admin-msg"></div>
+          <button type="submit" id="tmz-admin-login-btn" class="tmz-admin-btn tmz-admin-btn-primary tmz-admin-btn-block">Sign In to Dashboard</button>
         </form>
       </div>
     `;
@@ -216,46 +221,49 @@ export class AdminController {
     const mount = document.getElementById('tmz-admin-content');
     if (!mount) return;
 
+    const tabs = [
+      { id: 'overview', idx: '01', label: 'Overview' },
+      { id: 'products', idx: '02', label: 'E-Books & Catalog' },
+      { id: 'films', idx: '03', label: 'Films' },
+      { id: 'orders', idx: '04', label: 'Orders' },
+      { id: 'abandoned', idx: '05', label: 'Abandoned Bags' },
+      { id: 'coupons', idx: '06', label: 'Coupons' },
+      { id: 'leads', idx: '07', label: 'Sample Leads' },
+      { id: 'reviews', idx: '08', label: 'Reviews' },
+      { id: 'announcement', idx: '09', label: 'Banner' },
+      { id: 'customers', idx: '10', label: 'Customers' },
+      { id: 'analytics', idx: '11', label: 'Analytics' },
+      { id: 'settings', idx: '12', label: 'Settings' }
+    ];
+
     mount.innerHTML = `
       <!-- Admin Top Bar -->
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(11,11,11,0.1); padding-bottom: 18px; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <span style="display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-head); font-weight: 700; font-size: 20px; letter-spacing: -0.4px;">
-            <span style="background: #0B0B0B; color: #FFFFFF; font-size: 11px; padding: 3px 8px; border-radius: 999px; letter-spacing: 1px; text-transform: uppercase;">ADMIN</span>
-            TAMYIZ™ Operations
-          </span>
-          <a href="/" target="_blank" style="font-size: 13px; font-weight: 500; color: #5E5E59; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: rgba(11,11,11,0.05);">
+      <header class="tmz-admin-topbar tmz-frame">
+        <div class="tmz-admin-topbar-left">
+          <p class="tmz-label">TAMYIZ // INTERNAL CONSOLE</p>
+          <h1 class="tmz-admin-topbar-title">Storefront &amp; <span class="tmz-mark">Publishing Desk</span></h1>
+          <p class="tmz-admin-topbar-sub">Manage digital monographs, pricing, customer fulfillment, and editorial operations.</p>
+        </div>
+        <div class="tmz-admin-topbar-actions">
+          <span class="tmz-admin-tag-yellow"><i class="tmz-admin-live-dot"></i> SESSION ACTIVE</span>
+          <a href="/" target="_blank" rel="noopener noreferrer" class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">
             Storefront ↗
           </a>
-        </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <button id="tmz-admin-logout" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; border-radius: 999px; padding: 8px 16px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; color: #0B0B0B; cursor: pointer;">
+          <button id="tmz-admin-logout" type="button" class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">
             Log out
           </button>
         </div>
-      </div>
+      </header>
 
       <!-- Navigation Tabs -->
-      <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 24px; border-bottom: 1px solid rgba(11,11,11,0.08);">
-        ${[
-          { id: 'overview', label: 'Overview' },
-          { id: 'products', label: 'E-Books & Catalog' },
-          { id: 'films', label: 'Films & Video Showcase' },
-          { id: 'orders', label: 'Orders & Payments' },
-          { id: 'abandoned', label: 'Abandoned Bags' },
-          { id: 'coupons', label: 'Coupons & Discounts' },
-          { id: 'leads', label: 'Sample Leads' },
-          { id: 'reviews', label: 'Reader Reviews' },
-          { id: 'announcement', label: 'Store Banner' },
-          { id: 'customers', label: 'Customers' },
-          { id: 'analytics', label: 'Visitor Analytics' },
-          { id: 'settings', label: 'Diagnostics & Settings' }
-        ].map((t) => `
-          <button type="button" class="tmz-admin-tab-btn" data-tab="${t.id}" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; padding: 10px 18px; border-radius: 999px; border: 1.5px solid ${this.activeTab === t.id ? '#0B0B0B' : 'transparent'}; background: ${this.activeTab === t.id ? '#0B0B0B' : 'transparent'}; color: ${this.activeTab === t.id ? '#FFFFFF' : '#5E5E59'}; cursor: pointer; white-space: nowrap; transition: all 0.15s ease;">
-            ${t.label}
+      <nav class="tmz-admin-tabs" aria-label="Admin sections">
+        ${tabs.map((t) => `
+          <button type="button" class="tmz-admin-tab-btn ${this.activeTab === t.id ? 'is-active' : ''}" data-tab="${t.id}">
+            <span class="tmz-admin-tab-idx">${t.idx}</span>
+            <span>${t.label}</span>
           </button>
         `).join('')}
-      </div>
+      </nav>
 
       <!-- Dynamic Tab Mount -->
       <div id="tmz-admin-tab-body"></div>
@@ -281,10 +289,7 @@ export class AdminController {
     this.activeTab = tab;
     const btns = this.container.querySelectorAll('.tmz-admin-tab-btn');
     btns.forEach((b) => {
-      const isCur = b.dataset.tab === tab;
-      b.style.borderColor = isCur ? '#0B0B0B' : 'transparent';
-      b.style.background = isCur ? '#0B0B0B' : 'transparent';
-      b.style.color = isCur ? '#FFFFFF' : '#5E5E59';
+      b.classList.toggle('is-active', b.dataset.tab === tab);
     });
     this.renderActiveTab();
   }
@@ -293,7 +298,12 @@ export class AdminController {
     const tabBody = document.getElementById('tmz-admin-tab-body');
     if (!tabBody) return;
 
-    tabBody.innerHTML = `<p style="color: #5E5E59; font-size: 14px; padding: 24px 0;">Loading data…</p>`;
+    tabBody.innerHTML = `
+      <div class="tmz-admin-loading">
+        <p class="tmz-label">LOADING SECTION</p>
+        <p>Fetching latest store records…</p>
+      </div>
+    `;
 
     switch (this.activeTab) {
       case 'overview':
@@ -342,74 +352,90 @@ export class AdminController {
     const kpis = data.kpis || {};
 
     mount.innerHTML = `
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; padding: 20px 22px;">
-          <span style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #5E5E59; display: block; margin-bottom: 8px;">Gross Revenue</span>
-          <b style="font-family: var(--font-head); font-size: 34px; font-weight: 700; color: #0B0B0B; letter-spacing: -1px; display: block;">₹${Number(kpis.totalRevenueINR || 0).toLocaleString('en-IN')}</b>
-          <span style="font-size: 13px; color: #1E7B2E; font-weight: 500; display: block; margin-top: 4px;">Verified payments</span>
+      <div class="tmz-admin-kpi-grid">
+        <div class="tmz-admin-kpi-card tmz-admin-kpi-card--ink">
+          <div class="tmz-admin-kpi-label">
+            <span>01 // Gross Revenue</span>
+            <span class="tmz-admin-tag-yellow">LIVE</span>
+          </div>
+          <b class="tmz-admin-kpi-val">₹${Number(kpis.totalRevenueINR || 0).toLocaleString('en-IN')}</b>
+          <span class="tmz-admin-kpi-sub">Verified payments settled</span>
         </div>
 
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; padding: 20px 22px;">
-          <span style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #5E5E59; display: block; margin-bottom: 8px;">Total Orders</span>
-          <b style="font-family: var(--font-head); font-size: 34px; font-weight: 700; color: #0B0B0B; letter-spacing: -1px; display: block;">${Number(kpis.totalOrders || 0).toLocaleString('en-IN')}</b>
-          <span style="font-size: 13px; color: #5E5E59; display: block; margin-top: 4px;">Fulfilled digital deliveries</span>
+        <div class="tmz-admin-kpi-card">
+          <div class="tmz-admin-kpi-label"><span>02 // Total Orders</span></div>
+          <b class="tmz-admin-kpi-val">${Number(kpis.totalOrders || 0).toLocaleString('en-IN')}</b>
+          <span class="tmz-admin-kpi-sub">Fulfilled digital deliveries</span>
         </div>
 
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; padding: 20px 22px;">
-          <span style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #5E5E59; display: block; margin-bottom: 8px;">Unique Buyers</span>
-          <b style="font-family: var(--font-head); font-size: 34px; font-weight: 700; color: #0B0B0B; letter-spacing: -1px; display: block;">${Number(kpis.totalCustomers || 0).toLocaleString('en-IN')}</b>
-          <span style="font-size: 13px; color: #5E5E59; display: block; margin-top: 4px;">Customer profiles</span>
+        <div class="tmz-admin-kpi-card">
+          <div class="tmz-admin-kpi-label"><span>03 // Unique Buyers</span></div>
+          <b class="tmz-admin-kpi-val">${Number(kpis.totalCustomers || 0).toLocaleString('en-IN')}</b>
+          <span class="tmz-admin-kpi-sub">Verified customer profiles</span>
         </div>
 
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; padding: 20px 22px;">
-          <span style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #5E5E59; display: block; margin-bottom: 8px;">Active E-Books</span>
-          <b style="font-family: var(--font-head); font-size: 34px; font-weight: 700; color: #0B0B0B; letter-spacing: -1px; display: block;">${kpis.onSaleProducts || 0} / ${kpis.totalProducts || 0}</b>
-          <span style="font-size: 13px; color: #5E5E59; display: block; margin-top: 4px;">Available in shop</span>
+        <div class="tmz-admin-kpi-card">
+          <div class="tmz-admin-kpi-label"><span>04 // Active E-Books</span></div>
+          <b class="tmz-admin-kpi-val">${kpis.onSaleProducts || 0} / ${kpis.totalProducts || 0}</b>
+          <span class="tmz-admin-kpi-sub">Editions available in shop</span>
         </div>
       </div>
 
       <!-- Quick Actions and Best Sellers -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 20px; padding: 24px;">
-          <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0 0 16px; color: #0B0B0B;">Fast Administrative Actions</h2>
-          <div style="display: flex; flex-direction: column; gap: 10px;">
-            <button id="tmz-action-add-book" type="button" style="text-align: left; padding: 14px 18px; border-radius: 14px; border: 1.5px solid rgba(11,11,11,0.12); background: #F7F7F5; font-family: var(--font-head); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s ease;">
-              + Add New E-Book Guide
+      <div class="tmz-admin-overview-grid">
+        <div class="tmz-admin-panel tmz-frame">
+          <p class="tmz-label">QUICK DISPATCH</p>
+          <h2 class="tmz-admin-panel-title" style="margin-bottom: 16px;">Fast Administrative Actions</h2>
+          <div class="tmz-admin-action-stack">
+            <button id="tmz-action-add-book" type="button" class="tmz-admin-quick-btn">
+              <span>+ Add New E-Book Guide</span>
+              <span aria-hidden="true">→</span>
             </button>
-            <button id="tmz-action-gift-book" type="button" style="text-align: left; padding: 14px 18px; border-radius: 14px; border: 1.5px solid rgba(11,11,11,0.12); background: #F7F7F5; font-family: var(--font-head); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s ease;">
-              🎁 Send Free Gift / Reviewer Link
+            <button id="tmz-action-gift-book" type="button" class="tmz-admin-quick-btn">
+              <span>Send Free Gift / Reviewer Link</span>
+              <span aria-hidden="true">→</span>
             </button>
-            <button id="tmz-action-coupons" type="button" style="text-align: left; padding: 14px 18px; border-radius: 14px; border: 1.5px solid rgba(11,11,11,0.12); background: #F7F7F5; font-family: var(--font-head); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s ease;">
-              🏷️ Create / Manage Discount Coupons
+            <button id="tmz-action-coupons" type="button" class="tmz-admin-quick-btn">
+              <span>Create / Manage Discount Coupons</span>
+              <span aria-hidden="true">→</span>
             </button>
-            <button id="tmz-action-banner" type="button" style="text-align: left; padding: 14px 18px; border-radius: 14px; border: 1.5px solid rgba(11,11,11,0.12); background: #F7F7F5; font-family: var(--font-head); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.15s ease;">
-              📢 Update Store Announcement Banner
+            <button id="tmz-action-banner" type="button" class="tmz-admin-quick-btn">
+              <span>Update Store Announcement Banner</span>
+              <span aria-hidden="true">→</span>
             </button>
           </div>
         </div>
 
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 20px; padding: 24px;">
-          <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0 0 16px; color: #0B0B0B;">Catalog Status & Sales</h2>
+        <div class="tmz-admin-panel">
+          <div class="tmz-admin-panel-head">
+            <div>
+              <p class="tmz-label" style="margin-bottom: 4px;">SALES LEDGER</p>
+              <h2 class="tmz-admin-panel-title">Catalog Status &amp; Sales</h2>
+            </div>
+            <button type="button" id="tmz-overview-catalog-btn" class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">Manage →</button>
+          </div>
           ${(data.bestSellers && data.bestSellers.length) ? `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="tmz-admin-ledger-list">
               ${data.bestSellers.map((b) => `
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(11,11,11,0.06); padding-bottom: 8px;">
-                  <div>
-                    <strong style="font-family: var(--font-head); font-size: 14px; display: block; color: #0B0B0B;">${escapeText(b.name)}</strong>
-                    <span style="font-size: 12px; color: #5E5E59;">Status: ${STATUS_MAP[b.status] || b.status} · ₹${b.price}</span>
+                <div class="tmz-admin-ledger-row">
+                  <div style="min-width: 0;">
+                    <strong style="font-family: var(--font-head); font-weight: 600; font-size: 14.5px; display: block; color: #0B0B0B;">${escapeText(b.name)}</strong>
+                    <span style="font-size: 12px; color: var(--tmz-graphite, #55554F);">${STATUS_MAP[b.status] || b.status} · ₹${b.price}</span>
                   </div>
-                  <span style="font-family: var(--font-head); font-weight: 600; font-size: 13px; background: rgba(11,11,11,0.06); padding: 4px 10px; border-radius: 999px;">
+                  <span class="tmz-admin-status ${b.sales > 0 ? 'tmz-admin-status--warn' : 'tmz-admin-status--muted'}">
                     ${b.sales} sold
                   </span>
                 </div>
               `).join('')}
             </div>
           ` : `
-            <p style="color: #5E5E59; font-size: 14px; margin: 0;">No sales recorded yet. Once orders are fulfilled, top-selling e-books will appear here.</p>
+            <p style="color: var(--tmz-graphite, #55554F); font-size: 14px; margin: 0;">No sales recorded yet. Once orders are fulfilled, top-selling e-books will appear here.</p>
           `}
         </div>
       </div>
     `;
+
+    document.getElementById('tmz-overview-catalog-btn')?.addEventListener('click', () => this.switchTab('products'));
 
     document.getElementById('tmz-action-add-book')?.addEventListener('click', () => {
       this.switchTab('products');
@@ -432,64 +458,70 @@ export class AdminController {
 
     mount.innerHTML = `
       <div id="tmz-product-list-view">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <div class="tmz-admin-section-head">
           <div>
-            <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 22px; margin: 0; color: #0B0B0B;">E-Book Catalog</h2>
-            <p style="color: #5E5E59; font-size: 14px; margin: 4px 0 0;">Manage your digital publications, pricing, covers and downloadable PDFs.</p>
+            <p class="tmz-label">CATALOG // MONOGRAPHS</p>
+            <h2 class="tmz-admin-section-title">E-Book Catalog &amp; PDF Vault</h2>
+            <p class="tmz-admin-section-sub">Manage your digital publications, pricing, covers, and downloadable PDFs.</p>
           </div>
-          <button id="tmz-add-product-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 11px 22px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+          <button id="tmz-add-product-btn" type="button" class="tmz-admin-btn tmz-admin-btn-primary">
             + Add an E-Book
           </button>
         </div>
 
-        <div id="tmz-product-msg" style="margin-bottom: 14px;"></div>
+        <div id="tmz-product-msg" class="tmz-admin-msg"></div>
 
-        <div style="display: grid; gap: 14px;">
-          ${this.products.length ? this.products.map((b) => `
-            <article class="tmz-admin-product-card" style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; padding: 18px 20px; display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 20px; align-items: center;">
+        <div class="tmz-admin-product-list">
+          ${this.products.length ? this.products.map((b) => {
+            const statusCls = b.status === 'on-sale' ? 'tmz-admin-status--live' : b.status === 'soon' ? 'tmz-admin-status--warn' : 'tmz-admin-status--muted';
+            return `
+            <article class="tmz-admin-product-card">
               ${b.coverUrl ? `
-                <img src="${b.coverUrl}" alt="" style="width: 84px; height: 126px; object-fit: cover; border-radius: 8px; box-shadow: 0 8px 18px -8px rgba(0,0,0,0.4);" />
+                <img src="${b.coverUrl}" alt="" class="tmz-admin-product-thumb" />
               ` : `
-                <div style="width: 84px; height: 126px; background: #E6E6E2; border-radius: 8px; display: grid; place-items: center; color: #5E5E59; font-size: 12px; font-weight: 500;">No cover</div>
+                <div class="tmz-admin-product-placeholder">No cover</div>
               `}
               <div>
-                <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0 0 6px; color: #0B0B0B; letter-spacing: -0.3px;">${escapeText(b.name)}</h3>
-                <p style="color: #5E5E59; font-size: 14px; margin: 0 0 10px;">${escapeText(b.tagline || 'No tagline')}</p>
-                <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #5E5E59; flex-wrap: wrap;">
-                  <span style="display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 3px 10px; font-family: var(--font-head); font-weight: 600; font-size: 11px; text-transform: uppercase; background: ${b.status === 'on-sale' ? '#E3F3E7' : b.status === 'soon' ? '#FFF2D6' : '#ECECE8'}; color: ${b.status === 'on-sale' ? '#1E7B2E' : b.status === 'soon' ? '#7A4F00' : '#3A3A36'};">
-                    <span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor;"></span>
+                <h3 class="tmz-admin-product-title">${escapeText(b.name)}</h3>
+                <p class="tmz-admin-product-tagline">${escapeText(b.tagline || 'No tagline')}</p>
+                <div class="tmz-admin-product-meta">
+                  <span class="tmz-admin-status ${statusCls}">
+                    <span class="tmz-admin-dot"></span>
                     ${STATUS_MAP[b.status] || b.status}
                   </span>
-                  <span>₹${Number(b.price).toLocaleString('en-IN')}</span>
+                  <strong style="color: #0B0B0B;">₹${Number(b.price).toLocaleString('en-IN')}</strong>
                   <span>·</span>
-                  <span>${b.fileSize ? `PDF ${mb(b.fileSize)}` : '<span style="color:#B3261E">Missing PDF</span>'}</span>
+                  <span>${b.fileSize ? `PDF ${mb(b.fileSize)}` : '<span style="color:#9E1C14; font-weight:600;">Missing PDF</span>'}</span>
                   ${b.pages ? `<span>·</span><span>${b.pages} pages</span>` : ''}
-                  ${b.videoUrl ? `<span>·</span><span style="color:#0284C7; font-weight:700; display:inline-flex; align-items:center; gap:3px;">▶ Video attached</span>` : ''}
+                  ${b.sampleExcerpt && b.sampleExcerpt.text ? `<span class="tmz-admin-status tmz-admin-status--info">Sample Ready</span>` : ''}
+                  ${b.videoUrl ? `<span class="tmz-admin-status tmz-admin-status--ink">▶ Video</span>` : ''}
                 </div>
               </div>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <div class="tmz-admin-product-actions">
                 ${b.videoUrl ? `
-                  <button type="button" class="tmz-preview-book-video-btn" data-id="${b.id}" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 14px; border-radius: 999px; border: 1.5px solid rgba(2,132,199,0.3); background: #F0F9FF; color: #0284C7; cursor: pointer;">
+                  <button type="button" class="tmz-preview-book-video-btn tmz-admin-btn tmz-admin-btn-yellow tmz-admin-btn-sm" data-id="${b.id}">
                     ▶ Preview Video
                   </button>
                 ` : ''}
-                <button type="button" class="tmz-edit-book-btn" data-id="${b.id}" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; cursor: pointer;">
+                <button type="button" class="tmz-edit-book-btn tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm" data-id="${b.id}">
                   Edit
                 </button>
                 ${b.status !== 'draft' ? `
-                  <a href="/edition/${b.slug}" target="_blank" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; color: #0B0B0B; text-decoration: none; display: inline-flex; align-items: center;">
-                    View in shop ↗
+                  <a href="/edition/${b.slug}" target="_blank" rel="noopener noreferrer" class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">
+                    View ↗
                   </a>
                 ` : ''}
-                <button type="button" class="tmz-delete-book-btn" data-id="${b.id}" data-name="${escapeText(b.name)}" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid rgba(179,38,30,0.3); background: transparent; color: #B3261E; cursor: pointer;">
+                <button type="button" class="tmz-delete-book-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${b.id}" data-name="${escapeText(b.name)}">
                   Delete
                 </button>
               </div>
             </article>
-          `).join('') : `
-            <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; padding: 48px 24px; text-align: center; color: #5E5E59;">
-              <p style="margin: 0 0 16px; font-size: 15px;">Your store does not have any e-books yet.</p>
-              <button id="tmz-first-book-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 11px 22px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+          `;
+          }).join('') : `
+            <div class="tmz-admin-empty">
+              <h3>Your catalog is empty</h3>
+              <p>Your store does not have any e-books yet.</p>
+              <button id="tmz-first-book-btn" type="button" class="tmz-admin-btn tmz-admin-btn-primary">
                 Add your first e-book
               </button>
             </div>
@@ -498,7 +530,7 @@ export class AdminController {
       </div>
 
       <!-- Add / Edit Form Modal/Container -->
-      <div id="tmz-product-form-view" style="display: none; background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 24px; padding: 28px; box-shadow: 0 20px 45px -20px rgba(0,0,0,0.15);"></div>
+      <div id="tmz-product-form-view" class="tmz-admin-panel tmz-frame" style="display: none;"></div>
     `;
 
     document.getElementById('tmz-add-product-btn')?.addEventListener('click', () => this.openProductForm(null));
@@ -554,133 +586,134 @@ export class AdminController {
     formV.style.display = 'block';
 
     formV.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <div class="tmz-admin-section-head">
         <div>
-          <p style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #5E5E59; margin: 0 0 4px;">Product Specification</p>
-          <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 24px; margin: 0; color: #0B0B0B;">${b ? 'Edit E-Book' : 'Publish New E-Book'}</h2>
+          <p class="tmz-label">MONOGRAPH SPECIFICATION</p>
+          <h2 class="tmz-admin-section-title">${b ? 'Edit E-Book' : 'Publish New E-Book'}</h2>
         </div>
-        <button id="tmz-cancel-form" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; cursor: pointer;">
-          Cancel
+        <button id="tmz-cancel-form" type="button" class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">
+          ← Back to Catalog
         </button>
       </div>
 
       <form id="tmz-book-form" novalidate>
-        <div style="margin-bottom: 18px;">
-          <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Title *</label>
-          <input type="text" id="tmz-f-name" required maxlength="140" value="${b ? escapeText(b.name) : ''}" placeholder="e.g. The Prompt Engineer's Playbook" style="width: 100%; box-sizing: border-box; font-size: 15px; padding: 12px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 12px;" />
+        <div class="tmz-admin-field">
+          <label for="tmz-f-name" class="tmz-admin-field-label">Title *</label>
+          <input type="text" id="tmz-f-name" class="tmz-admin-input" required maxlength="140" value="${b ? escapeText(b.name) : ''}" placeholder="e.g. The Prompt Engineer's Playbook" />
         </div>
 
-        <div style="margin-bottom: 18px;">
-          <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">One-Line Summary</label>
-          <input type="text" id="tmz-f-tagline" maxlength="200" value="${b ? escapeText(b.tagline || '') : ''}" placeholder="Short compelling description shown on cards and headers" style="width: 100%; box-sizing: border-box; font-size: 15px; padding: 12px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 12px;" />
+        <div class="tmz-admin-field">
+          <label for="tmz-f-tagline" class="tmz-admin-field-label">One-Line Summary</label>
+          <input type="text" id="tmz-f-tagline" class="tmz-admin-input" maxlength="200" value="${b ? escapeText(b.tagline || '') : ''}" placeholder="Short compelling description shown on cards and headers" />
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;">
+        <div class="tmz-admin-form-grid-2 tmz-admin-field">
           <div>
-            <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Price in ₹ *</label>
-            <input type="number" id="tmz-f-price" required min="1" max="100000" step="1" value="${b ? b.price : ''}" placeholder="499" style="width: 100%; box-sizing: border-box; font-size: 15px; padding: 12px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 12px;" />
+            <label for="tmz-f-price" class="tmz-admin-field-label">Price in ₹ *</label>
+            <input type="number" id="tmz-f-price" class="tmz-admin-input" required min="1" max="100000" step="1" value="${b ? b.price : ''}" placeholder="499" />
           </div>
           <div>
-            <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Pages (optional)</label>
-            <input type="number" id="tmz-f-pages" min="1" max="5000" step="1" value="${b && b.pages ? b.pages : ''}" placeholder="128" style="width: 100%; box-sizing: border-box; font-size: 15px; padding: 12px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 12px;" />
+            <label for="tmz-f-pages" class="tmz-admin-field-label">Pages (Optional)</label>
+            <input type="number" id="tmz-f-pages" class="tmz-admin-input" min="1" max="5000" step="1" value="${b && b.pages ? b.pages : ''}" placeholder="128" />
           </div>
         </div>
 
-        <div style="margin-bottom: 18px;">
-          <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Full Description</label>
-          <textarea id="tmz-f-desc" rows="4" style="width: 100%; box-sizing: border-box; font-size: 15px; padding: 12px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 12px; resize: vertical;">${b ? escapeText(b.description || '') : ''}</textarea>
+        <div class="tmz-admin-field">
+          <label for="tmz-f-desc" class="tmz-admin-field-label">Full Description</label>
+          <textarea id="tmz-f-desc" class="tmz-admin-input tmz-admin-textarea" rows="4">${b ? escapeText(b.description || '') : ''}</textarea>
         </div>
 
-        <div style="margin-bottom: 18px;">
-          <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Chapters & Syllabus (one per line)</label>
-          <textarea id="tmz-f-contents" rows="3" style="width: 100%; box-sizing: border-box; font-size: 15px; padding: 12px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 12px; resize: vertical;">${b && b.contents ? b.contents.join('\n') : ''}</textarea>
+        <div class="tmz-admin-field">
+          <label for="tmz-f-contents" class="tmz-admin-field-label">Chapters &amp; Syllabus (One Per Line)</label>
+          <textarea id="tmz-f-contents" class="tmz-admin-input tmz-admin-textarea" rows="3">${b && b.contents ? b.contents.join('\n') : ''}</textarea>
         </div>
 
-        <div style="margin-bottom: 18px; background: #F7F7F5; border: 1.5px solid rgba(11,11,11,0.12); border-radius: 12px; padding: 16px;">
-          <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 4px; color: #0B0B0B;">Free Sample Excerpt (Chapter 1 Lead Magnet)</label>
-          <p style="font-size: 12px; color: #5E5E59; margin: 0 0 10px;">Storefront visitors can read this Chapter 1 preview immediately after entering their email.</p>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+        <div class="tmz-admin-subbox">
+          <p class="tmz-label" style="margin-bottom: 6px;">CHAPTER 1 LEAD MAGNET</p>
+          <label class="tmz-admin-field-label" style="margin-bottom: 2px;">Free Sample Excerpt</label>
+          <p class="tmz-admin-field-hint" style="margin: 0 0 12px;">Storefront visitors can read this Chapter 1 preview immediately after entering their email.</p>
+          <div class="tmz-admin-form-grid-2" style="margin-bottom: 12px;">
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Chapter Label</label>
-              <input type="text" id="tmz-f-sample-chapter" maxlength="100" value="${b && b.sampleExcerpt && b.sampleExcerpt.chapter ? escapeText(b.sampleExcerpt.chapter) : 'Chapter 01'}" placeholder="Chapter 01" style="width: 100%; box-sizing: border-box; font-size: 14px; padding: 10px 12px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF;" />
+              <label for="tmz-f-sample-chapter" class="tmz-admin-field-label">Chapter Label</label>
+              <input type="text" id="tmz-f-sample-chapter" class="tmz-admin-input" maxlength="100" value="${b && b.sampleExcerpt && b.sampleExcerpt.chapter ? escapeText(b.sampleExcerpt.chapter) : 'Chapter 01'}" placeholder="Chapter 01" />
             </div>
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Chapter Subtitle</label>
-              <input type="text" id="tmz-f-sample-subtitle" maxlength="150" value="${b && b.sampleExcerpt && b.sampleExcerpt.subtitle ? escapeText(b.sampleExcerpt.subtitle) : ''}" placeholder="Foundations & Principles" style="width: 100%; box-sizing: border-box; font-size: 14px; padding: 10px 12px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF;" />
+              <label for="tmz-f-sample-subtitle" class="tmz-admin-field-label">Chapter Subtitle</label>
+              <input type="text" id="tmz-f-sample-subtitle" class="tmz-admin-input" maxlength="150" value="${b && b.sampleExcerpt && b.sampleExcerpt.subtitle ? escapeText(b.sampleExcerpt.subtitle) : ''}" placeholder="Foundations & Principles" />
             </div>
           </div>
           <div>
-            <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Chapter 1 Text</label>
-            <textarea id="tmz-f-sample-text" rows="4" placeholder="Paste the introductory chapter or excerpt text here..." style="width: 100%; box-sizing: border-box; font-size: 14px; padding: 10px 12px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF; resize: vertical;">${b && b.sampleExcerpt && b.sampleExcerpt.text ? escapeText(b.sampleExcerpt.text) : ''}</textarea>
+            <label for="tmz-f-sample-text" class="tmz-admin-field-label">Chapter 1 Text</label>
+            <textarea id="tmz-f-sample-text" class="tmz-admin-input tmz-admin-textarea" rows="4" placeholder="Paste the introductory chapter or excerpt text here...">${b && b.sampleExcerpt && b.sampleExcerpt.text ? escapeText(b.sampleExcerpt.text) : ''}</textarea>
           </div>
         </div>
 
-        <div style="margin-bottom: 18px; background: #F7F7F5; border: 1.5px solid rgba(11,11,11,0.12); border-radius: 12px; padding: 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; color: #0B0B0B; margin: 0;">Book Preview / Trailer Video (Optional)</label>
-            <button type="button" id="tmz-test-book-video-btn" style="background: none; border: none; color: #0284C7; font-weight: 700; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0;">
+        <div class="tmz-admin-subbox">
+          <div class="tmz-admin-panel-head" style="margin-bottom: 4px;">
+            <label for="tmz-f-video" class="tmz-admin-field-label" style="margin: 0;">Book Preview / Trailer Video (Optional)</label>
+            <button type="button" id="tmz-test-book-video-btn" class="tmz-admin-btn tmz-admin-btn-yellow tmz-admin-btn-sm">
               ▶ Test Video
             </button>
           </div>
-          <p style="font-size: 12px; color: #5E5E59; margin: 0 0 10px;">Attach a video preview, teaser, or walkthrough of this book. Customers will see it on the book's detail page before buying so they feel confident purchasing.</p>
-          <input type="url" id="tmz-f-video" placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/... or https://.../video.mp4" value="${b && b.videoUrl ? escapeText(b.videoUrl) : ''}" style="width: 100%; box-sizing: border-box; font-size: 14px; padding: 10px 12px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF;" />
-          <span style="display: block; font-size: 11px; color: #71716D; margin-top: 4px;">Supports YouTube (embeds in privacy mode), Vimeo, and direct HTTPS MP4 files.</span>
+          <p class="tmz-admin-field-hint" style="margin: 0 0 10px;">Attach a video preview, teaser, or walkthrough of this book for buyers on the edition page.</p>
+          <input type="url" id="tmz-f-video" class="tmz-admin-input" placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/... or https://.../video.mp4" value="${b && b.videoUrl ? escapeText(b.videoUrl) : ''}" />
+          <span class="tmz-admin-field-hint">Supports YouTube (privacy mode), Vimeo, and direct HTTPS MP4 files.</span>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 22px;">
-          <div style="border: 1.5px dashed rgba(11,11,11,0.2); border-radius: 14px; padding: 16px; background: #F7F7F5;">
-            <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Cover Image (Portrait 2:3 JPG/PNG/WebP)</label>
-            <input type="file" id="tmz-f-cover" accept="image/jpeg,image/png,image/webp" style="margin-bottom: 8px; font-size: 13px;" />
+        <div class="tmz-admin-form-grid-2" style="margin-bottom: 20px;">
+          <div class="tmz-admin-dropzone">
+            <label for="tmz-f-cover" class="tmz-admin-field-label">Cover Image (Portrait 2:3 JPG/PNG/WebP)</label>
+            <input type="file" id="tmz-f-cover" accept="image/jpeg,image/png,image/webp" style="margin-bottom: 8px; font-size: 13px; width: 100%;" />
             <div id="tmz-cover-preview" style="margin-top: 8px; ${b && b.coverUrl ? '' : 'display: none;'}">
-              <img id="tmz-cover-img" src="${b && b.coverUrl ? b.coverUrl : ''}" style="width: 60px; height: 90px; object-fit: cover; border-radius: 6px;" />
-              <span id="tmz-cover-note" style="display: block; font-size: 12px; color: #5E5E59; margin-top: 4px;">${b && b.coverUrl ? 'Current active cover' : ''}</span>
+              <img id="tmz-cover-img" src="${b && b.coverUrl ? b.coverUrl : ''}" style="width: 60px; height: 90px; object-fit: cover; border-radius: 3px; border: 1px solid rgba(0,0,0,0.16);" />
+              <span id="tmz-cover-note" class="tmz-admin-field-hint">${b && b.coverUrl ? 'Current active cover' : ''}</span>
             </div>
           </div>
 
-          <div style="border: 1.5px dashed rgba(11,11,11,0.2); border-radius: 14px; padding: 16px; background: #F7F7F5;">
-            <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Deliverable E-Book PDF (Up to 25 MB)</label>
-            <input type="file" id="tmz-f-pdf" accept="application/pdf,.pdf" style="margin-bottom: 8px; font-size: 13px;" />
-            <span id="tmz-pdf-note" style="display: block; font-size: 12px; color: #5E5E59;">
+          <div class="tmz-admin-dropzone">
+            <label for="tmz-f-pdf" class="tmz-admin-field-label">Deliverable E-Book PDF (Up to 25 MB)</label>
+            <input type="file" id="tmz-f-pdf" accept="application/pdf,.pdf" style="margin-bottom: 8px; font-size: 13px; width: 100%;" />
+            <span id="tmz-pdf-note" class="tmz-admin-field-hint">
               ${b && b.fileSize ? `Current PDF: ${b.fileName || 'ebook.pdf'} (${mb(b.fileSize)})` : 'No PDF uploaded yet.'}
             </span>
           </div>
         </div>
 
-        <div style="margin-bottom: 24px;">
-          <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 8px;">Storefront Availability</label>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
-            <label style="display: flex; gap: 8px; align-items: center; border: 1.5px solid rgba(11,11,11,0.18); border-radius: 12px; padding: 12px; cursor: pointer; background: #FFFFFF;">
+        <div class="tmz-admin-field" style="margin-bottom: 22px;">
+          <span class="tmz-admin-field-label" style="margin-bottom: 8px;">Storefront Availability</span>
+          <div class="tmz-admin-radio-grid">
+            <label class="tmz-admin-radio-card">
               <input type="radio" name="tmz_status" value="draft" ${!b || b.status === 'draft' ? 'checked' : ''} />
               <div>
                 <strong style="display: block; font-size: 14px; font-family: var(--font-head);">Draft</strong>
-                <span style="font-size: 12px; color: #5E5E59;">Hidden from storefront</span>
+                <span style="font-size: 12px; color: var(--tmz-graphite, #55554F);">Hidden from storefront</span>
               </div>
             </label>
-            <label style="display: flex; gap: 8px; align-items: center; border: 1.5px solid rgba(11,11,11,0.18); border-radius: 12px; padding: 12px; cursor: pointer; background: #FFFFFF;">
+            <label class="tmz-admin-radio-card">
               <input type="radio" name="tmz_status" value="soon" ${b && b.status === 'soon' ? 'checked' : ''} />
               <div>
                 <strong style="display: block; font-size: 14px; font-family: var(--font-head);">Coming Soon</strong>
-                <span style="font-size: 12px; color: #5E5E59;">WhatsApp pre-orders</span>
+                <span style="font-size: 12px; color: var(--tmz-graphite, #55554F);">WhatsApp pre-orders</span>
               </div>
             </label>
-            <label style="display: flex; gap: 8px; align-items: center; border: 1.5px solid rgba(11,11,11,0.18); border-radius: 12px; padding: 12px; cursor: pointer; background: #FFFFFF;">
+            <label class="tmz-admin-radio-card">
               <input type="radio" name="tmz_status" value="on-sale" ${b && b.status === 'on-sale' ? 'checked' : ''} />
               <div>
                 <strong style="display: block; font-size: 14px; font-family: var(--font-head);">On Sale</strong>
-                <span style="font-size: 12px; color: #5E5E59;">Instant digital checkout</span>
+                <span style="font-size: 12px; color: var(--tmz-graphite, #55554F);">Instant digital checkout</span>
               </div>
             </label>
           </div>
         </div>
 
-        <div id="tmz-form-msg" style="margin-bottom: 16px; font-size: 14px; font-weight: 500;"></div>
-        <progress id="tmz-progress" max="100" value="0" style="display: none; width: 100%; height: 8px; margin-bottom: 14px;"></progress>
+        <div id="tmz-form-msg" class="tmz-admin-msg"></div>
+        <progress id="tmz-progress" max="100" value="0" style="display: none; width: 100%; height: 6px; margin-bottom: 14px; accent-color: #0B0B0B;"></progress>
 
-        <div style="display: flex; gap: 12px;">
-          <button type="submit" id="tmz-save-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 15px; border-radius: 999px; padding: 12px 28px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+        <div class="tmz-admin-actions-row">
+          <button type="submit" id="tmz-save-btn" class="tmz-admin-btn tmz-admin-btn-primary">
             Save E-Book
           </button>
-          <button type="button" id="tmz-form-cancel-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 12px 22px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; cursor: pointer;">
+          <button type="button" id="tmz-form-cancel-btn" class="tmz-admin-btn tmz-admin-btn-secondary">
             Cancel
           </button>
         </div>
@@ -865,70 +898,73 @@ export class AdminController {
     const homepageCount = this.films.filter(f => f.homepageVisible).length;
 
     mount.innerHTML = `
-      <div style="margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
+      <div>
+        <div class="tmz-admin-section-head">
           <div>
-            <p style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #5E5E59; margin: 0 0 4px;">Cinematic Discovery</p>
-            <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 24px; margin: 0; color: #0B0B0B;">Films &amp; Video Showcase</h2>
-            <p style="font-size: 14px; color: #5E5E59; margin: 4px 0 0;">Manage motion graphics, trailers, and visual essays published on /films and the homepage showcase.</p>
+            <p class="tmz-label">CINEMA // YOUTUBE SHOWCASE</p>
+            <h2 class="tmz-admin-section-title">Films &amp; Video Showcase</h2>
+            <p class="tmz-admin-section-sub">Manage motion graphics, trailers, and visual essays published on /films and the homepage.</p>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <a href="/films" target="_blank" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: #FFFFFF; color: #0B0B0B; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+          <div class="tmz-admin-actions-row">
+            <a href="/films" target="_blank" rel="noopener noreferrer" class="tmz-admin-btn tmz-admin-btn-secondary">
               View Showcase ↗
             </a>
-            <button id="tmz-add-film-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 10px 22px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <button id="tmz-add-film-btn" type="button" class="tmz-admin-btn tmz-admin-btn-primary">
               + Add New Film
             </button>
           </div>
         </div>
 
         <!-- KPI Mini Stats -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px;">
-          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 16px; padding: 14px 18px;">
-            <div style="font-size: 12px; color: #5E5E59; font-weight: 600; text-transform: uppercase;">Total Films</div>
-            <div style="font-family: var(--font-head); font-size: 24px; font-weight: 800; margin-top: 4px;">${totalFilms}</div>
+        <div class="tmz-admin-kpi-grid">
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>01 // Total Films</span></div>
+            <b class="tmz-admin-kpi-val">${totalFilms}</b>
           </div>
-          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 16px; padding: 14px 18px;">
-            <div style="font-size: 12px; color: #1E7B2E; font-weight: 600; text-transform: uppercase;">Published</div>
-            <div style="font-family: var(--font-head); font-size: 24px; font-weight: 800; margin-top: 4px; color: #1E7B2E;">${publishedCount}</div>
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>02 // Published</span></div>
+            <b class="tmz-admin-kpi-val tmz-admin-kpi-val--ok">${publishedCount}</b>
           </div>
-          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 16px; padding: 14px 18px;">
-            <div style="font-size: 12px; color: #B3261E; font-weight: 600; text-transform: uppercase;">Featured</div>
-            <div style="font-family: var(--font-head); font-size: 24px; font-weight: 800; margin-top: 4px; color: #B3261E;">${featuredCount}</div>
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>03 // Featured</span></div>
+            <b class="tmz-admin-kpi-val">${featuredCount}</b>
           </div>
-          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 16px; padding: 14px 18px;">
-            <div style="font-size: 12px; color: #0284C7; font-weight: 600; text-transform: uppercase;">Homepage Visible</div>
-            <div style="font-family: var(--font-head); font-size: 24px; font-weight: 800; margin-top: 4px; color: #0284C7;">${homepageCount}</div>
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>04 // Homepage Visible</span></div>
+            <b class="tmz-admin-kpi-val">${homepageCount}</b>
           </div>
         </div>
 
         <!-- Film Editor Drawer/Box -->
-        <div id="tmz-film-form-box" style="display: ${this.editingFilm ? 'block' : 'none'}; background: #FFFFFF; border: 1px solid rgba(11,11,11,0.15); border-radius: 20px; padding: 24px; margin-bottom: 28px; box-shadow: 0 10px 30px -15px rgba(0,0,0,0.1);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
-            <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0;">
-              ${this.editingFilm?.id ? `Edit Film: ${escapeText(this.editingFilm.title)}` : 'Add New Film'}
-            </h3>
-            <button type="button" id="tmz-cancel-film-top" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #888;">✕</button>
+        <div id="tmz-film-form-box" class="tmz-admin-panel tmz-frame" style="display: ${this.editingFilm ? 'block' : 'none'}; margin-bottom: 24px;">
+          <div class="tmz-admin-section-head" style="margin-bottom: 18px;">
+            <div>
+              <p class="tmz-label">FILM SPECIFICATION</p>
+              <h3 class="tmz-admin-panel-title">
+                ${this.editingFilm?.id ? `Edit Film: ${escapeText(this.editingFilm.title)}` : 'Add New Film'}
+              </h3>
+            </div>
+            <button type="button" id="tmz-cancel-film-top" class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">✕ Close</button>
           </div>
 
           <form id="tmz-film-form">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 16px;">
+            <div class="tmz-admin-form-grid-2 tmz-admin-field">
               <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Film Title *</label>
-                <input type="text" id="tmz-film-title" required maxlength="140" placeholder="e.g. The Architecture of Distinction" value="${escapeText(this.editingFilm?.title || '')}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px;" />
+                <label for="tmz-film-title" class="tmz-admin-field-label">Film Title *</label>
+                <input type="text" id="tmz-film-title" class="tmz-admin-input" required maxlength="140" placeholder="e.g. The Architecture of Distinction" value="${escapeText(this.editingFilm?.title || '')}" />
               </div>
 
               <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Video URL (YouTube, Vimeo, or MP4) *</label>
-                <input type="url" id="tmz-film-url" required placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..." value="${escapeText(this.editingFilm?.videoUrl || '')}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px;" />
-                <span style="display: block; font-size: 11px; color: #71716D; margin-top: 4px;">Supports YouTube (embeds in privacy mode), Vimeo, or direct HTTPS MP4 stream.</span>
+                <label for="tmz-film-url" class="tmz-admin-field-label">Video URL (YouTube, Vimeo, or MP4) *</label>
+                <input type="url" id="tmz-film-url" class="tmz-admin-input" required placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..." value="${escapeText(this.editingFilm?.videoUrl || '')}" />
+                <span class="tmz-admin-field-hint">Supports YouTube (privacy mode), Vimeo, or direct HTTPS MP4 stream.</span>
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+            <div class="tmz-admin-form-grid-auto tmz-admin-field">
               <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Category</label>
-                <input type="text" list="tmz-cat-presets" id="tmz-film-cat" placeholder="Book Trailers" value="${escapeText(this.editingFilm?.category || 'Book Trailers')}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px;" />
+                <label for="tmz-film-cat" class="tmz-admin-field-label">Category</label>
+                <input type="text" list="tmz-cat-presets" id="tmz-film-cat" class="tmz-admin-input" placeholder="Book Trailers" value="${escapeText(this.editingFilm?.category || 'Book Trailers')}" />
                 <datalist id="tmz-cat-presets">
                   <option value="Book Trailers"></option>
                   <option value="Motion Graphics"></option>
@@ -939,8 +975,8 @@ export class AdminController {
               </div>
 
               <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Associated Publication (Book)</label>
-                <select id="tmz-film-product" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px;">
+                <label for="tmz-film-product" class="tmz-admin-field-label">Associated Publication</label>
+                <select id="tmz-film-product" class="tmz-admin-input">
                   <option value="">None (Independent Brand Film)</option>
                   ${this.products.map(p => `
                     <option value="${escapeText(p.id)}" ${(this.editingFilm?.productId === p.id) ? 'selected' : ''}>
@@ -951,23 +987,23 @@ export class AdminController {
               </div>
 
               <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Duration (e.g. 02:45)</label>
-                <input type="text" id="tmz-film-dur" maxlength="20" placeholder="02:30" value="${escapeText(this.editingFilm?.duration || '')}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px;" />
+                <label for="tmz-film-dur" class="tmz-admin-field-label">Duration (e.g. 02:45)</label>
+                <input type="text" id="tmz-film-dur" class="tmz-admin-input" maxlength="20" placeholder="02:30" value="${escapeText(this.editingFilm?.duration || '')}" />
               </div>
 
               <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Custom Thumbnail URL</label>
-                <input type="url" id="tmz-film-thumb" placeholder="https://... (Leave empty for auto YouTube thumbnail)" value="${escapeText(this.editingFilm?.thumbnailUrl || '')}" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px;" />
+                <label for="tmz-film-thumb" class="tmz-admin-field-label">Custom Thumbnail URL</label>
+                <input type="url" id="tmz-film-thumb" class="tmz-admin-input" placeholder="https://... (Auto YouTube if empty)" value="${escapeText(this.editingFilm?.thumbnailUrl || '')}" />
               </div>
             </div>
 
-            <div style="margin-bottom: 16px;">
-              <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Short Description</label>
-              <textarea id="tmz-film-desc" rows="3" maxlength="1000" placeholder="Brief visual summary of this film..." style="width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2); font-size: 14px; font-family: inherit;">${escapeText(this.editingFilm?.description || '')}</textarea>
+            <div class="tmz-admin-field">
+              <label for="tmz-film-desc" class="tmz-admin-field-label">Short Description</label>
+              <textarea id="tmz-film-desc" class="tmz-admin-input tmz-admin-textarea" rows="3" maxlength="1000" placeholder="Brief visual summary of this film...">${escapeText(this.editingFilm?.description || '')}</textarea>
             </div>
 
             <!-- Status Checkboxes -->
-            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; padding: 14px; background: #F7F7F5; border-radius: 12px;">
+            <div class="tmz-admin-check-row">
               <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
                 <input type="checkbox" id="tmz-film-published" ${this.editingFilm?.published ? 'checked' : (!this.editingFilm ? 'checked' : '')} />
                 <span>Published (Live in collection)</span>
@@ -985,20 +1021,20 @@ export class AdminController {
 
               <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;">
                 <label for="tmz-film-order">Display Order:</label>
-                <input type="number" id="tmz-film-order" min="0" max="999" value="${this.editingFilm?.displayOrder || 1}" style="width: 60px; padding: 4px 8px; border-radius: 6px; border: 1.5px solid rgba(11,11,11,0.2);" />
+                <input type="number" id="tmz-film-order" class="tmz-admin-input" min="0" max="999" value="${this.editingFilm?.displayOrder || 1}" style="width: 72px; padding: 5px 8px;" />
               </div>
             </div>
 
-            <div id="tmz-film-msg" style="display: none; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px;"></div>
+            <div id="tmz-film-msg" class="tmz-admin-msg" style="display: none; padding: 10px 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.15);"></div>
 
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <button type="submit" id="tmz-save-film-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 11px 24px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+            <div class="tmz-admin-actions-row">
+              <button type="submit" id="tmz-save-film-btn" class="tmz-admin-btn tmz-admin-btn-primary">
                 ${this.editingFilm?.id ? 'Update Film' : 'Publish Film'}
               </button>
-              <button type="button" id="tmz-preview-film-form-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 11px 20px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; color: #0B0B0B; cursor: pointer;">
-                Preview Player
+              <button type="button" id="tmz-preview-film-form-btn" class="tmz-admin-btn tmz-admin-btn-yellow">
+                ▶ Preview Player
               </button>
-              <button type="button" id="tmz-cancel-film-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 11px 20px; border: none; background: transparent; color: #5E5E59; cursor: pointer;">
+              <button type="button" id="tmz-cancel-film-btn" class="tmz-admin-btn tmz-admin-btn-secondary">
                 Cancel
               </button>
             </div>
@@ -1006,132 +1042,105 @@ export class AdminController {
         </div>
 
         <!-- Video Collection Grid/Table -->
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 20px; padding: 20px; overflow-x: auto;">
-          ${!this.films.length ? `
-            <div style="text-align: center; padding: 48px 16px; color: #5E5E59;">
-              <div style="font-size: 32px; margin-bottom: 8px;">🎬</div>
-              <h3 style="font-family: var(--font-head); font-size: 18px; font-weight: 700; color: #0B0B0B; margin: 0 0 6px;">No films published yet</h3>
-              <p style="font-size: 14px; margin: 0 0 16px;">Create your first film trailer, motion graphic, or concept visual for TAMYIZ.</p>
-              <button type="button" id="tmz-add-first-film-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; border-radius: 999px; padding: 10px 20px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
-                + Add First Film
-              </button>
+        ${!this.films.length ? `
+          <div class="tmz-admin-empty">
+            <h3>No films published yet</h3>
+            <p>Create your first film trailer, motion graphic, or concept visual for TAMYIZ.</p>
+            <button type="button" id="tmz-add-first-film-btn" class="tmz-admin-btn tmz-admin-btn-primary">
+              + Add First Film
+            </button>
+          </div>
+        ` : `
+          <div class="tmz-admin-table-wrap">
+            <div class="tmz-admin-table-scroll">
+              <table class="tmz-admin-table">
+                <thead>
+                  <tr>
+                    <th style="width: 136px;">Preview</th>
+                    <th>Film Title &amp; Details</th>
+                    <th>Category</th>
+                    <th>Associated Publication</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${this.films.map(f => {
+                    const thumb = f.thumbnailUrl || (f.provider === 'youtube' && f.videoId ? `https://img.youtube.com/vi/${f.videoId}/hqdefault.jpg` : '/og/tamyiz.jpg');
+                    return `
+                      <tr>
+                        <td style="vertical-align: top;">
+                          <div style="width: 120px; aspect-ratio: 16/9; background: #0B0B0B; border-radius: 3px; border: 1px solid rgba(0,0,0,0.14); overflow: hidden; position: relative;">
+                            <img src="${escapeText(thumb)}" alt="" style="width: 100%; height: 100%; object-fit: cover;" />
+                            ${f.duration ? `
+                              <span style="position: absolute; bottom: 4px; right: 4px; background: var(--tmz-yellow, #FFD60A); color: #0B0B0B; border: 1px solid rgba(11,11,11,0.3); font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 2px; font-family: monospace;">
+                                ${escapeText(f.duration)}
+                              </span>
+                            ` : ''}
+                          </div>
+                        </td>
+                        <td style="vertical-align: top;">
+                          <div style="font-family: var(--font-head); font-weight: 600; color: #0B0B0B; font-size: 15px; margin-bottom: 4px;">
+                            ${escapeText(f.title)}
+                          </div>
+                          <div style="font-size: 12.5px; color: var(--tmz-graphite, #55554F); margin-bottom: 6px; max-width: 360px;">
+                            ${escapeText(f.description || 'No description.')}
+                          </div>
+                          <div style="display: flex; gap: 6px; align-items: center; font-size: 11px;">
+                            <span class="tmz-admin-status tmz-admin-status--muted">${escapeText(f.provider || 'video')}</span>
+                            <span style="color: var(--tmz-graphite, #55554F);">Order #${f.displayOrder || 1}</span>
+                          </div>
+                        </td>
+                        <td style="vertical-align: top;">
+                          <span class="tmz-admin-status tmz-admin-status--muted">
+                            ${escapeText(f.category || 'General')}
+                          </span>
+                        </td>
+                        <td style="vertical-align: top;">
+                          ${f.bookName ? `
+                            <div style="font-weight: 600; color: #0B0B0B; font-size: 13px;">${escapeText(f.bookName)}</div>
+                            <span style="font-size: 11px; color: var(--tmz-graphite, #55554F); font-family: monospace;">${escapeText(f.productId)}</span>
+                          ` : `
+                            <span style="color: var(--tmz-graphite, #55554F); font-size: 13px;">Independent Film</span>
+                          `}
+                        </td>
+                        <td style="vertical-align: top;">
+                          <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <span class="tmz-admin-status ${f.published ? 'tmz-admin-status--live' : 'tmz-admin-status--muted'}">
+                              <span class="tmz-admin-dot"></span> ${f.published ? 'Published' : 'Draft'}
+                            </span>
+                            ${f.featured ? `
+                              <span class="tmz-admin-status tmz-admin-status--warn">Featured</span>
+                            ` : ''}
+                            ${f.homepageVisible ? `
+                              <span class="tmz-admin-status tmz-admin-status--info">Homepage</span>
+                            ` : ''}
+                          </div>
+                        </td>
+                        <td style="vertical-align: top; text-align: right;">
+                          <div class="tmz-admin-actions-row" style="justify-content: flex-end;">
+                            <button type="button" class="tmz-preview-film-row-btn tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm" data-id="${escapeText(f.id)}">
+                              Preview
+                            </button>
+                            <button type="button" class="tmz-edit-film-row-btn tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm" data-id="${escapeText(f.id)}">
+                              Edit
+                            </button>
+                            <button type="button" class="tmz-toggle-pub-row-btn tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm" data-id="${escapeText(f.id)}" data-pub="${f.published ? '1' : '0'}">
+                              ${f.published ? 'Unpublish' : 'Publish'}
+                            </button>
+                            <button type="button" class="tmz-del-film-row-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${escapeText(f.id)}" data-title="${escapeText(f.title)}">
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
             </div>
-          ` : `
-            <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
-              <thead>
-                <tr style="border-bottom: 1.5px solid rgba(11,11,11,0.1); color: #5E5E59; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
-                  <th style="padding: 12px 14px; width: 140px;">Preview</th>
-                  <th style="padding: 12px 14px;">Film Title &amp; Details</th>
-                  <th style="padding: 12px 14px;">Category</th>
-                  <th style="padding: 12px 14px;">Associated Publication</th>
-                  <th style="padding: 12px 14px;">Status</th>
-                  <th style="padding: 12px 14px; text-align: right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${this.films.map(f => {
-                  const thumb = f.thumbnailUrl || (f.provider === 'youtube' && f.videoId ? `https://img.youtube.com/vi/${f.videoId}/hqdefault.jpg` : '/og/tamyiz.jpg');
-                  return `
-                    <tr style="border-bottom: 1px solid rgba(11,11,11,0.06); transition: background 0.1s ease;">
-                      <td style="padding: 12px 14px; vertical-align: top;">
-                        <div style="width: 120px; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; position: relative;">
-                          <img src="${escapeText(thumb)}" alt="" style="width: 100%; height: 100%; object-fit: cover;" />
-                          ${f.duration ? `
-                            <span style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.8); color: #FFF; font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 4px; font-family: monospace;">
-                              ${escapeText(f.duration)}
-                            </span>
-                          ` : ''}
-                        </div>
-                      </td>
-                      <td style="padding: 12px 14px; vertical-align: top;">
-                        <div style="font-weight: 700; color: #0B0B0B; font-size: 15px; margin-bottom: 4px;">
-                          ${escapeText(f.title)}
-                        </div>
-                        <div style="font-size: 12px; color: #71716D; margin-bottom: 6px; max-width: 380px;">
-                          ${escapeText(f.description || 'No description.')}
-                        </div>
-                        <div style="display: flex; gap: 6px; align-items: center; font-size: 11px;">
-                          <span style="background: rgba(11,11,11,0.06); padding: 2px 6px; border-radius: 4px; font-family: monospace; text-transform: uppercase;">
-                            ${escapeText(f.provider || 'video')}
-                          </span>
-                          <span style="color: #888;">Order: #${f.displayOrder || 1}</span>
-                        </div>
-                      </td>
-                      <td style="padding: 12px 14px; vertical-align: top;">
-                        <span style="display: inline-block; padding: 3px 8px; border-radius: 6px; background: rgba(11,11,11,0.05); font-weight: 600; font-size: 12px;">
-                          ${escapeText(f.category || 'General')}
-                        </span>
-                      </td>
-                      <td style="padding: 12px 14px; vertical-align: top;">
-                        ${f.bookName ? `
-                          <div style="font-weight: 600; color: #0B0B0B; font-size: 13px;">${escapeText(f.bookName)}</div>
-                          <span style="font-size: 11px; color: #71716D; font-family: monospace;">${escapeText(f.productId)}</span>
-                        ` : `
-                          <span style="color: #71716D; font-size: 13px;">Independent Film</span>
-                        `}
-                      </td>
-                      <td style="padding: 12px 14px; vertical-align: top;">
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                          <span style="display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; width: fit-content; ${f.published ? 'background: #E8F5E9; color: #1E7B2E;' : 'background: #F0F0EE; color: #71716D;'}">
-                            ${f.published ? '● Published' : '○ Draft'}
-                          </span>
-                          ${f.featured ? `
-                            <span style="display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #FFF8E1; color: #B3261E; width: fit-content;">
-                              ★ Featured
-                            </span>
-                          ` : ''}
-                          ${f.homepageVisible ? `
-                            <span style="display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #E0F2FE; color: #0284C7; width: fit-content;">
-                              🏠 Homepage
-                            </span>
-                          ` : ''}
-                        </div>
-                      </td>
-                      <td style="padding: 12px 14px; vertical-align: top; text-align: right;">
-                        <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;">
-                          <button
-                            type="button"
-                            class="tmz-preview-film-row-btn"
-                            data-id="${escapeText(f.id)}"
-                            style="padding: 6px 12px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; font-size: 12px; font-weight: 600; cursor: pointer;"
-                          >
-                            Preview
-                          </button>
-                          <button
-                            type="button"
-                            class="tmz-edit-film-row-btn"
-                            data-id="${escapeText(f.id)}"
-                            style="padding: 6px 12px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; font-size: 12px; font-weight: 600; cursor: pointer;"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            class="tmz-toggle-pub-row-btn"
-                            data-id="${escapeText(f.id)}"
-                            data-pub="${f.published ? '1' : '0'}"
-                            style="padding: 6px 12px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; font-size: 12px; font-weight: 600; cursor: pointer;"
-                          >
-                            ${f.published ? 'Unpublish' : 'Publish'}
-                          </button>
-                          <button
-                            type="button"
-                            class="tmz-del-film-row-btn"
-                            data-id="${escapeText(f.id)}"
-                            data-title="${escapeText(f.title)}"
-                            style="padding: 6px 10px; border-radius: 999px; border: 1.5px solid rgba(179,38,30,0.3); background: transparent; color: #B3261E; font-size: 12px; font-weight: 600; cursor: pointer;"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          `}
-        </div>
+          </div>
+        `}
       </div>
     `;
 
@@ -1358,99 +1367,111 @@ export class AdminController {
 
   // ---------------------------------------------------------------- ORDERS TAB
   async renderOrdersTab(mount) {
+    if (!this.products.length) {
+      const pRes = await this.api('products');
+      this.products = pRes.ok ? (pRes.data.products || []) : [];
+    }
     const query = this.orderSearchQuery.trim();
     const res = await this.api(`orders${query ? `?q=${encodeURIComponent(query)}` : ''}`);
     this.orders = res.ok ? (res.data.orders || []) : [];
 
     mount.innerHTML = `
       <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <div class="tmz-admin-section-head">
           <div>
-            <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 22px; margin: 0; color: #0B0B0B;">Orders & Fulfillments</h2>
-            <p style="color: #5E5E59; font-size: 14px; margin: 4px 0 0;">Customer transactions, gift orders, and digital download links.</p>
+            <p class="tmz-label">FULFILLMENT // LEDGER</p>
+            <h2 class="tmz-admin-section-title">Orders &amp; Fulfillments</h2>
+            <p class="tmz-admin-section-sub">Customer transactions, complimentary gift orders, and digital download links.</p>
           </div>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button id="tmz-btn-open-gift" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 999px; border: 1.5px solid #0B0B0B; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
-              🎁 Send Gift Copy
+          <div class="tmz-admin-search-group">
+            <button id="tmz-btn-open-gift" type="button" class="tmz-admin-btn tmz-admin-btn-yellow tmz-admin-btn-sm">
+              + Send Gift Copy
             </button>
-            <input type="text" id="tmz-order-search" placeholder="Search reference, email, phone…" value="${escapeText(this.orderSearchQuery)}" style="padding: 10px 14px; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 999px; font-size: 14px; min-width: 220px;" />
-            <button id="tmz-order-search-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; color: #0B0B0B; cursor: pointer;">Search</button>
+            <input type="text" id="tmz-order-search" class="tmz-admin-input tmz-admin-search-input" placeholder="Search ref, email, phone…" value="${escapeText(this.orderSearchQuery)}" />
+            <button id="tmz-order-search-btn" type="button" class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">Search</button>
           </div>
         </div>
 
         <!-- Gift Order Modal -->
-        <div id="tmz-gift-modal" style="display: none; background: #FFFFFF; border: 1px solid rgba(11,11,11,0.15); border-radius: 20px; padding: 24px; margin-bottom: 24px; box-shadow: 0 15px 35px -15px rgba(0,0,0,0.15);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0;">Send Free Gift / Review Copy</h3>
-            <button id="tmz-close-gift-modal" type="button" style="background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
+        <div id="tmz-gift-modal" class="tmz-admin-panel tmz-frame" style="display: none; margin-bottom: 24px;">
+          <div class="tmz-admin-section-head" style="margin-bottom: 16px;">
+            <div>
+              <p class="tmz-label">COMPLIMENTARY DISPATCH</p>
+              <h3 class="tmz-admin-panel-title">Send Free Gift / Review Copy</h3>
+            </div>
+            <button id="tmz-close-gift-modal" type="button" class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">✕ Close</button>
           </div>
           <form id="tmz-gift-form">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 14px;">
+            <div class="tmz-admin-form-grid-auto tmz-admin-field">
               <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Recipient Email *</label>
-                <input type="email" id="tmz-gift-email" required placeholder="reviewer@example.com" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2);" />
+                <label for="tmz-gift-email" class="tmz-admin-field-label">Recipient Email *</label>
+                <input type="email" id="tmz-gift-email" class="tmz-admin-input" required placeholder="reviewer@example.com" />
               </div>
               <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Phone (Optional)</label>
-                <input type="tel" id="tmz-gift-phone" placeholder="9876543210" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2);" />
+                <label for="tmz-gift-phone" class="tmz-admin-field-label">Phone (Optional)</label>
+                <input type="tel" id="tmz-gift-phone" class="tmz-admin-input" placeholder="9876543210" />
               </div>
               <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">E-Book Edition *</label>
-                <select id="tmz-gift-product" required style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2);">
+                <label for="tmz-gift-product" class="tmz-admin-field-label">E-Book Edition *</label>
+                <select id="tmz-gift-product" class="tmz-admin-input" required>
                   ${this.products.map((p) => `<option value="${p.id}">${escapeText(p.name)} (₹${p.price})</option>`).join('')}
                 </select>
               </div>
             </div>
-            <div id="tmz-gift-result" style="margin-bottom: 14px; font-size: 14px;"></div>
-            <button type="submit" id="tmz-gift-submit-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 10px 22px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+            <div id="tmz-gift-result" class="tmz-admin-msg"></div>
+            <button type="submit" id="tmz-gift-submit-btn" class="tmz-admin-btn tmz-admin-btn-primary">
               Generate &amp; Dispatch Gift Order
             </button>
           </form>
         </div>
 
         ${this.orders.length ? `
-          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; overflow-x: auto; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-              <thead>
-                <tr style="border-bottom: 1px solid rgba(11,11,11,0.08); background: #F7F7F5;">
-                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Order Ref</th>
-                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Customer</th>
-                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Items Purchased</th>
-                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Total</th>
-                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${this.orders.map((o) => `
-                  <tr style="border-bottom: 1px solid rgba(11,11,11,0.06);">
-                    <td style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600;">
-                      ${escapeText(o.referenceId || o.orderId)}
-                      <span style="display: block; font-size: 11px; color: #5E5E59; font-weight: 400;">${escapeText(o.paymentId || '')}</span>
-                      <span style="font-size: 11px; color: #8F8F89;">${o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</span>
-                    </td>
-                    <td style="padding: 14px 16px;">
-                      <div style="font-weight: 500;">${escapeText(o.email || '—')}</div>
-                      <div style="font-size: 12px; color: #5E5E59;">${escapeText(o.phone || '')}</div>
-                    </td>
-                    <td style="padding: 14px 16px;">
-                      ${(o.items || []).map((i) => `<span style="display: inline-block; background: rgba(11,11,11,0.06); padding: 2px 8px; border-radius: 6px; font-size: 12px; margin-right: 4px; margin-bottom: 4px;">${escapeText(i.name)}</span>`).join('')}
-                    </td>
-                    <td style="padding: 14px 16px; font-family: var(--font-head); font-weight: 700;">
-                      ₹${o.totalINR || Math.round((o.amountPaise || 0) / 100)}
-                    </td>
-                    <td style="padding: 14px 16px;">
-                      <button type="button" class="tmz-resend-btn" data-id="${o.orderId}" style="font-family: var(--font-head); font-weight: 600; font-size: 12px; padding: 6px 12px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; cursor: pointer;">
-                        Re-send Email ✉
-                      </button>
-                    </td>
+          <div class="tmz-admin-table-wrap">
+            <div class="tmz-admin-table-scroll">
+              <table class="tmz-admin-table">
+                <thead>
+                  <tr>
+                    <th>Order Ref</th>
+                    <th>Customer</th>
+                    <th>Items Purchased</th>
+                    <th>Total</th>
+                    <th style="text-align: right;">Actions</th>
                   </tr>
-                `).join('')}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  ${this.orders.map((o) => `
+                    <tr>
+                      <td style="font-family: var(--font-head); font-weight: 600;">
+                        <div>${escapeText(o.referenceId || o.orderId)}</div>
+                        ${o.paymentId ? `<span style="display: block; font-size: 11px; color: var(--tmz-graphite, #55554F); font-weight: 400; font-family: monospace;">${escapeText(o.paymentId)}</span>` : ''}
+                        <span style="font-size: 11px; color: var(--tmz-graphite, #55554F); font-weight: 400;">${o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</span>
+                      </td>
+                      <td>
+                        <div style="font-weight: 600; color: #0B0B0B;">${escapeText(o.email || '—')}</div>
+                        ${o.phone ? `<div style="font-size: 12px; color: var(--tmz-graphite, #55554F);">${escapeText(o.phone)}</div>` : ''}
+                      </td>
+                      <td>
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                          ${(o.items || []).map((i) => `<span class="tmz-admin-status tmz-admin-status--muted">${escapeText(i.name)}</span>`).join('')}
+                        </div>
+                      </td>
+                      <td style="font-family: var(--font-head); font-weight: 700;">
+                        ₹${o.totalINR || Math.round((o.amountPaise || 0) / 100)}
+                      </td>
+                      <td style="text-align: right; white-space: nowrap;">
+                        <button type="button" class="tmz-resend-btn tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm" data-id="${o.orderId}">
+                          Re-send Email ✉
+                        </button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
           </div>
         ` : `
-          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; padding: 48px 24px; text-align: center; color: #5E5E59;">
-            <p style="margin: 0;">${query ? `No customer orders match "${escapeText(query)}".` : 'No orders recorded yet. As customers buy on the storefront, all transactions appear here.'}</p>
+          <div class="tmz-admin-empty">
+            <p>${query ? `No customer orders match "${escapeText(query)}".` : 'No orders recorded yet. As customers buy on the storefront, all transactions appear here.'}</p>
           </div>
         `}
       </div>
@@ -1493,7 +1514,7 @@ export class AdminController {
       resBox.style.color = '#1E7B2E';
       resBox.innerHTML = `
         Gift order created! Download URL:
-        <input type="text" readonly value="${res.data.downloadUrl}" style="width: 100%; box-sizing: border-box; padding: 6px; font-size: 12px; margin-top: 4px;" onclick="this.select()" />
+        <input type="text" readonly class="tmz-admin-input" value="${res.data.downloadUrl}" style="padding: 8px 10px; font-size: 12px; font-family: monospace; margin-top: 6px;" onclick="this.select()" />
       `;
       setTimeout(() => this.renderOrdersTab(mount), 2000);
     });
@@ -1539,113 +1560,111 @@ export class AdminController {
     const uniqueEmails = [...new Set(list.map(c => c.email))].filter(Boolean);
 
     mount.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
-        <div>
-          <p style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #5E5E59; margin: 0 0 4px;">Checkout Funnel &amp; Revenue Recovery</p>
-          <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 24px; margin: 0; color: #0B0B0B;">Abandoned Reading Bags</h2>
-          <p style="font-size: 14px; color: #5E5E59; margin: 4px 0 0;">Visitors who entered their email in the checkout bag but left before completing payment.</p>
+      <div>
+        <div class="tmz-admin-section-head">
+          <div>
+            <p class="tmz-label">RECOVERY // CHECKOUT TELEMETRY</p>
+            <h2 class="tmz-admin-section-title">Abandoned Reading Bags</h2>
+            <p class="tmz-admin-section-sub">Visitors who entered their email in the checkout bag but left before completing payment.</p>
+          </div>
+          <div class="tmz-admin-actions-row">
+            <button id="tmz-copy-abandoned-emails-btn" type="button" class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">
+              Copy All Emails (${uniqueEmails.length})
+            </button>
+            <button id="tmz-export-abandoned-btn" type="button" class="tmz-admin-btn tmz-admin-btn-primary tmz-admin-btn-sm">
+              Export CSV ↓
+            </button>
+          </div>
         </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button id="tmz-copy-abandoned-emails-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: #FFFFFF; color: #0B0B0B; cursor: pointer; transition: all 0.15s ease;">
-            📋 Copy All Emails (${uniqueEmails.length})
-          </button>
-          <button id="tmz-export-abandoned-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid #0B0B0B; background: #0B0B0B; color: #FFFFFF; cursor: pointer; transition: all 0.15s ease;">
-            📥 Export CSV
-          </button>
-        </div>
-      </div>
 
-      <!-- KPI Grid -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
-          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Unclaimed Revenue</span>
-          <strong style="font-size: 28px; font-weight: 700; color: #B3261E; font-family: var(--font-head);">₹${(data.totalLostRevenue || 0).toLocaleString('en-IN')}</strong>
+        <!-- KPI Grid -->
+        <div class="tmz-admin-kpi-grid">
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>01 // Unclaimed Revenue</span></div>
+            <b class="tmz-admin-kpi-val tmz-admin-kpi-val--danger">₹${(data.totalLostRevenue || 0).toLocaleString('en-IN')}</b>
+          </div>
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>02 // Abandoned Sessions</span></div>
+            <b class="tmz-admin-kpi-val">${list.length}</b>
+          </div>
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>03 // Successfully Recovered</span></div>
+            <b class="tmz-admin-kpi-val tmz-admin-kpi-val--ok">${data.recoveredCount || 0}</b>
+          </div>
         </div>
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
-          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Abandoned Sessions</span>
-          <strong style="font-size: 28px; font-weight: 700; color: #0B0B0B; font-family: var(--font-head);">${list.length}</strong>
-        </div>
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
-          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Successfully Recovered</span>
-          <strong style="font-size: 28px; font-weight: 700; color: #1E7B2E; font-family: var(--font-head);">${data.recoveredCount || 0}</strong>
-        </div>
-      </div>
 
-      <!-- Table Container -->
-      <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; overflow: hidden;">
+        <!-- Table Container -->
         ${list.length === 0 ? `
-          <div style="padding: 48px 24px; text-align: center; color: #5E5E59;">
-            <p style="font-size: 16px; font-weight: 600; color: #0B0B0B; margin: 0 0 4px;">No abandoned checkouts recorded</p>
-            <p style="font-size: 14px; margin: 0;">When visitors enter their email in the bag drawer, uncompleted carts will appear here.</p>
+          <div class="tmz-admin-empty">
+            <h3>No abandoned checkouts recorded</h3>
+            <p>When visitors enter their email in the bag drawer, uncompleted carts will appear here.</p>
           </div>
         ` : `
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-              <thead>
-                <tr style="border-bottom: 1.5px solid rgba(11,11,11,0.08); background: #FAF9F6; font-size: 12px; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.06em;">
-                  <th style="padding: 14px 16px; font-weight: 600;">Last Seen</th>
-                  <th style="padding: 14px 16px; font-weight: 600;">Customer Contact</th>
-                  <th style="padding: 14px 16px; font-weight: 600;">Books In Bag</th>
-                  <th style="padding: 14px 16px; font-weight: 600;">Cart Value</th>
-                  <th style="padding: 14px 16px; font-weight: 600;">Status</th>
-                  <th style="padding: 14px 16px; font-weight: 600; text-align: right;">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${list.map(c => {
-                  const dateStr = c.lastSeenAt ? new Date(c.lastSeenAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
-                  const cleanPhone = (c.phone || '').replace(/[^0-9+]/g, '');
-                  const waText = encodeURIComponent(`Hi! We noticed you left ${(c.items || []).map(i => i.name).join(', ')} in your TAMYIZ reading bag. Here is a 10% discount to complete your order: https://tamyiz.pages.dev/checkout?resume=${(c.items || []).map(i => i.productId).join(',')}&coupon=SAMPLE10`);
-                  const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}?text=${waText}` : null;
-                  const isRecovered = c.status === 'recovered';
+          <div class="tmz-admin-table-wrap">
+            <div class="tmz-admin-table-scroll">
+              <table class="tmz-admin-table">
+                <thead>
+                  <tr>
+                    <th>Last Seen</th>
+                    <th>Customer Contact</th>
+                    <th>Books In Bag</th>
+                    <th>Cart Value</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${list.map(c => {
+                    const dateStr = c.lastSeenAt ? new Date(c.lastSeenAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+                    const cleanPhone = (c.phone || '').replace(/[^0-9+]/g, '');
+                    const waText = encodeURIComponent(`Hi! We noticed you left ${(c.items || []).map(i => i.name).join(', ')} in your TAMYIZ reading bag. Here is a 10% discount to complete your order: https://tamyiz.pages.dev/checkout?resume=${(c.items || []).map(i => i.productId).join(',')}&coupon=SAMPLE10`);
+                    const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}?text=${waText}` : null;
+                    const isRecovered = c.status === 'recovered';
 
-                  return `
-                    <tr style="border-bottom: 1px solid rgba(11,11,11,0.06); ${isRecovered ? 'opacity: 0.75; background: #FAFDF9;' : ''}">
-                      <td style="padding: 14px 16px; color: #5E5E59; font-size: 13px; white-space: nowrap;">${dateStr}</td>
-                      <td style="padding: 14px 16px;">
-                        <a href="mailto:${escapeText(c.email)}" style="font-weight: 600; color: #0B0B0B; text-decoration: none; display: block;">${escapeText(c.email)}</a>
-                        ${cleanPhone ? `
-                          <a href="${waUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: #1E7B2E; text-decoration: underline; margin-top: 2px; display: inline-flex; align-items: center; gap: 4px;">
-                            WhatsApp: ${escapeText(c.phone)} ↗
-                          </a>
-                        ` : ''}
-                      </td>
-                      <td style="padding: 14px 16px; font-size: 13px;">
-                        ${(c.items || []).map(i => `<div style="font-weight: 500; color: #0B0B0B;">• ${escapeText(i.name)}</div>`).join('')}
-                      </td>
-                      <td style="padding: 14px 16px; font-weight: 700; color: #0B0B0B; font-family: monospace; white-space: nowrap;">
-                        ₹${(c.total || c.subtotal || 0).toLocaleString('en-IN')}
-                      </td>
-                      <td style="padding: 14px 16px; white-space: nowrap;">
-                        ${isRecovered ? `
-                          <span style="font-size: 11px; font-weight: 700; background: #E8F5E9; color: #2E7D32; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">
-                            ✓ Recovered
-                          </span>
-                        ` : c.emailSent ? `
-                          <span style="font-size: 11px; font-weight: 700; background: #E3F2FD; color: #1565C0; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">
-                            Emailed
-                          </span>
-                        ` : `
-                          <span style="font-size: 11px; font-weight: 700; background: #FFF3E0; color: #E65100; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">
-                            Abandoned
-                          </span>
-                        `}
-                      </td>
-                      <td style="padding: 14px 16px; text-align: right; white-space: nowrap;">
-                        ${!isRecovered ? `
-                          <button type="button" class="tmz-send-abandoned-btn" data-id="${c.id}" style="font-family: var(--font-head); font-weight: 700; font-size: 12px; padding: 6px 12px; background: #0B0B0B; color: #FFF; border: none; border-radius: 6px; cursor: pointer; margin-right: 6px;">
-                            ${c.emailSent ? 'Re-send Email' : 'Send Recovery Email'}
-                          </button>
-                        ` : ''}
-                        <button type="button" class="tmz-del-abandoned-btn" data-id="${c.id}" style="background: none; border: none; color: #B3261E; font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 6px;">
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
+                    return `
+                      <tr class="${isRecovered ? 'tmz-admin-row--recovered' : ''}">
+                        <td style="color: var(--tmz-graphite, #55554F); font-size: 13px; white-space: nowrap;">${dateStr}</td>
+                        <td>
+                          <a href="mailto:${escapeText(c.email)}" style="font-weight: 600; color: #0B0B0B; text-decoration: none; display: block;">${escapeText(c.email)}</a>
+                          ${cleanPhone ? `
+                            <a href="${waUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: #166224; text-decoration: underline; margin-top: 2px; display: inline-flex; align-items: center; gap: 4px;">
+                              WhatsApp: ${escapeText(c.phone)} ↗
+                            </a>
+                          ` : ''}
+                        </td>
+                        <td style="font-size: 13px;">
+                          ${(c.items || []).map(i => `<div style="font-weight: 500; color: #0B0B0B;">• ${escapeText(i.name)}</div>`).join('')}
+                        </td>
+                        <td style="font-weight: 700; color: #0B0B0B; white-space: nowrap;">
+                          ₹${(c.total || c.subtotal || 0).toLocaleString('en-IN')}
+                        </td>
+                        <td style="white-space: nowrap;">
+                          ${isRecovered ? `
+                            <span class="tmz-admin-status tmz-admin-status--live">✓ Recovered</span>
+                          ` : c.emailSent ? `
+                            <span class="tmz-admin-status tmz-admin-status--info">Emailed</span>
+                          ` : `
+                            <span class="tmz-admin-status tmz-admin-status--warn">Abandoned</span>
+                          `}
+                        </td>
+                        <td style="text-align: right; white-space: nowrap;">
+                          <div class="tmz-admin-actions-row" style="justify-content: flex-end;">
+                            ${!isRecovered ? `
+                              <button type="button" class="tmz-send-abandoned-btn tmz-admin-btn tmz-admin-btn-primary tmz-admin-btn-sm" data-id="${c.id}">
+                                ${c.emailSent ? 'Re-send Email' : 'Send Recovery Email'}
+                              </button>
+                            ` : ''}
+                            <button type="button" class="tmz-del-abandoned-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${c.id}">
+                              Remove
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
           </div>
         `}
       </div>
@@ -1728,62 +1747,72 @@ export class AdminController {
 
     mount.innerHTML = `
       <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <div class="tmz-admin-section-head">
           <div>
-            <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 22px; margin: 0; color: #0B0B0B;">Discount Coupons & Promo Codes</h2>
-            <p style="color: #5E5E59; font-size: 14px; margin: 4px 0 0;">Create and manage promotional discount codes that work in the checkout bag.</p>
+            <p class="tmz-label">PROMOTIONS // PRICING RULES</p>
+            <h2 class="tmz-admin-section-title">Discount Coupons &amp; Promo Codes</h2>
+            <p class="tmz-admin-section-sub">Create and manage promotional discount codes that work in the checkout bag.</p>
           </div>
-          <button id="tmz-open-coupon-modal" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 11px 22px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+          <button id="tmz-open-coupon-modal" type="button" class="tmz-admin-btn tmz-admin-btn-primary">
             + Create New Coupon
           </button>
         </div>
 
-        <div id="tmz-coupon-form-box" style="display: none; background: #FFFFFF; border: 1px solid rgba(11,11,11,0.15); border-radius: 20px; padding: 24px; margin-bottom: 24px;">
-          <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0 0 16px;">New Promotional Coupon</h3>
+        <div id="tmz-coupon-form-box" class="tmz-admin-panel tmz-frame" style="display: none; margin-bottom: 24px;">
+          <div class="tmz-admin-section-head" style="margin-bottom: 16px;">
+            <div>
+              <p class="tmz-label">PROMO CODE CREATOR</p>
+              <h3 class="tmz-admin-panel-title">New Promotional Coupon</h3>
+            </div>
+            <button type="button" id="tmz-close-coupon-modal" class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">✕ Cancel</button>
+          </div>
           <form id="tmz-create-coupon-form">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px;">
+            <div class="tmz-admin-form-grid-auto tmz-admin-field">
               <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Coupon Code (e.g. LAUNCH20) *</label>
-                <input type="text" id="tmz-cp-code" required maxlength="20" placeholder="EID25" style="width: 100%; box-sizing: border-box; text-transform: uppercase; padding: 10px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2);" />
+                <label for="tmz-cp-code" class="tmz-admin-field-label">Coupon Code (e.g. LAUNCH20) *</label>
+                <input type="text" id="tmz-cp-code" class="tmz-admin-input" required maxlength="20" placeholder="EID25" style="text-transform: uppercase;" />
               </div>
               <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Discount Type *</label>
-                <select id="tmz-cp-type" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2);">
+                <label for="tmz-cp-type" class="tmz-admin-field-label">Discount Type *</label>
+                <select id="tmz-cp-type" class="tmz-admin-input">
                   <option value="percent">Percentage (% off)</option>
                   <option value="flat">Flat Amount (₹ INR off)</option>
                 </select>
               </div>
               <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Discount Value *</label>
-                <input type="number" id="tmz-cp-val" required min="1" max="10000" placeholder="20" style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 10px; border: 1.5px solid rgba(11,11,11,0.2);" />
+                <label for="tmz-cp-val" class="tmz-admin-field-label">Discount Value *</label>
+                <input type="number" id="tmz-cp-val" class="tmz-admin-input" required min="1" max="10000" placeholder="20" />
               </div>
             </div>
-            <div id="tmz-coupon-msg" style="margin-bottom: 12px; font-size: 14px;"></div>
-            <div style="display: flex; gap: 10px;">
-              <button type="submit" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 10px 22px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">Save Coupon</button>
-              <button type="button" id="tmz-close-coupon-modal" style="font-family: var(--font-head); font-weight: 600; font-size: 14px; border-radius: 999px; padding: 10px 22px; border: 1.5px solid rgba(11,11,11,0.2); background: transparent; cursor: pointer;">Cancel</button>
+            <div id="tmz-coupon-msg" class="tmz-admin-msg"></div>
+            <div class="tmz-admin-actions-row">
+              <button type="submit" class="tmz-admin-btn tmz-admin-btn-primary">Save Coupon</button>
             </div>
           </form>
         </div>
 
         ${couponList.length ? `
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+          <div class="tmz-admin-coupon-grid">
             ${couponList.map((c) => `
-              <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+              <div class="tmz-admin-coupon-card">
                 <div>
-                  <strong style="font-family: var(--font-head); font-size: 18px; letter-spacing: 1px; color: #0B0B0B; display: block;">${escapeText(c.code)}</strong>
-                  <span style="font-size: 13px; color: #1E7B2E; font-weight: 600;">${escapeText(c.label || (c.type === 'flat' ? `₹${c.value} off` : `${c.value}% off`))}</span>
-                  <span style="display: block; font-size: 11px; color: #8F8F89; margin-top: 4px;">Active</span>
+                  <span class="tmz-label" style="margin-bottom: 6px;">PROMO CODE</span>
+                  <strong class="tmz-admin-coupon-code">${escapeText(c.code)}</strong>
+                  <div class="tmz-admin-actions-row">
+                    <span class="tmz-admin-status tmz-admin-status--warn">${escapeText(c.label || (c.type === 'flat' ? `₹${c.value} off` : `${c.value}% off`))}</span>
+                    <span class="tmz-admin-status tmz-admin-status--live">Active</span>
+                  </div>
                 </div>
-                <button type="button" class="tmz-delete-coupon-btn" data-code="${c.code}" style="font-family: var(--font-head); font-weight: 600; font-size: 12px; padding: 6px 14px; border-radius: 999px; border: 1.5px solid rgba(179,38,30,0.3); background: transparent; color: #B3261E; cursor: pointer;">
+                <button type="button" class="tmz-delete-coupon-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-code="${c.code}">
                   Delete
                 </button>
               </div>
             `).join('')}
           </div>
         ` : `
-          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; padding: 48px 24px; text-align: center; color: #5E5E59;">
-            <p style="margin: 0;">No active promotional coupons. Click "+ Create New Coupon" to offer instant discounts to buyers.</p>
+          <div class="tmz-admin-empty">
+            <h3>No active promotional coupons</h3>
+            <p>Click "+ Create New Coupon" to offer instant discounts to buyers.</p>
           </div>
         `}
       </div>
@@ -1839,88 +1868,90 @@ export class AdminController {
     const uniqueEmails = [...new Set(leads.map(l => (l.email || '').toLowerCase()))].filter(Boolean);
 
     mount.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
-        <div>
-          <p style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #5E5E59; margin: 0 0 4px;">Audience & Lead Generation</p>
-          <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 24px; margin: 0; color: #0B0B0B;">Free Sample Chapter Leads</h2>
-          <p style="font-size: 14px; color: #5E5E59; margin: 4px 0 0;">Prospective readers who unlocked Chapter 1 previews on your storefront.</p>
+      <div>
+        <div class="tmz-admin-section-head">
+          <div>
+            <p class="tmz-label">AUDIENCE // CHAPTER 1 SAMPLES</p>
+            <h2 class="tmz-admin-section-title">Free Sample Chapter Leads</h2>
+            <p class="tmz-admin-section-sub">Prospective readers who unlocked Chapter 1 previews on your storefront.</p>
+          </div>
+          <div class="tmz-admin-actions-row">
+            <button id="tmz-copy-leads-btn" type="button" class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">
+              Copy All Emails (${uniqueEmails.length})
+            </button>
+            <button id="tmz-export-leads-btn" type="button" class="tmz-admin-btn tmz-admin-btn-primary tmz-admin-btn-sm">
+              Export CSV ↓
+            </button>
+          </div>
         </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button id="tmz-copy-leads-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid rgba(11,11,11,0.2); background: #FFFFFF; color: #0B0B0B; cursor: pointer; transition: all 0.15s ease;">
-            📋 Copy All Emails (${uniqueEmails.length})
-          </button>
-          <button id="tmz-export-leads-btn" type="button" style="font-family: var(--font-head); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid #0B0B0B; background: #0B0B0B; color: #FFFFFF; cursor: pointer; transition: all 0.15s ease;">
-            📥 Export CSV
-          </button>
-        </div>
-      </div>
 
-      <!-- KPI Grid -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
-          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Total Samples Unlocked</span>
-          <strong style="font-size: 28px; font-weight: 700; color: #0B0B0B; font-family: var(--font-head);">${totalLeads}</strong>
+        <!-- KPI Grid -->
+        <div class="tmz-admin-kpi-grid">
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>01 // Total Samples Unlocked</span></div>
+            <b class="tmz-admin-kpi-val">${totalLeads}</b>
+          </div>
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>02 // Unique Prospective Buyers</span></div>
+            <b class="tmz-admin-kpi-val">${uniqueEmails.length}</b>
+          </div>
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>03 // New Leads Today</span></div>
+            <b class="tmz-admin-kpi-val">${todayLeads}</b>
+          </div>
         </div>
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
-          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Unique Prospective Buyers</span>
-          <strong style="font-size: 28px; font-weight: 700; color: #0B0B0B; font-family: var(--font-head);">${uniqueEmails.length}</strong>
-        </div>
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
-          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">New Leads Today</span>
-          <strong style="font-size: 28px; font-weight: 700; color: #0B0B0B; font-family: var(--font-head);">${todayLeads}</strong>
-        </div>
-      </div>
 
-      <!-- Leads Table -->
-      <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; overflow: hidden;">
+        <!-- Leads Table -->
         ${leads.length === 0 ? `
-          <div style="padding: 48px 24px; text-align: center; color: #5E5E59;">
-            <p style="font-size: 16px; font-weight: 600; color: #0B0B0B; margin: 0 0 4px;">No sample leads recorded yet</p>
-            <p style="font-size: 14px; margin: 0;">When visitors enter their email on a book page to read Chapter 1, they will appear here in real-time.</p>
+          <div class="tmz-admin-empty">
+            <h3>No sample leads recorded yet</h3>
+            <p>When visitors enter their email on a book page to read Chapter 1, they will appear here in real-time.</p>
           </div>
         ` : `
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-              <thead>
-                <tr style="border-bottom: 1.5px solid rgba(11,11,11,0.08); background: #FAF9F6; font-size: 12px; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.06em;">
-                  <th style="padding: 14px 16px; font-weight: 600;">Date</th>
-                  <th style="padding: 14px 16px; font-weight: 600;">Email</th>
-                  <th style="padding: 14px 16px; font-weight: 600;">Phone / WhatsApp</th>
-                  <th style="padding: 14px 16px; font-weight: 600;">Book Sample</th>
-                  <th style="padding: 14px 16px; font-weight: 600; text-align: right;">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${leads.map(l => {
-                  const dateStr = l.createdAt ? new Date(l.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
-                  const cleanPhone = (l.phone || '').replace(/[^0-9+]/g, '');
-                  const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}` : null;
-                  return `
-                    <tr style="border-bottom: 1px solid rgba(11,11,11,0.06);">
-                      <td style="padding: 14px 16px; color: #5E5E59; font-size: 13px; white-space: nowrap;">${dateStr}</td>
-                      <td style="padding: 14px 16px; font-weight: 600; color: #0B0B0B;">
-                        <a href="mailto:${escapeText(l.email)}" style="color: #0B0B0B; text-decoration: none;">${escapeText(l.email)}</a>
-                      </td>
-                      <td style="padding: 14px 16px; font-size: 13px; color: #5E5E59;">
-                        ${cleanPhone ? `
-                          <a href="${waUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 4px; color: #0B0B0B; text-decoration: underline;">
-                            ${escapeText(l.phone)} ↗
-                          </a>
-                        ` : `<span style="color: #999;">—</span>`}
-                      </td>
-                      <td style="padding: 14px 16px; font-size: 13px; color: #0B0B0B; font-weight: 500;">
-                        ${escapeText(l.productName || l.productId || 'E-Book')}
-                      </td>
-                      <td style="padding: 14px 16px; text-align: right;">
-                        <button type="button" class="tmz-del-lead-btn" data-id="${l.id}" style="background: none; border: none; color: #B3261E; font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 8px; border-radius: 4px;">
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
+          <div class="tmz-admin-table-wrap">
+            <div class="tmz-admin-table-scroll">
+              <table class="tmz-admin-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Email</th>
+                    <th>Phone / WhatsApp</th>
+                    <th>Book Sample</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${leads.map(l => {
+                    const dateStr = l.createdAt ? new Date(l.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+                    const cleanPhone = (l.phone || '').replace(/[^0-9+]/g, '');
+                    const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}` : null;
+                    return `
+                      <tr>
+                        <td style="color: var(--tmz-graphite, #55554F); font-size: 13px; white-space: nowrap;">${dateStr}</td>
+                        <td style="font-weight: 600; color: #0B0B0B;">
+                          <a href="mailto:${escapeText(l.email)}" style="color: #0B0B0B; text-decoration: none;">${escapeText(l.email)}</a>
+                        </td>
+                        <td style="font-size: 13px; color: var(--tmz-graphite, #55554F);">
+                          ${cleanPhone ? `
+                            <a href="${waUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 4px; color: #0B0B0B; text-decoration: underline;">
+                              ${escapeText(l.phone)} ↗
+                            </a>
+                          ` : `<span style="color: #999;">—</span>`}
+                        </td>
+                        <td style="font-size: 13px; color: #0B0B0B; font-weight: 500;">
+                          ${escapeText(l.productName || l.productId || 'E-Book')}
+                        </td>
+                        <td style="text-align: right;">
+                          <button type="button" class="tmz-del-lead-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${l.id}">
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
           </div>
         `}
       </div>
@@ -1973,114 +2004,127 @@ export class AdminController {
     const approved = Array.isArray(data.approved) ? data.approved : [];
 
     mount.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
-        <div>
-          <p style="font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #5E5E59; margin: 0 0 4px;">Social Proof &amp; Moderation</p>
-          <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 24px; margin: 0; color: #0B0B0B;">Reader Reviews &amp; Testimonials</h2>
-          <p style="font-size: 14px; color: #5E5E59; margin: 4px 0 0;">Moderate incoming ratings and comments from readers before they appear live on the storefront.</p>
+      <div>
+        <div class="tmz-admin-section-head">
+          <div>
+            <p class="tmz-label">MODERATION // SOCIAL PROOF</p>
+            <h2 class="tmz-admin-section-title">Reader Reviews &amp; Testimonials</h2>
+            <p class="tmz-admin-section-sub">Moderate incoming ratings and comments from readers before they appear live on the storefront.</p>
+          </div>
         </div>
-      </div>
 
-      <!-- KPI Grid -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px;">
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
-          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Pending Moderation</span>
-          <strong style="font-size: 28px; font-weight: 700; color: ${pending.length > 0 ? '#C00' : '#0B0B0B'}; font-family: var(--font-head);">${pending.length}</strong>
+        <!-- KPI Grid -->
+        <div class="tmz-admin-kpi-grid">
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>01 // Pending Moderation</span></div>
+            <b class="tmz-admin-kpi-val ${pending.length > 0 ? 'tmz-admin-kpi-val--danger' : ''}">${pending.length}</b>
+          </div>
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>02 // Live Approved Reviews</span></div>
+            <b class="tmz-admin-kpi-val tmz-admin-kpi-val--ok">${approved.length}</b>
+          </div>
+          <div class="tmz-admin-kpi-card">
+            <div class="tmz-admin-kpi-label"><span>03 // Total Submissions</span></div>
+            <b class="tmz-admin-kpi-val">${pending.length + approved.length}</b>
+          </div>
         </div>
-        <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 14px; padding: 18px 20px;">
-          <span style="font-size: 12px; font-weight: 600; color: #5E5E59; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Live Approved Reviews</span>
-          <strong style="font-size: 28px; font-weight: 700; color: #1E7B2E; font-family: var(--font-head);">${approved.length}</strong>
-        </div>
-      </div>
 
-      <!-- Section 1: Pending Reviews -->
-      <div style="background: #FFFFFF; border: 1.5px solid ${pending.length > 0 ? '#0B0B0B' : 'rgba(11,11,11,0.08)'}; border-radius: 16px; padding: 24px; margin-bottom: 28px;">
-        <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0 0 16px; color: #0B0B0B; display: flex; align-items: center; gap: 8px;">
-          <span>⏳ Awaiting Your Approval</span>
-          <span style="font-size: 12px; background: #0B0B0B; color: #FFF; padding: 2px 8px; border-radius: 999px;">${pending.length}</span>
-        </h3>
+        <!-- Section 1: Pending Reviews -->
+        <div class="tmz-admin-panel ${pending.length > 0 ? 'tmz-admin-panel--priority' : ''}" style="margin-bottom: 24px;">
+          <div class="tmz-admin-panel-head">
+            <h3 class="tmz-admin-panel-title">
+              <span>Awaiting Your Approval</span>
+              <span class="tmz-admin-status ${pending.length > 0 ? 'tmz-admin-status--warn' : 'tmz-admin-status--muted'}">${pending.length}</span>
+            </h3>
+          </div>
 
-        ${pending.length === 0 ? `
-          <p style="font-size: 14px; color: #5E5E59; margin: 0;">No pending reviews. All reader submissions have been moderated.</p>
-        ` : `
-          <div style="display: flex; flex-direction: column; gap: 14px;">
-            ${pending.map(r => `
-              <div style="background: #FAF9F6; border: 1px solid rgba(11,11,11,0.1); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
-                  <div>
-                    <div style="color: #F5A623; font-size: 16px; letter-spacing: 2px; margin-bottom: 4px;">
-                      ${'★'.repeat(r.rating || 5)}${'☆'.repeat(5 - (r.rating || 5))}
+          ${pending.length === 0 ? `
+            <p style="font-size: 14px; color: var(--tmz-graphite, #55554F); margin: 0;">No pending reviews. All reader submissions have been moderated.</p>
+          ` : `
+            <div class="tmz-admin-review-list">
+              ${pending.map(r => `
+                <div class="tmz-admin-review-card">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+                    <div>
+                      <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span class="tmz-admin-review-stars">${'★'.repeat(r.rating || 5)}${'☆'.repeat(5 - (r.rating || 5))}</span>
+                        ${r.verifiedBuyer ? `
+                          <span class="tmz-admin-status tmz-admin-status--live">✓ Verified Buyer</span>
+                        ` : ''}
+                      </div>
+                      <strong style="font-family: var(--font-head); font-size: 15px; color: #0B0B0B;">${escapeText(r.name)}</strong>
+                      <span style="font-size: 13px; color: var(--tmz-graphite, #55554F); margin-left: 6px;">(${escapeText(r.email)})</span>
                     </div>
-                    <strong style="font-family: var(--font-head); font-size: 15px; color: #0B0B0B;">${escapeText(r.name)}</strong>
-                    <span style="font-size: 13px; color: #767670; margin-left: 6px;">(${escapeText(r.email)})</span>
-                    ${r.verifiedBuyer ? `
-                      <span style="font-size: 11px; background: #E8F5E9; color: #2E7D32; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-left: 8px; text-transform: uppercase;">
-                        ✓ Verified Buyer
-                      </span>
-                    ` : ''}
-                  </div>
-                  <div style="display: flex; gap: 8px;">
-                    <button type="button" class="tmz-approve-rev-btn" data-id="${r.id}" style="font-family: var(--font-head); font-weight: 700; font-size: 12px; padding: 6px 14px; background: #0B0B0B; color: #FFF; border: none; border-radius: 6px; cursor: pointer;">
-                      Approve &amp; Publish ✓
-                    </button>
-                    <button type="button" class="tmz-delete-rev-btn" data-id="${r.id}" style="font-family: var(--font-head); font-weight: 600; font-size: 12px; padding: 6px 12px; background: transparent; color: #B3261E; border: 1px solid rgba(179,38,30,0.3); border-radius: 6px; cursor: pointer;">
-                      Reject / Delete
-                    </button>
-                  </div>
-                </div>
-                <div style="font-size: 13px; color: #5E5E59;">Book: <strong>${escapeText(r.bookName || r.productId)}</strong></div>
-                <blockquote style="margin: 6px 0 0; font-size: 14px; line-height: 1.5; color: #222; font-style: italic; border-left: 2px solid #0B0B0B; padding-left: 12px;">
-                  "${escapeText(r.comment)}"
-                </blockquote>
-              </div>
-            `).join('')}
-          </div>
-        `}
-      </div>
-
-      <!-- Section 2: Approved Reviews Table -->
-      <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.08); border-radius: 16px; padding: 24px;">
-        <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 18px; margin: 0 0 16px; color: #0B0B0B;">
-          Published Storefront Reviews (${approved.length})
-        </h3>
-
-        ${approved.length === 0 ? `
-          <p style="font-size: 14px; color: #5E5E59; margin: 0;">No approved reviews published yet.</p>
-        ` : `
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-              <thead>
-                <tr style="border-bottom: 1.5px solid rgba(11,11,11,0.08); background: #FAF9F6; font-size: 12px; color: #5E5E59; text-transform: uppercase;">
-                  <th style="padding: 12px 14px;">Rating</th>
-                  <th style="padding: 12px 14px;">Reviewer</th>
-                  <th style="padding: 12px 14px;">Book</th>
-                  <th style="padding: 12px 14px;">Feedback</th>
-                  <th style="padding: 12px 14px; text-align: right;">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${approved.map(r => `
-                  <tr style="border-bottom: 1px solid rgba(11,11,11,0.06);">
-                    <td style="padding: 12px 14px; color: #F5A623; white-space: nowrap;">${'★'.repeat(r.rating || 5)}</td>
-                    <td style="padding: 12px 14px; font-weight: 600; color: #0B0B0B; white-space: nowrap;">
-                      ${escapeText(r.name)}
-                      ${r.verifiedBuyer ? '<span style="color:#2E7D32; font-size:11px;">✓</span>' : ''}
-                    </td>
-                    <td style="padding: 12px 14px; font-size: 13px; color: #5E5E59; white-space: nowrap;">${escapeText(r.bookName || r.productId)}</td>
-                    <td style="padding: 12px 14px; font-size: 13px; color: #333; max-width: 320px;">
-                      "${escapeText(r.comment)}"
-                    </td>
-                    <td style="padding: 12px 14px; text-align: right;">
-                      <button type="button" class="tmz-delete-rev-btn" data-id="${r.id}" style="background: none; border: none; color: #B3261E; font-size: 12px; font-weight: 600; cursor: pointer;">
-                        Remove
+                    <div class="tmz-admin-actions-row">
+                      <button type="button" class="tmz-approve-rev-btn tmz-admin-btn tmz-admin-btn-primary tmz-admin-btn-sm" data-id="${r.id}">
+                        Approve &amp; Publish ✓
                       </button>
-                    </td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
+                      <button type="button" class="tmz-delete-rev-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${r.id}">
+                        Reject / Delete
+                      </button>
+                    </div>
+                  </div>
+                  <div style="font-size: 13px; color: var(--tmz-graphite, #55554F);">Book: <strong style="color: #0B0B0B;">${escapeText(r.bookName || r.productId)}</strong></div>
+                  <blockquote class="tmz-admin-review-quote">
+                    "${escapeText(r.comment)}"
+                  </blockquote>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </div>
+
+        <!-- Section 2: Approved Reviews Table -->
+        <div class="tmz-admin-panel">
+          <div class="tmz-admin-panel-head">
+            <h3 class="tmz-admin-panel-title">
+              <span>Published Storefront Reviews</span>
+              <span class="tmz-admin-status tmz-admin-status--ink">${approved.length}</span>
+            </h3>
           </div>
-        `}
+
+          ${approved.length === 0 ? `
+            <p style="font-size: 14px; color: var(--tmz-graphite, #55554F); margin: 0;">No approved reviews published yet.</p>
+          ` : `
+            <div class="tmz-admin-table-wrap">
+              <div class="tmz-admin-table-scroll">
+                <table class="tmz-admin-table">
+                  <thead>
+                    <tr>
+                      <th>Rating</th>
+                      <th>Reviewer</th>
+                      <th>Book</th>
+                      <th>Feedback</th>
+                      <th style="text-align: right;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${approved.map(r => `
+                      <tr>
+                        <td style="white-space: nowrap;">
+                          <span class="tmz-admin-review-stars">${'★'.repeat(r.rating || 5)}</span>
+                        </td>
+                        <td style="font-weight: 600; color: #0B0B0B; white-space: nowrap;">
+                          ${escapeText(r.name)}
+                          ${r.verifiedBuyer ? '<span class="tmz-admin-status tmz-admin-status--live" style="margin-left: 6px;">✓</span>' : ''}
+                        </td>
+                        <td style="font-size: 13px; color: var(--tmz-graphite, #55554F); white-space: nowrap;">${escapeText(r.bookName || r.productId)}</td>
+                        <td style="font-size: 13px; color: #222; max-width: 340px;">
+                          "${escapeText(r.comment)}"
+                        </td>
+                        <td style="text-align: right;">
+                          <button type="button" class="tmz-delete-rev-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${r.id}">
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `}
+        </div>
       </div>
     `;
 
@@ -2118,37 +2162,45 @@ export class AdminController {
     const ann = res.ok && res.data.announcement ? res.data.announcement : { enabled: false, text: '', link: '', linkText: '' };
 
     mount.innerHTML = `
-      <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 20px; padding: 28px;">
-        <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 22px; margin: 0 0 8px; color: #0B0B0B;">Storefront Announcement Banner</h2>
-        <p style="color: #5E5E59; font-size: 14px; margin: 0 0 24px;">Display an eye-catching banner at the very top of your TAMYIZ website for sales, new editions, or notices.</p>
+      <div class="tmz-admin-panel tmz-frame">
+        <div class="tmz-admin-section-head">
+          <div>
+            <p class="tmz-label">STOREFRONT // TOP RIBBON</p>
+            <h2 class="tmz-admin-section-title">Storefront Announcement Banner</h2>
+            <p class="tmz-admin-section-sub">Display an editorial announcement bar at the very top of your TAMYIZ website for launches, sales, or notices.</p>
+          </div>
+          <span class="tmz-admin-status ${ann.enabled ? 'tmz-admin-status--warn' : 'tmz-admin-status--muted'}">
+            ${ann.enabled ? 'Live on Storefront' : 'Disabled'}
+          </span>
+        </div>
 
         <form id="tmz-announcement-form">
-          <div style="margin-bottom: 18px;">
+          <div class="tmz-admin-check-row">
             <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-              <input type="checkbox" id="tmz-ann-enabled" ${ann.enabled ? 'checked' : ''} style="width: 18px; height: 18px;" />
-              <span style="font-family: var(--font-head); font-weight: 600; font-size: 15px;">Enable Banner on Storefront</span>
+              <input type="checkbox" id="tmz-ann-enabled" ${ann.enabled ? 'checked' : ''} style="width: 17px; height: 17px;" />
+              <span style="font-family: var(--font-head); font-weight: 600; font-size: 14.5px;">Enable Banner on Storefront</span>
             </label>
           </div>
 
-          <div style="margin-bottom: 18px;">
-            <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Banner Text *</label>
-            <input type="text" id="tmz-ann-text" maxlength="200" value="${escapeText(ann.text || '')}" placeholder="e.g. Ramadhan Special: 20% off all AI Playbooks with code EID20" style="width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: 1.5px solid rgba(11,11,11,0.2);" />
+          <div class="tmz-admin-field">
+            <label for="tmz-ann-text" class="tmz-admin-field-label">Banner Text *</label>
+            <input type="text" id="tmz-ann-text" class="tmz-admin-input" maxlength="200" value="${escapeText(ann.text || '')}" placeholder="e.g. Ramadhan Special: 20% off all AI Playbooks with code EID20" />
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px;">
+          <div class="tmz-admin-form-grid-2" style="margin-bottom: 20px;">
             <div>
-              <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Target URL (Optional)</label>
-              <input type="text" id="tmz-ann-link" maxlength="150" value="${escapeText(ann.link || '')}" placeholder="/editions or https://..." style="width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: 1.5px solid rgba(11,11,11,0.2);" />
+              <label for="tmz-ann-link" class="tmz-admin-field-label">Target URL (Optional)</label>
+              <input type="text" id="tmz-ann-link" class="tmz-admin-input" maxlength="150" value="${escapeText(ann.link || '')}" placeholder="/editions or https://..." />
             </div>
             <div>
-              <label style="display: block; font-family: var(--font-head); font-weight: 600; font-size: 14px; margin-bottom: 6px;">Link Action Label (Optional)</label>
-              <input type="text" id="tmz-ann-linktext" maxlength="50" value="${escapeText(ann.linkText || '')}" placeholder="Explore Editions ↗" style="width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: 1.5px solid rgba(11,11,11,0.2);" />
+              <label for="tmz-ann-linktext" class="tmz-admin-field-label">Link Action Label (Optional)</label>
+              <input type="text" id="tmz-ann-linktext" class="tmz-admin-input" maxlength="50" value="${escapeText(ann.linkText || '')}" placeholder="Explore Editions ↗" />
             </div>
           </div>
 
-          <div id="tmz-ann-msg" style="margin-bottom: 14px; font-size: 14px; font-weight: 500;"></div>
+          <div id="tmz-ann-msg" class="tmz-admin-msg"></div>
 
-          <button type="submit" id="tmz-save-ann-btn" style="font-family: var(--font-head); font-weight: 600; font-size: 15px; border-radius: 999px; padding: 12px 28px; border: none; background: #0B0B0B; color: #FFFFFF; cursor: pointer;">
+          <button type="submit" id="tmz-save-ann-btn" class="tmz-admin-btn tmz-admin-btn-primary">
             Save Announcement Banner
           </button>
         </form>
@@ -2193,41 +2245,50 @@ export class AdminController {
 
     mount.innerHTML = `
       <div>
-        <div style="margin-bottom: 20px;">
-          <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 22px; margin: 0; color: #0B0B0B;">Customers Directory</h2>
-          <p style="color: #5E5E59; font-size: 14px; margin: 4px 0 0;">Aggregated buyer profiles with order histories and lifetime value.</p>
+        <div class="tmz-admin-section-head">
+          <div>
+            <p class="tmz-label">DIRECTORY // VERIFIED BUYERS</p>
+            <h2 class="tmz-admin-section-title">Customers Directory</h2>
+            <p class="tmz-admin-section-sub">Aggregated buyer profiles with order histories and lifetime spend.</p>
+          </div>
+          <span class="tmz-admin-status tmz-admin-status--ink">${this.customers.length} Profiles</span>
         </div>
 
         ${this.customers.length ? `
-          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; overflow-x: auto; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-              <thead>
-                <tr style="border-bottom: 1px solid rgba(11,11,11,0.08); background: #F7F7F5;">
-                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Email / Identifier</th>
-                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Phone</th>
-                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Orders Count</th>
-                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Lifetime Spend</th>
-                  <th style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: #5E5E59;">Last Active</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${this.customers.map((c) => `
-                  <tr style="border-bottom: 1px solid rgba(11,11,11,0.06);">
-                    <td style="padding: 14px 16px; font-weight: 600;">${escapeText(c.email)}</td>
-                    <td style="padding: 14px 16px; color: #5E5E59;">${escapeText(c.phone)}</td>
-                    <td style="padding: 14px 16px; font-family: var(--font-head); font-weight: 600;">${c.ordersCount}</td>
-                    <td style="padding: 14px 16px; font-family: var(--font-head); font-weight: 700;">₹${Number(c.totalSpentINR || 0).toLocaleString('en-IN')}</td>
-                    <td style="padding: 14px 16px; font-size: 12px; color: #5E5E59;">
-                      ${c.lastOrderAt ? new Date(c.lastOrderAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
-                    </td>
+          <div class="tmz-admin-table-wrap">
+            <div class="tmz-admin-table-scroll">
+              <table class="tmz-admin-table">
+                <thead>
+                  <tr>
+                    <th>Email / Identifier</th>
+                    <th>Phone</th>
+                    <th>Orders Count</th>
+                    <th>Lifetime Spend</th>
+                    <th>Last Active</th>
                   </tr>
-                `).join('')}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  ${this.customers.map((c) => `
+                    <tr>
+                      <td style="font-weight: 600; color: #0B0B0B;">${escapeText(c.email)}</td>
+                      <td style="color: var(--tmz-graphite, #55554F);">${escapeText(c.phone || '—')}</td>
+                      <td>
+                        <span class="tmz-admin-status tmz-admin-status--muted">${c.ordersCount}</span>
+                      </td>
+                      <td style="font-family: var(--font-head); font-weight: 700;">₹${Number(c.totalSpentINR || 0).toLocaleString('en-IN')}</td>
+                      <td style="font-size: 12.5px; color: var(--tmz-graphite, #55554F);">
+                        ${c.lastOrderAt ? new Date(c.lastOrderAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
           </div>
         ` : `
-          <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 18px; padding: 48px 24px; text-align: center; color: #5E5E59;">
-            <p style="margin: 0;">No registered customer profiles found yet.</p>
+          <div class="tmz-admin-empty">
+            <h3>No registered customer profiles</h3>
+            <p>No customer purchase records found yet.</p>
           </div>
         `}
       </div>
@@ -2237,21 +2298,22 @@ export class AdminController {
   // ---------------------------------------------------------------- ANALYTICS TAB
   async renderAnalyticsTab(mount) {
     mount.innerHTML = `
-      <div style="background: #0B0B0B; color: #FFFFFF; border-radius: 24px; padding: 28px; box-shadow: 0 30px 60px -30px rgba(0,0,0,0.6);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+      <div class="tmz-admin-panel--ink tmz-frame">
+        <div class="tmz-admin-section-head" style="border-bottom-color: rgba(255,255,255,0.14);">
           <div>
-            <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 22px; margin: 0; color: #FFFFFF;">Visitor Telemetry</h2>
-            <p style="color: #A9A9A3; font-size: 14px; margin: 4px 0 0;">Cloudflare Web Analytics (Cookieless and privacy compliant).</p>
+            <p class="tmz-label">TELEMETRY // CLOUDFLARE EDGE</p>
+            <h2 class="tmz-admin-section-title">Visitor Telemetry</h2>
+            <p class="tmz-admin-section-sub">Cloudflare Web Analytics (Cookieless and privacy compliant).</p>
           </div>
-          <div style="display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.08);">
-            <button type="button" class="tmz-stat-range-btn" data-days="1" style="padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; border: none; background: ${this.statsDays === 1 ? '#FFFFFF' : 'transparent'}; color: ${this.statsDays === 1 ? '#0B0B0B' : '#D6D6D1'}; cursor: pointer;">Today</button>
-            <button type="button" class="tmz-stat-range-btn" data-days="7" style="padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; border: none; background: ${this.statsDays === 7 ? '#FFFFFF' : 'transparent'}; color: ${this.statsDays === 7 ? '#0B0B0B' : '#D6D6D1'}; cursor: pointer;">7 Days</button>
-            <button type="button" class="tmz-stat-range-btn" data-days="30" style="padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; border: none; background: ${this.statsDays === 30 ? '#FFFFFF' : 'transparent'}; color: ${this.statsDays === 30 ? '#0B0B0B' : '#D6D6D1'}; cursor: pointer;">30 Days</button>
+          <div class="tmz-admin-range-group">
+            <button type="button" class="tmz-stat-range-btn ${this.statsDays === 1 ? 'is-active' : ''}" data-days="1">Today</button>
+            <button type="button" class="tmz-stat-range-btn ${this.statsDays === 7 ? 'is-active' : ''}" data-days="7">7 Days</button>
+            <button type="button" class="tmz-stat-range-btn ${this.statsDays === 30 ? 'is-active' : ''}" data-days="30">30 Days</button>
           </div>
         </div>
 
         <div id="tmz-stats-content">
-          <p style="color: #A9A9A3;">Connecting to Cloudflare Analytics…</p>
+          <p style="color: #A9A9A3; margin: 0;">Connecting to Cloudflare Analytics…</p>
         </div>
       </div>
     `;
@@ -2267,7 +2329,7 @@ export class AdminController {
     const res = await this.api(`stats?days=${this.statsDays}`);
     if (!res.ok) {
       statsBox.innerHTML = `
-        <div style="background: rgba(255,214,140,0.12); color: #FFD98A; padding: 16px; border-radius: 12px; font-size: 14px;">
+        <div style="background: var(--tmz-yellow, #FFD60A); border: 1px solid #0B0B0B; color: #0B0B0B; padding: 14px 16px; border-radius: 4px; font-size: 13.5px; font-weight: 600;">
           ${escapeText(res.data.error || 'Analytics token not active or accessible.')}
         </div>
       `;
@@ -2278,40 +2340,40 @@ export class AdminController {
     const num = (n) => Number(n || 0).toLocaleString('en-IN');
 
     statsBox.innerHTML = `
-      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 24px;">
-        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px 20px;">
-          <b style="display: block; font-family: var(--font-head); font-size: 40px; font-weight: 700; letter-spacing: -1.5px; color: #FFFFFF;">${num(d.visits)}</b>
-          <span style="color: #A9A9A3; font-size: 14px;">Visits in the last ${this.statsDays === 1 ? '24 hours' : `${this.statsDays} days`}</span>
+      <div class="tmz-admin-telemetry-kpis">
+        <div class="tmz-admin-telemetry-card">
+          <b>${num(d.visits)}</b>
+          <span>Visits in the last ${this.statsDays === 1 ? '24 hours' : `${this.statsDays} days`}</span>
         </div>
-        <div style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 18px 20px;">
-          <b style="display: block; font-family: var(--font-head); font-size: 40px; font-weight: 700; letter-spacing: -1.5px; color: #FFFFFF;">${num(d.pageViews)}</b>
-          <span style="color: #A9A9A3; font-size: 14px;">Page Views ${d.visits ? `(${((d.pageViews || 0) / (d.visits || 1)).toFixed(1)} per visit)` : ''}</span>
+        <div class="tmz-admin-telemetry-card">
+          <b>${num(d.pageViews)}</b>
+          <span>Page Views ${d.visits ? `(${((d.pageViews || 0) / (d.visits || 1)).toFixed(1)} per visit)` : ''}</span>
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px;">
+      <div class="tmz-admin-telemetry-cols">
         <div>
-          <h3 style="font-family: var(--font-head); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #8F8F89; margin: 0 0 12px;">Top Sources</h3>
+          <h3>Top Sources</h3>
           ${(d.sources || []).map((s) => `
-            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #EDEDE8;">
+            <div class="tmz-admin-telemetry-row">
               <span>${escapeText(s.name)}</span>
               <strong style="color: #FFFFFF;">${num(s.visits)}</strong>
             </div>
           `).join('')}
         </div>
         <div>
-          <h3 style="font-family: var(--font-head); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #8F8F89; margin: 0 0 12px;">Most Read Pages</h3>
+          <h3>Most Read Pages</h3>
           ${(d.pages || []).filter((p) => !p.path.startsWith('/admin')).slice(0, 6).map((p) => `
-            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #EDEDE8;">
-              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">${escapeText(p.path === '/' ? 'Home' : p.path)}</span>
+            <div class="tmz-admin-telemetry-row">
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px;">${escapeText(p.path === '/' ? 'Home' : p.path)}</span>
               <strong style="color: #FFFFFF;">${num(p.pageViews)}</strong>
             </div>
           `).join('')}
         </div>
         <div>
-          <h3 style="font-family: var(--font-head); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #8F8F89; margin: 0 0 12px;">Countries</h3>
+          <h3>Countries</h3>
           ${(d.countries || []).slice(0, 6).map((c) => `
-            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #EDEDE8;">
+            <div class="tmz-admin-telemetry-row">
               <span>${escapeText(c.name)}</span>
               <strong style="color: #FFFFFF;">${num(c.visits)}</strong>
             </div>
@@ -2327,57 +2389,62 @@ export class AdminController {
     const cfg = res.ok && res.data.storeConfig ? res.data.storeConfig : {};
 
     mount.innerHTML = `
-      <div style="background: #FFFFFF; border: 1px solid rgba(11,11,11,0.1); border-radius: 20px; padding: 28px;">
-        <h2 style="font-family: var(--font-head); font-weight: 700; font-size: 22px; margin: 0 0 8px; color: #0B0B0B;">System Diagnostics & Settings</h2>
-        <p style="color: #5E5E59; font-size: 14px; margin: 0 0 24px;">Environment variable status and infrastructure health checks.</p>
+      <div class="tmz-admin-panel tmz-frame">
+        <div class="tmz-admin-section-head">
+          <div>
+            <p class="tmz-label">DIAGNOSTICS // INFRASTRUCTURE</p>
+            <h2 class="tmz-admin-section-title">System Diagnostics &amp; Settings</h2>
+            <p class="tmz-admin-section-sub">Environment variable status and infrastructure health checks.</p>
+          </div>
+        </div>
 
-        <div style="display: grid; gap: 14px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(11,11,11,0.06); padding-bottom: 12px;">
+        <div class="tmz-admin-diag-list">
+          <div class="tmz-admin-diag-row">
             <div>
               <strong style="font-family: var(--font-head); font-size: 15px; display: block;">Cloudflare KV Catalog Storage</strong>
-              <span style="font-size: 13px; color: #5E5E59;">Binding: TAMYIZ_STORE (1GB free storage)</span>
+              <span style="font-size: 13px; color: var(--tmz-graphite, #55554F);">Binding: TAMYIZ_STORE (1GB storage)</span>
             </div>
-            <span style="background: ${cfg.hasStorage ? '#E3F3E7' : '#FDF1F0'}; color: ${cfg.hasStorage ? '#1E7B2E' : '#8B1A12'}; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;">
+            <span class="tmz-admin-status ${cfg.hasStorage ? 'tmz-admin-status--live' : 'tmz-admin-status--danger'}">
               ${cfg.hasStorage ? 'Active & Ready' : 'Disconnected'}
             </span>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(11,11,11,0.06); padding-bottom: 12px;">
+          <div class="tmz-admin-diag-row">
             <div>
               <strong style="font-family: var(--font-head); font-size: 15px; display: block;">Razorpay Payment Gateway</strong>
-              <span style="font-size: 13px; color: #5E5E59;">Key: ${escapeText(cfg.razorpayKeyId || 'None')} ${cfg.isSandbox ? '(SANDBOX MODE ENABLED)' : ''}</span>
+              <span style="font-size: 13px; color: var(--tmz-graphite, #55554F);">Key: ${escapeText(cfg.razorpayKeyId || 'None')} ${cfg.isSandbox ? '(SANDBOX MODE ENABLED)' : ''}</span>
             </div>
-            <span style="background: ${cfg.hasRazorpay ? '#E3F3E7' : '#FFF2D6'}; color: ${cfg.hasRazorpay ? '#1E7B2E' : '#7A4F00'}; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;">
+            <span class="tmz-admin-status ${cfg.hasRazorpay ? 'tmz-admin-status--live' : 'tmz-admin-status--warn'}">
               ${cfg.hasRazorpay ? 'Configured' : 'Missing Production Keys'}
             </span>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(11,11,11,0.06); padding-bottom: 12px;">
+          <div class="tmz-admin-diag-row">
             <div>
               <strong style="font-family: var(--font-head); font-size: 15px; display: block;">Receipt Email Dispatcher (Brevo / Resend)</strong>
-              <span style="font-size: 13px; color: #5E5E59;">Sender: ${escapeText(cfg.receiptSender || 'tamyiz.co@gmail.com')}</span>
+              <span style="font-size: 13px; color: var(--tmz-graphite, #55554F);">Sender: ${escapeText(cfg.receiptSender || 'tamyiz.co@gmail.com')}</span>
             </div>
-            <span style="background: ${cfg.hasBrevo || cfg.hasResend ? '#E3F3E7' : '#FDF1F0'}; color: ${cfg.hasBrevo || cfg.hasResend ? '#1E7B2E' : '#8B1A12'}; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;">
+            <span class="tmz-admin-status ${(cfg.hasBrevo || cfg.hasResend) ? 'tmz-admin-status--live' : 'tmz-admin-status--danger'}">
               ${cfg.hasBrevo ? 'Brevo Connected' : cfg.hasResend ? 'Resend Connected' : 'Unconfigured'}
             </span>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(11,11,11,0.06); padding-bottom: 12px;">
+          <div class="tmz-admin-diag-row">
             <div>
               <strong style="font-family: var(--font-head); font-size: 15px; display: block;">Signed Digital Asset Vault</strong>
-              <span style="font-size: 13px; color: #5E5E59;">Time-expiring HMAC signed download links</span>
+              <span style="font-size: 13px; color: var(--tmz-graphite, #55554F);">Time-expiring HMAC signed download links</span>
             </div>
-            <span style="background: #E3F3E7; color: #1E7B2E; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;">
+            <span class="tmz-admin-status tmz-admin-status--live">
               Secured (1-Year Tokens)
             </span>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(11,11,11,0.06); padding-bottom: 12px;">
+          <div class="tmz-admin-diag-row">
             <div>
               <strong style="font-family: var(--font-head); font-size: 15px; display: block;">Admin Login Protection (Zero-KV Rate Limit + Email 2FA)</strong>
-              <span style="font-size: 13px; color: #5E5E59;">${cfg.hasAdmin2FA ? `6-digit Email OTP active (${escapeText(cfg.adminOtpEmail)})` : 'In-memory brute-force lockout active (0 KV writes)'}</span>
+              <span style="font-size: 13px; color: var(--tmz-graphite, #55554F);">${cfg.hasAdmin2FA ? `6-digit Email OTP active (${escapeText(cfg.adminOtpEmail)})` : 'In-memory brute-force lockout active (0 KV writes)'}</span>
             </div>
-            <span style="background: #E3F3E7; color: #1E7B2E; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;">
+            <span class="tmz-admin-status tmz-admin-status--live">
               ${cfg.hasAdmin2FA ? '2FA + Zero-KV Active' : 'Zero-KV Lockout Active'}
             </span>
           </div>
