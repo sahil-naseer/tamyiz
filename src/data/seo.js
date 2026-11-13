@@ -34,7 +34,7 @@ const STATIC_PAGES = {
   atelier: {
     path: '/atelier',
     title: `About us | ${BRAND}`,
-    description: 'TAMYIZ™ is Basit Majeed and Sahil Naseer: two people writing short, practical e-books on AI and the digital world.',
+    description: 'TAMYIZ™ is Basit Majeed and Sahil Naseer: two people writing short, practical e-books.',
   },
   downloads: {
     path: '/downloads',

@@ -69,7 +69,7 @@ export function renderHomePage(appInstance) {
               <h1 class="tmz-hero-title"><span class="tmz-line"><span>Learn to tell</span></span> <span class="tmz-line"><span><span class="tmz-mark tmz-nowrap">the difference.</span></span></span></h1>
             </div>
             <div class="tmz-hero-side">
-              <p class="tmz-hero-lede">Short, practical e-books on AI and the digital world, written for beginners. Download the PDF and start reading in a minute.</p>
+              <p class="tmz-hero-lede">Short, practical e-books, written for beginners. Download the PDF and start reading in a minute.</p>
               <div class="tmz-hero-ctas">
                 <a href="/#editions" class="tmz-btn tmz-btn-solid" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#editions')">Browse the e-books <span class="tmz-btn-arrow" aria-hidden="true">↓</span></a>
                 <a href="/#philosophy" class="tmz-btn tmz-btn-line" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#philosophy')">How we write</a>

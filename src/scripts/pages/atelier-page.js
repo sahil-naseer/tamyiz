@@ -48,7 +48,7 @@ export function renderAtelierPage(appInstance) {
         <div class="tmz-wrap tmz-about-story-grid">
           <div class="tmz-about-text">
             <h2>Why we started</h2>
-            <p>We started TAMYIZ in late 2025. Basit works in cybersecurity and research; Sahil works in artificial intelligence and machine learning. Between us, we kept seeing the same thing: people being told to use AI and stay safe online, with nobody explaining how in plain language.</p>
+            <p>We started TAMYIZ in late 2025. Basit works in cybersecurity and research; Sahil works in artificial intelligence and machine learning. Between us, we kept seeing the same thing: complex subjects being made harder than they need to be, with nobody explaining them in plain language.</p>
             <p>So we write short e-books that do exactly that. Every chapter ends with something you can do today. No filler, no jargon, and a PDF you can read on any device.</p>
           </div>
           <aside class="tmz-about-facts" aria-label="TAMYIZ at a glance">

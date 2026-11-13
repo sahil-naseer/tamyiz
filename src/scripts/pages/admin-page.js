@@ -13,6 +13,7 @@
  */
 
 import { siteConfig } from '../../data/site-config.js';
+import { markCatalogUpdated } from '../../data/products.js';
 import { escapeText } from '../tamyiz-unified-app.js';
 import { openVideoModal } from '../components/video-modal.js';
 
@@ -568,6 +569,8 @@ export class AdminController {
           alert(res.data.error || 'Failed to delete e-book.');
           return;
         }
+        markCatalogUpdated();
+        this.app?.refreshProducts?.({ fresh: true });
         this.renderProductsTab(mount);
       });
     });
@@ -865,6 +868,8 @@ export class AdminController {
         }
 
         formV.style.display = 'none';
+        markCatalogUpdated();
+        this.app?.refreshProducts?.({ fresh: true });
         this.renderProductsTab(document.getElementById('tmz-admin-tab-body'));
       };
 

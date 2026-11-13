@@ -5,12 +5,28 @@
  */
 export const products = [];
 
+export const CATALOG_UPDATED_KEY = 'tamyiz:catalog_updated';
+
+export function markCatalogUpdated() {
+  const stamp = String(Date.now());
+  try { localStorage.setItem(CATALOG_UPDATED_KEY, stamp); } catch {}
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      const ch = new BroadcastChannel('tamyiz-catalog');
+      ch.postMessage({ updatedAt: stamp });
+      ch.close();
+    }
+  } catch {}
+}
+
 async function fetchProducts(timeoutMs, fresh) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     // First try matches the <link rel=preload> in index.html (same address), so it reuses that download.
-    const res = await fetch(fresh ? `/api/products?r=${Date.now()}` : '/api/products', { signal: ctrl.signal });
+    const url = fresh ? `/api/products?r=${Date.now()}` : '/api/products';
+    const opts = fresh ? { signal: ctrl.signal, cache: 'no-store' } : { signal: ctrl.signal };
+    const res = await fetch(url, opts);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return await res.json();
   } finally {
@@ -22,11 +38,12 @@ async function fetchProducts(timeoutMs, fresh) {
  * Fetches the shop's ebooks. The page is already drawn while this runs (cards show as placeholders),
  * so a slow answer only delays the cards. One retry before the shop says "Couldn't load".
  */
-export async function loadProducts() {
+export async function loadProducts({ fresh = false } = {}) {
   loadState.loading = true;
   let data = null;
-  for (const [timeoutMs, fresh] of [[10000, false], [10000, true]]) {
-    try { data = await fetchProducts(timeoutMs, fresh); break; }
+  const attempts = fresh ? [[10000, true], [10000, true]] : [[10000, false], [10000, true]];
+  for (const [timeoutMs, isFresh] of attempts) {
+    try { data = await fetchProducts(timeoutMs, isFresh); break; }
     catch (err) { console.warn('Could not load ebooks:', err.message); }
   }
   if (data) products.splice(0, products.length, ...(Array.isArray(data.products) ? data.products : []));

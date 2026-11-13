@@ -12,7 +12,7 @@
 
 import { pageMeta, SITE_URL } from '../data/seo.js';
 import { renderNotFoundPage } from './pages/not-found-page.js';
-import { products, loadProducts, loadState, findProductBySlugOrId, isAvailable, anyAvailable, buyLabel } from '../data/products.js';
+import { products, loadProducts, loadState, findProductBySlugOrId, isAvailable, anyAvailable, buyLabel, CATALOG_UPDATED_KEY } from '../data/products.js';
 import { foundersData, brandInfo, policies } from '../data/content.js';
 import { siteConfig, preorderWhatsAppUrl } from '../data/site-config.js';
 import { store, hasCoupons } from './store.js';
@@ -99,6 +99,31 @@ class TamyizUnifiedApp {
     const params = new URLSearchParams(window.location.search);
     // 7. Load store announcement banner
     this.loadAnnouncement();
+
+    // 8. Stay in sync when books are added, edited, or deleted on /admin (even in another tab)
+    try {
+      window.addEventListener('storage', (ev) => {
+        if (ev.key === CATALOG_UPDATED_KEY) this.refreshProducts({ fresh: true });
+      });
+      if (typeof BroadcastChannel !== 'undefined') {
+        this._catalogChannel = new BroadcastChannel('tamyiz-catalog');
+        this._catalogChannel.onmessage = () => this.refreshProducts({ fresh: true });
+      }
+    } catch {}
+  }
+
+  async refreshProducts({ fresh = true } = {}) {
+    await loadProducts({ fresh });
+    if (!loadState.failed) {
+      store.pruneUnavailable();
+      if (this.currentPage !== 'admin') {
+        const y = window.scrollY;
+        this.renderShell();
+        this.renderCurrentPage();
+        this.renderDrawerItems();
+        window.scrollTo({ top: y, behavior: 'instant' });
+      }
+    }
   }
 
   async loadAnnouncement() {
@@ -262,6 +287,10 @@ class TamyizUnifiedApp {
       this.renderCurrentPage();
     } else {
       this.updateActiveNavIndicators();
+    }
+
+    if (previousPage === 'admin' && this.currentPage !== 'admin') {
+      this.refreshProducts({ fresh: true });
     }
 
     // Handle hash smooth scrolling

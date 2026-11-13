@@ -153,7 +153,8 @@ export async function publicCatalog(env) {
       if (raw) films = JSON.parse(raw);
     } catch {}
   }
-  return (await loadCatalog(env, { cached: true })).filter((p) => p.status !== 'draft').map((p) => publicProduct(p, films));
+  // Read live catalog without edge cacheTtl so newly added/updated books reflect immediately on Hero and About us.
+  return (await loadCatalog(env, { cached: false })).filter((p) => p.status !== 'draft').map((p) => publicProduct(p, films));
 }
 
 // ---------------------------------------------------------------------------

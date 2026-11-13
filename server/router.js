@@ -40,7 +40,10 @@ export async function route(request, env, fetchImpl = fetch) {
   if (rest === 'products' && method === 'GET') {
     const products = await publicCatalog(env);
     return new Response(JSON.stringify({ products }), {
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' }, // new e-books show on the next page load
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate', // newly added e-books show immediately
+      },
     });
   }
 
