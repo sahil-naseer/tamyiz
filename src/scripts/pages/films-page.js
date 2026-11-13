@@ -39,7 +39,7 @@ export function renderFilmCard(video, isFeatured = false) {
   ` : '';
 
   return `
-    <article class="tmz-film-card ${isFeatured ? 'is-featured' : ''}" data-category="${escapeText(video.category || 'all')}">
+    <article class="tmz-film-card ${isFeatured ? 'is-featured' : ''}" data-category="${escapeText(video.category || 'all')}" data-featured-card="${isFeatured ? 'true' : 'false'}"${isFeatured && activeCategory.toLowerCase() === 'all' ? ' style="display: none;"' : ''}>
       <div
         class="tmz-film-thumb-wrap"
         role="button"
@@ -103,16 +103,23 @@ export function renderFilmsPage(appInstance) {
 
   window.filterFilmsCategory = (cat) => {
     activeCategory = cat;
+    const isAll = cat.toLowerCase() === 'all';
     const pills = document.querySelectorAll('.tmz-cat-pill');
     pills.forEach((p) => {
       const match = p.getAttribute('data-cat') === cat;
       p.classList.toggle('is-active', match);
     });
 
+    const featuredSection = document.querySelector('.tmz-film-featured-section');
+    if (featuredSection) {
+      featuredSection.style.display = isAll ? '' : 'none';
+    }
+
     const cards = document.querySelectorAll('.tmz-films-grid .tmz-film-card');
     cards.forEach((c) => {
-      const itemCat = c.getAttribute('data-category');
-      const show = cat === 'all' || itemCat.toLowerCase() === cat.toLowerCase();
+      const isFeat = c.getAttribute('data-featured-card') === 'true';
+      const itemCat = c.getAttribute('data-category') || '';
+      const show = isAll ? !isFeat : itemCat.toLowerCase() === cat.toLowerCase();
       c.style.display = show ? 'flex' : 'none';
     });
   };
@@ -131,7 +138,7 @@ export function renderFilmsPage(appInstance) {
               <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
             </svg>
           </div>
-          <h3>Films in Production</h3>
+          <h2>Films in Production</h2>
           <p>We are crafting our first cinematic trailers, motion graphics, and visual essays. Check back soon or browse our full collection of written e-books.</p>
           <div style="margin-top: 1.5rem;">
             <a href="/editions" class="tmz-btn tmz-btn-solid" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')">Browse All E-Books →</a>
@@ -150,7 +157,6 @@ export function renderFilmsPage(appInstance) {
     }
 
     const featuredFilm = films.find((f) => f.featured) || films[0];
-    const regularFilms = films.filter((f) => f.id !== (featuredFilm ? featuredFilm.id : null));
 
     mount.innerHTML = `
       <!-- Featured Film Hero Slot -->
@@ -235,14 +241,14 @@ export function renderFilmsPage(appInstance) {
 
       <!-- Video Grid -->
       <section class="tmz-films-grid" aria-label="All films">
-        ${(featuredFilm ? regularFilms : films).map((f) => renderFilmCard(f)).join('')}
+        ${films.map((f) => renderFilmCard(f, Boolean(featuredFilm && f.id === featuredFilm.id))).join('')}
       </section>
 
       <!-- From Screen to Page Banner -->
       <section class="tmz-films-books-bridge">
         <div class="tmz-films-bridge-inner">
           <span class="tmz-bridge-eyebrow">From Screen to Page</span>
-          <h3 class="tmz-bridge-title">Every film begins with deep study.</h3>
+          <h2 class="tmz-bridge-title">Every film begins with deep study.</h2>
           <p class="tmz-bridge-text">Our films are brief previews into full monographs and tactical guides. Download any edition instantly to start reading.</p>
           <a
             href="/editions"

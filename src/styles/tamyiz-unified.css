@@ -7289,6 +7289,7 @@ body.tmz-modal-open { overflow: hidden; }
   background: var(--color-soft, #F7F7F5); color: #0B0B0B;
   display: grid; place-items: center; margin: 0 auto 1.25rem;
 }
+.tmz-films-empty h2,
 .tmz-films-empty h3 {
   font-family: var(--font-head); font-size: 22px; font-weight: 800; margin: 0 0 8px;
 }

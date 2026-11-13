@@ -20,6 +20,45 @@ const STATUS_MAP = { draft: 'Draft', soon: 'Coming soon', 'on-sale': 'On sale' }
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 const mb = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`;
 
+// A finished cover is already portrait 2:3 (or close): never trim those, or light skies and white margins get cut away.
+const isCoverShape = (w, h) => { const r = w / h; return r > 0.6 && r < 0.75; };
+
+async function trimBorder(bmp) {
+  if (isCoverShape(bmp.width, bmp.height)) return bmp;
+  const k = Math.min(1, 400 / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * k)), h = Math.max(1, Math.round(bmp.height * k));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(bmp, 0, 0, w, h);
+  const px = ctx.getImageData(0, 0, w, h).data;
+  const at = (x, y) => { const i = (y * w + x) * 4; return [px[i], px[i + 1], px[i + 2]]; };
+  const corners = [at(1, 1), at(w - 2, 1), at(1, h - 2), at(w - 2, h - 2)];
+  const lum = (q) => q[0] + q[1] + q[2];
+  const bg = corners.reduce((a, q) => (lum(q) > lum(a) ? q : a));
+  if (corners.filter((q) => Math.abs(lum(q) - lum(bg)) < 120).length < 2) return bmp;
+  const differs = (x, y) => { const q = at(x, y); return Math.abs(q[0] - bg[0]) + Math.abs(q[1] - bg[1]) + Math.abs(q[2] - bg[2]) > 150; };
+  const rowHit = (y) => { let n = 0; for (let x = 0; x < w; x++) n += differs(x, y); return n > w * 0.2; };
+  const colHit = (x) => { let n = 0; for (let y = 0; y < h; y++) n += differs(x, y); return n > h * 0.2; };
+  const longestRun = (n, hit) => {
+    let best = [0, -1], start = -1;
+    for (let i = 0; i <= n; i++) {
+      if (i < n && hit(i)) { if (start < 0) start = i; }
+      else if (start >= 0) { if (i - 1 - start > best[1] - best[0]) best = [start, i - 1]; start = -1; }
+    }
+    return best;
+  };
+  const [top, bot] = longestRun(h, rowHit);
+  const [left, right] = longestRun(w, colHit);
+  const sw = right - left + 1, sh = bot - top + 1;
+  if (sw < w * 0.3 || sh < h * 0.3) return bmp;
+  if (sw > w * 0.95 && sh > h * 0.95) return bmp;
+  if (sw / sh < 0.5 || sw / sh > 0.85) return bmp;
+  const pad = 1;
+  const sx = Math.max(0, (left - pad) / k), sy = Math.max(0, (top - pad) / k);
+  const ex = Math.min(bmp.width, (right + 1 + pad) / k), ey = Math.min(bmp.height, (bot + 1 + pad) / k);
+  return createImageBitmap(bmp, Math.round(sx), Math.round(sy), Math.round(ex - sx), Math.round(ey - sy));
+}
+
 export class AdminController {
   constructor(app) {
     this.app = app;
@@ -663,8 +702,11 @@ export class AdminController {
       if (!file) return;
       try {
         const raw = await createImageBitmap(file);
-        const { blob: bigBlob } = await this.shrinkBitmap(raw, 1200, 0.86);
-        const { blob: smBlob } = await this.shrinkBitmap(raw, 720, 0.8);
+        let bmp = raw;
+        for (let i = 0; i < 3; i++) { const next = await trimBorder(bmp); if (next === bmp) break; bmp = next; }
+        const trimmed = bmp !== raw;
+        const { blob: bigBlob, canvas } = await this.shrinkBitmap(bmp, 1200, 0.86);
+        const { blob: smBlob } = await this.shrinkBitmap(bmp, 720, 0.8);
         this.coverBlob = bigBlob;
         this.thumbBlob = smBlob;
 
@@ -672,7 +714,7 @@ export class AdminController {
         const img = document.getElementById('tmz-cover-img');
         const note = document.getElementById('tmz-cover-note');
         img.src = URL.createObjectURL(this.coverBlob);
-        note.textContent = `New cover ready (${Math.round(this.coverBlob.size / 1024)} KB)`;
+        note.textContent = `New cover ready (${canvas.width}×${canvas.height}, ${Math.round(this.coverBlob.size / 1024)} KB)${trimmed ? ' — white border trimmed' : ''}`;
         prev.style.display = 'block';
       } catch {
         alert('Could not process that image file. Please choose a valid JPG, PNG or WebP.');

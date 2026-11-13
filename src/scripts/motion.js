@@ -117,7 +117,11 @@ function countUp(root) {
 let dotsStop = null;
 function dotGrid() {
   const canvas = document.querySelector('.tmz-dots');
-  if (!canvas || canvas.dataset.on) return;
+  if (!canvas) {
+    if (dotsStop) dotsStop();
+    return;
+  }
+  if (canvas.dataset.on) return;
   canvas.dataset.on = '1';
   if (dotsStop) dotsStop();
   if (!fine() || reduce()) return;
@@ -266,12 +270,13 @@ function scrollChrome() {
   const ask = () => { if (!queued) { queued = true; requestAnimationFrame(update); } };
   window.addEventListener('scroll', ask, { passive: true });
   ask(); // not straight away: measuring the page before it has settled would force an extra layout
+  return ask;
 }
 
 export function initMotion() {
   const app = document.getElementById('app');
   if (!app || !('IntersectionObserver' in window) || !('MutationObserver' in window)) return;
-  scrollChrome();
+  const askScroll = scrollChrome();
   tilt();
   const still = reduce();
   if (!still) {
@@ -288,6 +293,7 @@ export function initMotion() {
   const scan = () => {
     if (window.location.pathname !== navPath) { navPath = window.location.pathname; navStart = performance.now(); counted = false; }
     document.documentElement.style.setProperty('--mo-t', `${Math.round(Math.min(sinceNav(), 20000))}ms`);
+    askScroll();
     dotGrid();
     if (still) return;
     steps();

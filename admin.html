@@ -2,237 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Admin | TAMYIZ™</title>
+  <!-- seo: replaced per page by scripts/build-pages.js (from src/data/seo.js) -->
+  <title>Admin Dashboard | TAMYIZ™</title>
+  <!-- /seo -->
+  <meta name="theme-color" content="#0B0B0B" />
+
+  <!-- Favicon (Geometric T• Monogram Seal) -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <style>
-    /* Admin, in the shop's own look: black and white, Space Grotesk headings, Inter text. */
-    :root {
-      --ink: #0B0B0B; --paper: #F2F2EF; --card: #FFFFFF; --line: rgba(11,11,11,0.09); --line-strong: rgba(11,11,11,0.18);
-      --muted: #5E5E59; --soft: #F7F7F5; --red: #B3261E; --green: #1E7B2E; --amber: #7A4F00;
-      --head: 'Space Grotesk Variable', 'Space Grotesk', system-ui, sans-serif;
-      --body: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
-      font-family: var(--body);
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; background: var(--paper); color: var(--ink); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  <link rel="icon" type="image/png" sizes="256x256" href="/assets/images/tamyiz-logo-256.png" />
+  <link rel="apple-touch-icon" href="/assets/images/tamyiz-logo-256.png" />
 
-    header { background: rgba(11,11,11,0.94); color: #fff; padding: 12px max(16px, env(safe-area-inset-left)); display: flex; align-items: center; justify-content: space-between; gap: 12px; position: sticky; top: 0; z-index: 5; }
-    .brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
-    .brand img.dome { width: 34px; height: 34px; object-fit: contain; }
-    .brand img.word { height: 15px; width: auto; filter: invert(1); }
-    .brand .tag { font: 600 11px/1 var(--head); letter-spacing: 2px; text-transform: uppercase; color: #0B0B0B; background: #fff; border-radius: 999px; padding: 5px 9px; }
-
-    main { max-width: 920px; margin: 0 auto; padding: 28px 16px 96px; }
-    h1 { font: 700 34px/1.1 var(--head); letter-spacing: -0.8px; margin: 0; }
-    h2 { font: 700 22px/1.2 var(--head); letter-spacing: -0.4px; margin: 0; }
-    .eyebrow { font: 600 12px/1 var(--head); letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
-    .card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 22px; margin-bottom: 16px; box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 18px 40px -28px rgba(0,0,0,0.25); }
-
-    button, .btn { font: 600 15px/1 var(--head); letter-spacing: 0.1px; border-radius: 999px; padding: 13px 22px; min-height: 46px; border: 1.5px solid var(--ink); background: var(--ink); color: #fff; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color .15s ease, color .15s ease, transform .15s ease, border-color .15s ease; }
-    button:hover, .btn:hover { background: #2B2B29; border-color: #2B2B29; }
-    button:active, .btn:active { transform: scale(0.98); }
-    button.ghost, .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
-    button.ghost:hover, .btn.ghost:hover { border-color: var(--ink); background: var(--soft); }
-    header button.ghost { color: #fff; border-color: rgba(255,255,255,0.35); padding: 9px 16px; min-height: 44px; font-size: 14px; }
-    header button.ghost:hover { background: rgba(255,255,255,0.1); border-color: #fff; }
-    button.danger { background: transparent; color: var(--red); border-color: rgba(179,38,30,0.35); }
-    button.danger:hover { background: #FDF1F0; border-color: var(--red); }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    input:focus-visible, textarea:focus-visible, button:focus-visible, .btn:focus-visible { outline: 3px solid #2563EB; outline-offset: 2px; }
-
-    /* log in */
-    #login-view { max-width: 440px; margin: 8vh auto 0; text-align: left; }
-    #login-view .lock { width: 52px; height: 52px; border-radius: 16px; background: var(--ink); display: grid; place-items: center; margin-bottom: 18px; }
-
-    /* forms */
-    label { display: block; font: 600 15px/1.3 var(--head); margin: 20px 0 8px; }
-    label .hint, .hint { font: 400 14px/1.45 var(--body); color: var(--muted); }
-    input[type=text], input[type=number], input[type=password], textarea { width: 100%; font: 400 16px/1.4 var(--body); padding: 13px 15px; border: 1.5px solid var(--line-strong); border-radius: 14px; background: #fff; color: var(--ink); transition: border-color .15s ease, box-shadow .15s ease; }
-    input[type=text]:hover, input[type=number]:hover, input[type=password]:hover, textarea:hover { border-color: rgba(11,11,11,0.35); }
-    input[type=text]:focus, input[type=number]:focus, input[type=password]:focus, textarea:focus { border-color: var(--ink); box-shadow: 0 0 0 4px rgba(11,11,11,0.08); outline: none; }
-    textarea { min-height: 130px; resize: vertical; }
-    input[type=file] { font: inherit; font-size: 15px; width: 100%; padding: 14px; border: 1.5px dashed var(--line-strong); border-radius: 14px; background: var(--soft); cursor: pointer; }
-    input[type=file]:hover { border-color: var(--ink); }
-    input[type=file]::file-selector-button { font: 600 14px var(--head); border: 0; border-radius: 999px; background: var(--ink); color: #fff; padding: 9px 16px; margin-right: 12px; cursor: pointer; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
-    fieldset { border: 0; padding: 0; margin: 22px 0 0; }
-    legend { font: 600 15px var(--head); margin-bottom: 10px; }
-    .choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-    .choice { display: flex; gap: 10px; align-items: flex-start; border: 1.5px solid var(--line-strong); border-radius: 16px; padding: 14px; margin: 0; font-weight: 400; cursor: pointer; background: #fff; transition: border-color .15s ease, background-color .15s ease; }
-    .choice:hover { border-color: var(--ink); }
-    .choice:has(input:checked) { border-color: var(--ink); background: var(--soft); box-shadow: inset 0 0 0 1px var(--ink); }
-    .choice input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--ink); flex-shrink: 0; }
-    .choice b { display: block; font: 600 15px var(--head); }
-    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
-    .msg { border-radius: 14px; padding: 13px 16px; margin: 14px 0; font-weight: 500; font-size: 15px; }
-    .msg.error { background: #FDF1F0; color: #8B1A12; border: 1px solid rgba(179,38,30,0.2); }
-    .msg.ok { background: #EDF7EF; color: #14532D; border: 1px solid rgba(30,123,46,0.2); }
-    .msg.warn { background: #FFF6E3; color: #6B4500; border: 1px solid rgba(122,79,0,0.2); }
-    progress { width: 100%; height: 8px; margin-top: 14px; accent-color: var(--ink); }
-    .preview { display: flex; gap: 14px; align-items: center; margin-top: 10px; }
-    .preview img { width: 64px; height: 96px; object-fit: cover; border-radius: 6px; box-shadow: 0 8px 18px -8px rgba(0,0,0,0.5); }
-
-    /* e-book list */
-    .list-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap; margin: 34px 0 16px; }
-    .list { display: grid; gap: 12px; }
-    .item { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 20px; align-items: center; padding: 16px 18px; margin: 0; }
-    .item img, .item .noimg { width: 84px; height: 126px; object-fit: cover; border-radius: 6px; background: #E6E6E2; display: block; box-shadow: 0 12px 22px -12px rgba(0,0,0,0.55); }
-    .item h2 { font: 700 19px/1.25 var(--head); letter-spacing: -0.2px; margin: 0 0 8px; overflow-wrap: anywhere; }
-    .meta { color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-    .chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 11px; font: 600 12px/1.2 var(--head); letter-spacing: 0.3px; }
-    .chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-    .chip.draft { background: #ECECE8; color: #3A3A36; }
-    .chip.soon { background: #FFF2D6; color: var(--amber); }
-    .chip.on-sale { background: #E3F3E7; color: var(--green); }
-    .item .actions { margin: 0; justify-content: flex-end; }
-    .item .actions button, .item .actions .btn { padding: 10px 16px; min-height: 44px; font-size: 14px; }
-    .empty { text-align: center; color: var(--muted); padding: 40px 16px; }
-
-    /* visitors: the dark panel at the top */
-    #stats { background: var(--ink); color: #fff; border-color: var(--ink); padding: 24px; box-shadow: 0 30px 60px -36px rgba(0,0,0,0.6); }
-    #stats .hint { color: #A9A9A3; }
-    .stats-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .stats-head h2 { color: #fff; }
-    .ranges { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.08); }
-    .ranges button { padding: 8px 16px; min-height: 44px; font-size: 14px; background: transparent; color: #D6D6D1; border-color: transparent; }
-    .ranges button:hover { background: rgba(255,255,255,0.08); border-color: transparent; }
-    .ranges button[aria-pressed="true"] { background: #fff; color: var(--ink); }
-    .big { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 20px 0 8px; }
-    .big div { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 16px 18px; }
-    .big b { display: block; font: 700 44px/1 var(--head); letter-spacing: -1.5px; font-variant-numeric: tabular-nums; }
-    .big span { color: #A9A9A3; font-size: 14px; display: block; margin-top: 6px; }
-    .spark { display: flex; align-items: flex-end; gap: 4px; height: 64px; margin: 14px 0 6px; }
-    .spark i { flex: 1; background: linear-gradient(180deg, #fff, rgba(255,255,255,0.55)); border-radius: 4px 4px 1px 1px; min-height: 3px; }
-    .lists { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 28px; }
-    .lists h3 { font: 600 12px var(--head); letter-spacing: 1.6px; text-transform: uppercase; color: #8F8F89; margin: 18px 0 10px; }
-    .bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; font-size: 14px; margin-bottom: 10px; color: #EDEDE8; }
-    .bar span { overflow-wrap: anywhere; }
-    .bar em { font: 700 14px var(--head); font-style: normal; font-variant-numeric: tabular-nums; color: #fff; }
-    .bar s { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.1); text-decoration: none; position: relative; overflow: hidden; }
-    .bar s::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w); background: #fff; border-radius: 3px; }
-    #stats .msg.warn { background: rgba(255,214,140,0.12); color: #FFD98A; border-color: rgba(255,214,140,0.25); }
-    #stats .msg.error { background: rgba(255,120,110,0.12); color: #FFB4AB; border-color: rgba(255,120,110,0.25); }
-
-    @media (max-width: 640px) {
-      h1 { font-size: 28px; }
-      .row, .choices, .lists, .big { grid-template-columns: 1fr; }
-      .item { grid-template-columns: 72px minmax(0, 1fr); gap: 14px; align-items: start; }
-      .item img, .item .noimg { width: 72px; height: 108px; }
-      .item .actions { grid-column: 1 / -1; justify-content: flex-start; }
-      .big b { font-size: 38px; }
-      .brand img.word { display: none; }
-    }
-    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
-    [hidden] { display: none !important; }
-  </style>
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/src/styles/tamyiz-unified.css" />
 </head>
 <body>
-  <header>
-    <a class="brand" href="/">
-      <img class="dome" src="/assets/brand/tamyiz-dome-sm.webp" alt="" width="34" height="34" />
-      <img class="word" src="/assets/brand/tamyiz-wordmark.svg" alt="TAMYIZ" width="120" height="15" />
-      <span class="tag">Admin</span>
-    </a>
-    <button type="button" class="ghost" id="logout" hidden>Log out</button>
-  </header>
-
-  <main>
-    <!-- Log in -->
-    <section id="login-view" class="card" hidden>
-      <div class="lock" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></div>
-      <p class="eyebrow">TAMYIZ admin</p>
-      <h1>Welcome back</h1>
-      <p class="hint" style="margin:8px 0 0">Log in to add e-books and see your visitors.</p>
-      <form id="login-form">
-        <label for="password">Admin password</label>
-        <input type="password" id="password" autocomplete="current-password" required />
-        <div id="login-msg" role="alert"></div>
-        <div class="actions"><button type="submit" style="width:100%">Log in</button></div>
-      </form>
-    </section>
-
-    <!-- Your ebooks -->
-    <section id="list-view" hidden>
-      <!-- Visitors -->
-      <section id="stats" class="card" aria-labelledby="stats-title" hidden>
-        <div class="stats-head">
-          <h2 id="stats-title">Visitors</h2>
-          <div class="ranges" role="group" aria-label="Time range">
-            <button type="button" data-days="1" aria-pressed="false">Today</button>
-            <button type="button" data-days="7" aria-pressed="true">7 days</button>
-            <button type="button" data-days="30" aria-pressed="false">30 days</button>
-          </div>
-        </div>
-        <div id="stats-body" aria-live="polite"><p class="hint">Loading visitor numbers…</p></div>
-        <p class="hint" style="margin:10px 0 0">Counts only, from Cloudflare Web Analytics. It never shows who a visitor is. Your own visits are counted too.</p>
-      </section>
-
-      <div class="list-head">
-        <div><p class="eyebrow">Your shop</p><h1>Your e-books</h1></div>
-        <button type="button" id="add">+ Add an e-book</button>
+  <div id="app">
+    <div class="tmz-boot" role="status" aria-label="Loading TAMYIZ Admin">
+      <div class="tmz-boot-head"><img src="/assets/brand/tamyiz-dome-sm.webp" alt="" width="58" height="17" /><img src="/assets/brand/tamyiz-wordmark.svg" alt="TAMYIZ" width="96" height="16" /></div>
+      <div class="tmz-boot-progress"></div>
+      <div class="tmz-boot-body">
+        <span class="tmz-boot-line" style="width: 46%"></span>
+        <span class="tmz-boot-line" style="width: 62%"></span>
+        <span class="tmz-boot-line tmz-boot-thin" style="width: 38%"></span>
       </div>
-      <div id="list-msg" role="status"></div>
-      <div id="list" class="list"></div>
-    </section>
+      <noscript><p class="tmz-boot-noscript">TAMYIZ Admin needs JavaScript enabled.</p></noscript>
+    </div>
+  </div>
 
-    <!-- Add / edit -->
-    <section id="form-view" class="card" hidden>
-      <p class="eyebrow">E-book details</p>
-      <h1 id="form-title">Add an e-book</h1>
-      <form id="book-form" novalidate>
-        <label for="f-name">Title *</label>
-        <input type="text" id="f-name" name="name" maxlength="140" required />
-
-        <label for="f-tagline">One-line summary <span class="hint">(shown under the title)</span></label>
-        <input type="text" id="f-tagline" name="tagline" maxlength="200" />
-
-        <div class="row">
-          <div>
-            <label for="f-price">Price in ₹ *</label>
-            <input type="number" id="f-price" name="price" min="1" max="100000" step="1" inputmode="numeric" required />
-          </div>
-          <div>
-            <label for="f-pages">Pages <span class="hint">(optional)</span></label>
-            <input type="number" id="f-pages" name="pages" min="1" max="5000" step="1" inputmode="numeric" />
-          </div>
-        </div>
-
-        <label for="f-description">Description <span class="hint">(what the reader gets)</span></label>
-        <textarea id="f-description" name="description" maxlength="5000"></textarea>
-
-        <label for="f-contents">Chapters <span class="hint">(one per line, optional)</span></label>
-        <textarea id="f-contents" name="contents" maxlength="4000" style="min-height:90px"></textarea>
-
-        <label for="f-cover">Cover image <span class="hint">(JPG, PNG or WebP; portrait looks best)</span></label>
-        <input type="file" id="f-cover" accept="image/jpeg,image/png,image/webp" />
-        <div class="preview" id="cover-preview" hidden><img alt="Cover preview" id="cover-img" /><span class="hint" id="cover-note"></span></div>
-
-        <label for="f-pdf">E-book PDF <span class="hint">(up to 25 MB)</span></label>
-        <input type="file" id="f-pdf" accept="application/pdf,.pdf" />
-        <div class="hint" id="pdf-note"></div>
-
-        <fieldset>
-          <legend>Status</legend>
-          <div class="choices">
-            <label class="choice"><input type="radio" name="status" value="draft" checked /><span><b>Draft</b><span class="hint">Only you can see it here.</span></span></label>
-            <label class="choice"><input type="radio" name="status" value="soon" /><span><b>Coming soon</b><span class="hint">In the shop with a "Pre-order on WhatsApp" button.</span></span></label>
-            <label class="choice"><input type="radio" name="status" value="on-sale" /><span><b>On sale</b><span class="hint">People can buy and download it. Needs the PDF.</span></span></label>
-          </div>
-        </fieldset>
-
-        <div id="form-msg" role="alert"></div>
-        <progress id="progress" max="100" value="0" hidden></progress>
-        <div class="actions">
-          <button type="submit" id="save">Save</button>
-          <button type="button" class="ghost" id="cancel">Cancel</button>
-        </div>
-      </form>
-    </section>
-  </main>
-
-  <script type="module" src="/src/admin/admin.js"></script>
+  <!-- Unified TAMYIZ Script Entrypoint -->
+  <script type="module" src="/src/scripts/tamyiz-unified-app.js"></script>
 </body>
 </html>

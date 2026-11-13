@@ -44,6 +44,5 @@ export default defineConfig(({ mode }) => {
     plugins: [api(env)],
     server: { port: 5173 },
     preview: { port: 4173 },
-    build: { rollupOptions: { input: { main: 'index.html', admin: 'admin.html' } } },
   };
 });

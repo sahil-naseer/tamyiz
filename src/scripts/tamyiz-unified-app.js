@@ -34,7 +34,10 @@ import { initMotion } from './motion.js';
 const safeGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch { } };
 
-export const escapeText = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+export const escapeText = (v) =>
+  String(v ?? '')
+    .replace(/&(amp|lt|gt|quot|#39);/g, (_, e) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" })[e])
+    .replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 class TamyizUnifiedApp {
   constructor() {
@@ -50,6 +53,7 @@ class TamyizUnifiedApp {
     this.mobileMenuOpen = false;
     this.activePreviewProduct = null;
     this.activePreviewTab = 0;
+    this.announcement = null;
     this.adminController = new AdminController(this);
 
     this.init();
@@ -102,20 +106,25 @@ class TamyizUnifiedApp {
       const res = await fetch('/api/announcement');
       if (!res.ok) return;
       const data = await res.json();
-      const ann = data.announcement;
-      const banner = document.getElementById('tmz-announcement-banner');
-      if (!banner || !ann || !ann.enabled || !ann.text) return;
-
-      banner.style.display = 'block';
-      banner.innerHTML = `
-        <span>${escapeText(ann.text)}</span>
-        ${ann.link ? `
-          <a href="${escapeText(ann.link)}" style="color: #FFFFFF; font-weight: 700; text-decoration: underline; margin-left: 8px;">
-            ${escapeText(ann.linkText || 'Learn more ↗')}
-          </a>
-        ` : ''}
-      `;
+      this.announcement = data.announcement || null;
+      this.applyAnnouncement();
     } catch { }
+  }
+
+  applyAnnouncement() {
+    const ann = this.announcement;
+    const banner = document.getElementById('tmz-announcement-banner');
+    if (!banner || !ann || !ann.enabled || !ann.text) return;
+
+    banner.style.display = 'block';
+    banner.innerHTML = `
+      <span>${escapeText(ann.text)}</span>
+      ${ann.link ? `
+        <a href="${escapeText(ann.link)}" style="color: #FFFFFF; font-weight: 700; text-decoration: underline; margin-left: 8px;">
+          ${escapeText(ann.linkText || 'Learn more ↗')}
+        </a>
+      ` : ''}
+    `;
   }
 
   // Parse path & hash for zero-crash routing
@@ -137,7 +146,7 @@ class TamyizUnifiedApp {
 
     // Split search query if present
     const [rawPath, rawQuery] = raw.split('?');
-    let cleanPath = (rawPath || '/').replace(/\/index\.html$/, '').replace(/\/$/, '') || '/';
+    let cleanPath = (rawPath || '/').replace(/\/index\.html$/, '').replace(/\.html$/, '').replace(/\/$/, '') || '/';
 
     // Parse category from query param if available
     const searchStr = rawQuery ? `?${rawQuery}` : window.location.search;
@@ -304,14 +313,23 @@ class TamyizUnifiedApp {
   }
 
   bindScrollHeader() {
-    const header = document.getElementById('navbar');
-    if (!header) return;
-    // Only touch the header when it actually crosses the line, not on every scroll event.
+    // Only touch the header when it actually crosses the line (or gets recreated by renderShell), not on every scroll event.
+    let currentHeader = null;
     let scrolled = null;
     const update = () => {
+      const header = document.getElementById('navbar');
+      if (!header) return;
+      if (header !== currentHeader) {
+        currentHeader = header;
+        scrolled = null;
+      }
       const now = window.scrollY >= 70;
-      if (now !== scrolled) { scrolled = now; header.classList.toggle('is-scrolled', now); }
+      if (now !== scrolled) {
+        scrolled = now;
+        header.classList.toggle('is-scrolled', now);
+      }
     };
+    this._updateScrollHeader = update;
     // On phones the round WhatsApp button sits over the page text, so step it
     // aside while the reader is scrolling and bring it back once they stop.
     let idle = null;
@@ -618,6 +636,8 @@ class TamyizUnifiedApp {
     `;
 
     this.renderDrawerItems();
+    this.applyAnnouncement();
+    if (this._updateScrollHeader) this._updateScrollHeader();
   }
 
   // Render active page inside #main-content
@@ -2751,7 +2771,7 @@ class TamyizUnifiedApp {
           </label>
         </div>
 
-        <button id="btn-sandbox-approve" class="tamyiz-btn-checkout-primary" style="background: #1E7B2E; border-color: #1E7B2E;" onclick="window.tamyizApp.confirmSandboxPayment('${orderId}', '${email}', '${phone}')">
+        <button id="btn-sandbox-approve" class="tamyiz-btn-checkout-primary" style="background: #1E7B2E; border-color: #1E7B2E;" data-order-id="${escapeText(orderId)}" data-email="${escapeText(email)}" data-phone="${escapeText(phone)}" onclick="window.tamyizApp.confirmSandboxPayment(this.dataset.orderId, this.dataset.email, this.dataset.phone)">
           SIMULATE 1-CLICK UPI CLEARANCE (₹${totalINR.toLocaleString('en-IN')}) →
         </button>
 

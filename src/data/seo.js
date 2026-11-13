@@ -41,6 +41,12 @@ const STATIC_PAGES = {
     title: `Download Recovery | ${BRAND}`,
     description: 'Retrieve and renew your purchased TAMYIZ e-book and monograph download links anytime.',
   },
+  orders: {
+    path: '/orders',
+    title: `Download Recovery | ${BRAND}`,
+    description: 'Retrieve and renew your purchased TAMYIZ e-book and monograph download links anytime.',
+    noindex: true,
+  },
   checkout: {
     path: '/checkout',
     title: `Checkout | ${BRAND}`,
@@ -100,7 +106,7 @@ export function pageMeta(page, slug) {
 /** Every real page address, for the build script and the sitemap. */
 export function allPages() {
   return [
-    ...['home', 'editions', 'films', 'philosophy', 'atelier', 'downloads', 'checkout', 'admin'].map((page) => ({ page, slug: null })),
+    ...['home', 'editions', 'films', 'philosophy', 'atelier', 'downloads', 'orders', 'checkout', 'admin'].map((page) => ({ page, slug: null })),
     ...products.map((p) => ({ page: 'edition', slug: p.slug })),
     ...Object.keys(legalDocs).map((slug) => ({ page: 'legal', slug })),
   ];

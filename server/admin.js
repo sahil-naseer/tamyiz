@@ -527,6 +527,17 @@ async function createComplimentaryOrder(request, env) {
       await kv.put(`buyer-orders:${cleanE}`, JSON.stringify(bOrders)).catch(() => {});
     }
   }
+  const cleanP = String(phone || '').replace(/[^0-9+]/g, '');
+  if (cleanP.length >= 10) {
+    const pKey = `buyer-phone:${cleanP.slice(-10)}`;
+    const pRaw = await kv.get(pKey);
+    let pOrders = [];
+    try { pOrders = pRaw ? JSON.parse(pRaw) : []; } catch { pOrders = []; }
+    if (!pOrders.includes(orderId)) {
+      pOrders.unshift(orderId);
+      await kv.put(pKey, JSON.stringify(pOrders)).catch(() => {});
+    }
+  }
 
   return json({ ok: true, order: orderData, downloadUrl });
 }

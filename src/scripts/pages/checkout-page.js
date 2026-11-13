@@ -334,7 +334,7 @@ export function renderOrderVaultHtml(order) {
                     ${item.downloadUrl ? 'target="_blank" rel="noopener noreferrer"' : ''}
                     class="tamyiz-btn-download-vault"
                     style="display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; text-decoration: none;"
-                    ${!item.downloadUrl ? `onclick="event.preventDefault(); window.tamyizApp.triggerDownloadSim('${item.name}')"` : ''}
+                    ${!item.downloadUrl ? `data-book-name="${escapeText(item.name)}" onclick="event.preventDefault(); window.tamyizApp.triggerDownloadSim(this.dataset.bookName)"` : ''}
                   >
                     <span>${item.actionLabel || 'Download Edition ↗'}</span>
                   </a>

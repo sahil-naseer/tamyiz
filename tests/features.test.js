@@ -117,6 +117,9 @@ test('customer download recovery: links are only emailed to the order email, nev
     body: JSON.stringify({ email: 'verified.buyer@test.com', phone: '+919876543210', productId: book.id, note: 'VIP Reviewer' }),
   });
   assert.equal(orderRes.status, 200);
+  const { order: giftOrder } = await orderRes.json();
+  const phoneIdx = JSON.parse((await e.TAMYIZ_STORE.get('buyer-phone:9876543210')) || '[]');
+  assert.ok(phoneIdx.includes(giftOrder.orderId), 'complimentary order is indexed by buyer-phone');
 
   for (const lookup of [{ email: 'verified.buyer@test.com' }, { phone: '+91 98765 43210' }]) {
     sentEmails.length = 0;
