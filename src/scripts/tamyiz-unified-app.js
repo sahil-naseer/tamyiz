@@ -1588,15 +1588,23 @@ class TamyizUnifiedApp {
     });
   }
 
-  toggleSampleViewer() {
+  toggleSampleViewer({ scrollBack = false } = {}) {
     const content = document.getElementById('pdp-sample-content');
+    const btn = document.getElementById('sample-toggle-btn');
     const text = document.getElementById('sample-toggle-text');
     const icon = document.getElementById('sample-toggle-icon');
     if (content) {
       const isOpen = content.classList.contains('open');
-      content.classList.toggle('open', !isOpen);
-      if (text) text.textContent = isOpen ? 'Expand Preview' : 'Collapse Preview';
-      if (icon) icon.textContent = isOpen ? '↓' : '↑';
+      const nextOpen = !isOpen;
+      content.classList.toggle('open', nextOpen);
+      if (btn) btn.setAttribute('aria-expanded', String(nextOpen));
+      if (text) text.textContent = nextOpen ? 'Collapse Preview' : 'Expand Preview';
+      if (icon) icon.textContent = nextOpen ? '↑' : '↓';
+      if (nextOpen) {
+        content.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else if (scrollBack && btn) {
+        btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   }
 

@@ -131,7 +131,14 @@ export function renderProductDetailPage(slug, appInstance) {
                       <span class="tamyiz-sample-kicker">${product.sampleExcerpt ? 'Free sample' : 'Inside the book'}</span>
                       <h3 class="tamyiz-sample-title">${product.sampleExcerpt ? 'Read Sample Chapter &amp; Excerpt' : 'Chapters'}</h3>
                     </div>
-                    <button class="tamyiz-sample-toggle-btn" id="sample-toggle-btn" onclick="window.tamyizApp.toggleSampleViewer()">
+                    <button
+                      type="button"
+                      class="tamyiz-sample-toggle-btn"
+                      id="sample-toggle-btn"
+                      aria-expanded="false"
+                      aria-controls="pdp-sample-content"
+                      onclick="window.tamyizApp.toggleSampleViewer()"
+                    >
                       <span id="sample-toggle-text">Expand Preview</span>
                       <span id="sample-toggle-icon">↓</span>
                     </button>
@@ -180,6 +187,16 @@ export function renderProductDetailPage(slug, appInstance) {
                         </ul>
                       </div>
                     ` : ''}
+                    <div style="display:flex; justify-content:flex-end; margin-top: 1rem;">
+                      <button
+                        type="button"
+                        class="tamyiz-sample-toggle-btn"
+                        onclick="window.tamyizApp.toggleSampleViewer({ scrollBack: true })"
+                      >
+                        <span>Collapse Preview</span>
+                        <span aria-hidden="true">↑</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ` : ''}
@@ -436,7 +453,7 @@ export function renderProductDetailPage(slug, appInstance) {
               </button>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
+            <div class="tamyiz-product-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
               ${related.map(r => renderProductCardHtml(r, appInstance)).join('')}
             </div>
           </div>` : ''}

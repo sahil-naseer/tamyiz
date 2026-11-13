@@ -1250,8 +1250,8 @@ img {
 
 @media (max-width: 639px) {
   .tamyiz-product-grid {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
   }
 }
 
@@ -6412,18 +6412,42 @@ a.tamyiz-btn-preview-trigger { display: flex; align-items: center; justify-conte
   .tamyiz-founders-teaser-card { padding: 1.25rem; gap: 1.25rem; }
   .tamyiz-founders-teaser-content p { margin-bottom: 1.25rem !important; }
 
-  /* Product cards: cover on the left, details on the right, buttons underneath */
-  .tamyiz-product-grid { gap: 0.85rem !important; }
-  .tamyiz-product-card { display: grid !important; grid-template-columns: 108px minmax(0, 1fr); column-gap: 0.9rem; row-gap: 0.85rem; padding: 0.85rem; align-items: start; }
-  .tamyiz-product-thumb { grid-column: 1; grid-row: 1; border-radius: 3px; }
-  .tamyiz-product-info { display: contents !important; }
-  .tamyiz-product-info > div:first-child { grid-column: 2; grid-row: 1; min-width: 0; }
-  .tamyiz-card-actions-row { grid-column: 1 / -1; grid-row: 2; margin-top: 0; }
-  .tamyiz-card-actions-row .tamyiz-btn-quick-add { margin-top: 0; }
+  /* Product cards: 2 books per row on phones */
+  .tamyiz-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.75rem !important; }
+  .tamyiz-product-card { display: flex !important; flex-direction: column; height: 100%; padding: 0; min-width: 0; }
+  .tamyiz-product-thumb {
+    aspect-ratio: auto;
+    height: clamp(165px, 46vw, 215px);
+    background: linear-gradient(180deg, #F4F4F2 0%, #E8E8E5 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 10px;
+  }
+  .tamyiz-product-thumb .tamyiz-img-primary {
+    position: relative;
+    inset: auto;
+    width: auto;
+    height: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 3px 5px 5px 3px;
+    box-shadow: 0 12px 22px -12px rgba(0, 0, 0, 0.5), 0 3px 8px rgba(0, 0, 0, 0.1);
+    opacity: 1 !important;
+  }
+  .tamyiz-product-thumb .tamyiz-img-hover { display: none; }
+  .tamyiz-product-info { display: flex !important; flex-direction: column; flex: 1; justify-content: space-between; padding: 0.7rem 0.65rem 0.75rem; min-width: 0; }
+  .tamyiz-product-info > div:first-child { min-width: 0; }
+  .tamyiz-card-actions-row { margin-top: 0.55rem; gap: 0.4rem; }
+  .tamyiz-card-actions-row .tamyiz-btn-quick-add { margin-top: 0; min-height: 44px; padding: 0.45rem 0.5rem !important; font-size: 0.72rem !important; line-height: 1.2; text-align: center; }
+  .tamyiz-card-actions-row .tamyiz-btn-preview-trigger { min-height: 44px; padding: 0.45rem 0.5rem; font-size: 0.72rem; line-height: 1.2; text-align: center; }
   .tamyiz-btn-wishlist { display: none !important; }
-  .tamyiz-badge-digital { top: 0.35rem; left: 0.35rem; font-size: 0.52rem; padding: 0.15rem 0.35rem; letter-spacing: 0.04em; }
-  .tamyiz-product-name { font-size: 1rem; margin-bottom: 0.35rem; }
-  .tamyiz-product-cat { margin-bottom: 0.2rem; }
+  .tamyiz-badge-digital { top: 0.4rem; left: 0.4rem; font-size: 0.5rem; padding: 0.14rem 0.35rem; letter-spacing: 0.04em; }
+  .tamyiz-product-name { font-size: 0.85rem; line-height: 1.28; margin-bottom: 0.35rem; overflow-wrap: anywhere; }
+  .tamyiz-product-cat { font-size: 0.62rem; margin-bottom: 0.2rem; }
+  .tamyiz-price-cur { font-size: 0.96rem; }
+  .tamyiz-price-orig { font-size: 0.74rem; }
+  .tamyiz-card-video-pill-btn { font-size: 0.66rem; padding: 0.3rem 0.45rem; max-width: 100%; gap: 0.3rem; }
 
   /* Editions page: search right under the header */
   #editions-catalog { padding-top: 1.25rem !important; }
@@ -6433,6 +6457,10 @@ a.tamyiz-btn-preview-trigger { display: flex; align-items: center; justify-conte
   .tamyiz-pdp-main-section { padding-top: 1rem !important; padding-bottom: 1.5rem !important; }
   .tamyiz-pdp-main-img-wrap { background: transparent; border: 0; }
   .tamyiz-pdp-main-img { max-height: 380px; width: auto; max-width: 100%; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+  .tamyiz-pdp-sample-head { padding: 1rem; gap: 0.75rem; flex-wrap: wrap; }
+  .tamyiz-sample-toggle-btn { min-height: 44px; padding: 0.5rem 0.9rem; white-space: nowrap; flex-shrink: 0; }
+  .tamyiz-pdp-sample-content { padding: 1rem; }
+  .tamyiz-excerpt-paper { padding: 1.25rem 1rem 1.25rem 1.25rem; }
 
   /* Policy pages */
   .tamyiz-legal-tabs-bar { position: static !important; }
