@@ -593,7 +593,6 @@ class TamyizUnifiedApp {
 
           <div class="tamyiz-footer-grid">
             <div class="tamyiz-footer-brand">
-              <h2><img class="tmz-footer-wordmark" src="/assets/brand/tamyiz-wordmark.svg" alt="TAMYIZ" width="150" height="25" loading="lazy" /></h2>
               <p>
                 Practical e-books by Sahil &amp; Basit.<br/>
                 Email: <a href="mailto:${siteConfig.email}" style="color: #FFF; text-decoration: underline; white-space: nowrap;">${siteConfig.email}</a><br/>
