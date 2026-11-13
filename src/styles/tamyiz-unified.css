@@ -68,7 +68,6 @@ body {
 html.modal-open,
 body.modal-open {
   overflow: hidden !important;
-  touch-action: none;
   overscroll-behavior: none;
 }
 
@@ -2067,6 +2066,8 @@ img {
   flex-direction: column;
   box-shadow: 20px 0 50px rgba(0, 0, 0, 0.25);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -7915,6 +7916,417 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
 /* Inner page banners match the hero: paper, medium weight. */
 .tamyiz-page-header { background: var(--tmz-paper); border-bottom: 1px solid var(--tmz-hair); }
 .tamyiz-page-title { font-weight: 500; letter-spacing: -0.045em; }
+
+/* ---------- Help & Policies (Mobile Drawer + Modal + /legal/* pages) ---------- */
+.tamyiz-mobile-drawer .tamyiz-footer-links {
+  gap: 0.15rem;
+}
+.tamyiz-mobile-drawer .tamyiz-footer-links a,
+.tamyiz-mobile-drawer .tamyiz-footer-links button {
+  color: #2B2B29;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  padding: 0.35rem 0.25rem;
+  border-radius: var(--tmz-r);
+  transition: background-color 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
+}
+.tamyiz-mobile-drawer .tamyiz-footer-links a:hover,
+.tamyiz-mobile-drawer .tamyiz-footer-links button:hover {
+  color: #000000;
+  background: var(--tmz-yellow);
+  padding-left: 0.5rem;
+  transform: none;
+}
+#format-guide {
+  scroll-margin-top: 5rem;
+}
+
+/* Modal scroller stabilization + Legal Modal ("Paper & Hairlines") */
+.tamyiz-modal-box {
+  border-radius: 6px;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  border: 1px solid var(--tmz-hair);
+}
+.tamyiz-modal-box.is-legal {
+  max-width: 760px;
+  width: 100%;
+  max-height: 88dvh;
+  padding: 0 !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 6px;
+  background: #FFFFFF;
+}
+.tamyiz-legal-modal-box {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100% !important;
+  width: 100%;
+  overflow: hidden !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: #FFFFFF;
+  text-align: left;
+}
+.tamyiz-legal-modal-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem 1rem;
+  margin-bottom: 0;
+  background: var(--tmz-paper);
+  border-bottom: 1px solid var(--tmz-hair) !important;
+}
+.tamyiz-legal-modal-title-wrap {
+  min-width: 0;
+  flex: 1;
+}
+.tamyiz-legal-modal-kicker {
+  margin-bottom: 0.4rem !important;
+}
+.tamyiz-legal-modal-title {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-sub);
+  font-size: clamp(1.2rem, 2.6vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: #000000;
+  overflow-wrap: break-word;
+}
+.tamyiz-legal-modal-sub {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--tmz-graphite, #55554F);
+  overflow-wrap: break-word;
+}
+.tamyiz-legal-modal-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+.tamyiz-legal-tabs-row,
+.tamyiz-legal-tabs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.tamyiz-legal-tabs-row {
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--tmz-hair);
+}
+.tamyiz-legal-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 40px;
+  padding: 0.45rem 0.85rem !important;
+  border: 1px solid rgba(0, 0, 0, 0.22);
+  border-radius: var(--tmz-r);
+  background: #FFFFFF;
+  color: #1F1F1D;
+  font-family: var(--font-sub);
+  font-size: 0.82rem !important;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.tamyiz-legal-tab-btn:hover {
+  background: var(--tmz-paper);
+  border-color: #000000;
+  color: #000000;
+}
+.tamyiz-legal-tab-btn.active {
+  background: var(--tmz-yellow) !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+  font-weight: 600;
+}
+.tamyiz-legal-tab-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  opacity: 0.72;
+}
+.tamyiz-legal-modal-body {
+  margin-bottom: 1.25rem;
+}
+.tamyiz-legal-section-item {
+  margin-bottom: 1.35rem;
+}
+.tamyiz-legal-section-item:last-child {
+  margin-bottom: 0;
+}
+.tamyiz-legal-section-title,
+.tamyiz-legal-page-heading {
+  margin: 0 0 0.55rem !important;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--tmz-hair);
+  font-family: var(--font-sub) !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em !important;
+  text-transform: none !important;
+  color: #000000;
+  line-height: 1.35;
+}
+.tamyiz-legal-section-text {
+  font-family: var(--font-body);
+  font-size: 0.94rem;
+  line-height: 1.65;
+  color: #2B2B29;
+  overflow-wrap: anywhere;
+}
+.tamyiz-legal-section-text p {
+  margin: 0 0 0.65rem;
+}
+.tamyiz-legal-section-text p:last-child {
+  margin-bottom: 0;
+}
+.tamyiz-legal-list {
+  margin: 0.4rem 0 0.7rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.tamyiz-legal-list:last-child {
+  margin-bottom: 0;
+}
+.tamyiz-legal-list li {
+  padding-left: 0.15rem;
+}
+.tamyiz-legal-contact-footer {
+  margin-top: 1.5rem;
+  padding: 1rem 1.15rem;
+  background: var(--tmz-paper);
+  border: 1px solid var(--tmz-hair);
+  border-left: 3px solid #000000;
+  border-radius: var(--tmz-r);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: #2B2B29;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.tamyiz-legal-contact-title {
+  font-family: var(--font-sub);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #000000;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--tmz-hair);
+}
+.tamyiz-legal-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem 1.25rem;
+}
+.tamyiz-legal-contact-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.tamyiz-legal-link {
+  color: #000000;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.tamyiz-nowrap {
+  white-space: nowrap;
+}
+.tamyiz-legal-modal-foot {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--tmz-hair);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+.tamyiz-legal-page-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-sub);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #000000;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.tamyiz-legal-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border: 1px solid #000000;
+  border-radius: var(--tmz-r);
+  background: #000000;
+  color: #FFFFFF;
+  font-family: var(--font-sub);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.tamyiz-legal-close-btn:hover {
+  background: var(--tmz-yellow);
+  color: #000000;
+}
+
+/* Standalone /legal/* page */
+.tamyiz-legal-tabs-bar {
+  position: static;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--tmz-hair);
+  padding: 0.85rem 0;
+}
+.tamyiz-legal-page-section {
+  background: var(--tmz-paper);
+  padding: 3rem 0 4.5rem;
+}
+.tamyiz-legal-page-container {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+.tamyiz-legal-doc-card {
+  background: #FFFFFF;
+  border: 1px solid var(--tmz-hair);
+  border-radius: 6px;
+  padding: 2.25rem 2.5rem;
+}
+.tamyiz-legal-doc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid var(--tmz-hair);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tmz-graphite, #55554F);
+}
+.tamyiz-legal-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.tamyiz-legal-sections > .tamyiz-legal-section-item {
+  margin: 0 !important;
+}
+.tamyiz-legal-page-heading {
+  font-size: 1.12rem !important;
+}
+.tamyiz-legal-doc-card .tamyiz-legal-section-text {
+  font-size: 0.98rem;
+}
+.tamyiz-legal-doc-footer {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--tmz-hair);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.9rem;
+}
+.tamyiz-legal-doc-query {
+  font-size: 0.9rem;
+  color: var(--tmz-graphite, #55554F);
+}
+
+@media (max-width: 1023px), (pointer: coarse) {
+  .tamyiz-legal-link,
+  .tamyiz-legal-doc-query a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 639px) {
+  .tamyiz-modal {
+    padding: 0.5rem;
+  }
+  .tamyiz-modal-box.is-legal {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 6px;
+  }
+  .tamyiz-legal-modal-head {
+    padding: 1rem 1rem 0.85rem;
+  }
+  .tamyiz-legal-modal-title {
+    font-size: 1.15rem;
+  }
+  .tamyiz-legal-modal-sub {
+    font-size: 0.82rem;
+  }
+  .tamyiz-legal-modal-scroll {
+    padding: 1rem 1rem 1.25rem;
+  }
+  .tamyiz-legal-tabs-row,
+  .tamyiz-legal-tabs-list {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+    gap: 0.38rem !important;
+  }
+  .tamyiz-legal-tab-btn {
+    min-height: 44px;
+    padding: 0.45rem 0.72rem !important;
+    font-size: 0.78rem !important;
+  }
+  .tamyiz-legal-contact-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+  .tamyiz-legal-modal-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .tamyiz-legal-close-btn {
+    width: 100%;
+  }
+  .tamyiz-legal-page-section {
+    padding: 1.5rem 0 2.5rem !important;
+  }
+  .tamyiz-legal-doc-card {
+    padding: 1.25rem 1rem;
+  }
+  .tamyiz-legal-doc-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 
 /* ==========================================================================
    ADMIN CONSOLE — "Paper and Hairlines" editorial workspace

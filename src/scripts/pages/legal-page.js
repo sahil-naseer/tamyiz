@@ -166,6 +166,32 @@ We acknowledge every complaint within 48 hours and resolve it within one month o
   }
 };
 
+export function formatLegalContentHtml(content = '') {
+  const lines = String(content).split('\n').map((l) => l.trim()).filter(Boolean);
+  const blocks = [];
+  let listItems = [];
+
+  const flushList = () => {
+    if (!listItems.length) return;
+    blocks.push(`<ul class="tamyiz-legal-list">${listItems.map((item) => `<li>${item}</li>`).join('')}</ul>`);
+    listItems = [];
+  };
+
+  for (const line of lines) {
+    if (line.startsWith('• ')) {
+      listItems.push(line.slice(2).trim());
+    } else if (line.startsWith('- ')) {
+      listItems.push(line.slice(2).trim());
+    } else {
+      flushList();
+      blocks.push(`<p>${line}</p>`);
+    }
+  }
+  flushList();
+
+  return blocks.join('');
+}
+
 export function renderLegalPage(activeSlug = 'delivery-protocol', appInstance) {
   const validSlug = legalDocs[activeSlug] ? activeSlug : 'delivery-protocol';
   const doc = legalDocs[validSlug];
@@ -184,7 +210,7 @@ export function renderLegalPage(activeSlug = 'delivery-protocol', appInstance) {
       <section class="tamyiz-page-header">
         <div class="container">
           <div class="tamyiz-page-header-inner">
-            <span class="tamyiz-page-badge">POLICIES // ${doc.code}</span>
+            <span class="tmz-label">Policies · ${doc.code}</span>
             <h1 class="tamyiz-page-title">${doc.title}</h1>
             <p class="tamyiz-page-description">${doc.subtitle}</p>
           </div>
@@ -192,77 +218,74 @@ export function renderLegalPage(activeSlug = 'delivery-protocol', appInstance) {
       </section>
 
       <!-- NAVIGATION TABS -->
-      <div class="tamyiz-legal-tabs-bar sticky top-16 md:top-20 z-20 bg-white/95 backdrop-blur-md border-b border-neutral-200">
+      <nav class="tamyiz-legal-tabs-bar" aria-label="Policy documents">
         <div class="container">
-          <div class="flex overflow-x-auto whitespace-nowrap gap-2 py-3 no-scrollbar">
+          <div class="tamyiz-legal-tabs-list">
             ${tabList.map(tab => `
               <button
-                class="tamyiz-legal-tab-btn px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider rounded-full transition-all ${tab.slug === validSlug ? 'bg-black text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'}"
+                type="button"
+                class="tamyiz-legal-tab-btn ${tab.slug === validSlug ? 'active' : ''}"
+                aria-current="${tab.slug === validSlug ? 'page' : 'false'}"
                 onclick="window.tamyizApp.navigateTo('/legal/${tab.slug}')"
               >
-                <span class="${tab.slug === validSlug ? 'text-neutral-400' : 'text-neutral-500'} mr-1.5">${tab.code}</span>
-                ${tab.label}
+                <span class="tamyiz-legal-tab-code">${tab.code}</span>
+                <span>${tab.label}</span>
               </button>
             `).join('')}
           </div>
         </div>
-      </div>
+      </nav>
 
       <!-- MAIN LEGAL CONTENT -->
-      <section class="tamyiz-section py-12 md:py-20 bg-[#FBFBFB]">
-        <div class="container max-w-4xl mx-auto px-4 sm:px-6">
-          <div class="bg-white border border-neutral-200 p-6 sm:p-10 md:p-14 rounded-lg shadow-sm">
-            <div class="flex justify-between items-center pb-6 mb-8 border-b border-neutral-200 text-xs font-mono text-neutral-500">
+      <section class="tamyiz-section tamyiz-legal-page-section">
+        <div class="container tamyiz-legal-page-container">
+          <article class="tamyiz-legal-doc-card">
+            <div class="tamyiz-legal-doc-meta">
               <span>TAMYIZ policy</span>
-              <span>EFFECTIVE: ${doc.lastUpdated}</span>
+              <span>Effective: ${doc.lastUpdated}</span>
             </div>
 
-            <div class="space-y-10 text-neutral-800">
+            <div class="tamyiz-legal-sections">
               ${doc.sections.map(sec => `
-                <div class="legal-section">
-                  <h2 class="text-base sm:text-lg font-bold font-mono tracking-tight text-black mb-3 pb-2 border-b border-neutral-100">
-                    ${sec.heading}
-                  </h2>
-                  <div class="text-sm sm:text-base leading-relaxed text-neutral-700 whitespace-pre-line font-serif sm:font-sans">
-                    ${sec.content.replace(/\n/g, '<br/>')}
-                  </div>
-                </div>
+                <section class="legal-section tamyiz-legal-section-item">
+                  <h2 class="tamyiz-legal-page-heading">${sec.heading}</h2>
+                  <div class="tamyiz-legal-section-text">${formatLegalContentHtml(sec.content)}</div>
+                </section>
               `).join('')}
             </div>
 
             <!-- BUSINESS CONTACT DETAILS -->
-            <div class="mt-12 p-6 sm:p-7 bg-neutral-50 border border-neutral-300 rounded text-xs font-mono text-neutral-700 leading-relaxed">
-              <div class="font-bold text-black uppercase tracking-wider text-sm mb-3 pb-2 border-b border-neutral-200">
-                Business Contact Details
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <div class="mb-1.5"><strong class="text-black">Business:</strong> TAMYIZ™, run by Basit Majeed &amp; Sahil Naseer</div>
-                  <div class="mb-1.5"><strong class="text-black">Address:</strong> Sopore, Jammu &amp; Kashmir 193201, India</div>
+            <div class="tamyiz-legal-contact-footer tamyiz-legal-page-contact">
+              <div class="tamyiz-legal-contact-title">Business Contact Details</div>
+              <div class="tamyiz-legal-contact-grid">
+                <div class="tamyiz-legal-contact-col">
+                  <div><strong>Business:</strong> TAMYIZ™, run by Basit Majeed &amp; Sahil Naseer</div>
+                  <div><strong>Address:</strong> Sopore, Jammu &amp; Kashmir 193201, India</div>
                 </div>
-                <div>
-                  <div class="mb-1.5"><strong class="text-black">Email:</strong> <a href="mailto:tamyiz.co@gmail.com" class="underline text-black font-bold">tamyiz.co@gmail.com</a></div>
-                  <div class="mb-1.5"><strong class="text-black">Phone &amp; WhatsApp:</strong> <a href="tel:+919541722379" class="underline text-black font-bold" style="white-space: nowrap;">+91 95417 22379</a> (10:00–19:00 IST)</div>
-                  <div class="mb-1.5"><strong class="text-black">Delivery:</strong> download link on screen right after payment, plus an email receipt</div>
-                  <div><strong class="text-black">Refunds:</strong> within 7 days for a double charge, or a file we could not deliver or fix</div>
+                <div class="tamyiz-legal-contact-col">
+                  <div><strong>Email:</strong> <a href="mailto:tamyiz.co@gmail.com" class="tamyiz-legal-link">tamyiz.co@gmail.com</a></div>
+                  <div><strong>Phone &amp; WhatsApp:</strong> <a href="tel:+919541722379" class="tamyiz-legal-link tamyiz-nowrap">+91 95417 22379</a> (10:00–19:00 IST)</div>
+                  <div><strong>Delivery:</strong> download link on screen right after payment, plus an email receipt</div>
+                  <div><strong>Refunds:</strong> within 7 days for a double charge, or a file we could not deliver or fix</div>
                 </div>
               </div>
             </div>
 
-            <div class="mt-10 pt-8 border-t border-neutral-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs font-mono text-neutral-600">
-              <div>
-                Questions about this policy? Email 
-                <a href="mailto:${siteConfig.conciergeEmail}" class="text-black font-bold underline ml-1">${siteConfig.conciergeEmail}</a>
+            <div class="tamyiz-legal-doc-footer">
+              <div class="tamyiz-legal-doc-query">
+                Questions about this policy? Email
+                <a href="mailto:${siteConfig.conciergeEmail}" class="tamyiz-legal-link">${siteConfig.conciergeEmail}</a>
               </div>
-              <button 
-                class="tamyiz-btn-nav-outline text-xs px-4 py-2"
+              <button
+                type="button"
+                class="tamyiz-btn-nav-outline"
                 onclick="window.tamyizApp.navigateTo('/editions')"
               >
                 <span>See the e-books</span>
                 <span>→</span>
               </button>
             </div>
-          </div>
+          </article>
         </div>
       </section>
     </div>

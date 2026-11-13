@@ -25,7 +25,7 @@ import { renderPhilosophyPage } from './pages/philosophy-page.js';
 import { renderAtelierPage } from './pages/atelier-page.js';
 import { renderDownloadsPage } from './pages/downloads-page.js';
 import { renderCheckoutPage } from './pages/checkout-page.js';
-import { renderLegalPage, legalDocs } from './pages/legal-page.js';
+import { renderLegalPage, legalDocs, formatLegalContentHtml } from './pages/legal-page.js';
 import { AdminController } from './pages/admin-page.js';
 import { openVideoModal } from './components/video-modal.js';
 import { initMotion } from './motion.js';
@@ -1074,6 +1074,7 @@ class TamyizUnifiedApp {
     if (locked) {
       document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
+      document.documentElement.classList.add('modal-open');
       document.body.classList.add('modal-open');
     } else {
       const cartOpen = document.getElementById('cart-drawer')?.classList.contains('active');
@@ -1083,6 +1084,7 @@ class TamyizUnifiedApp {
       if (!cartOpen && !mobileOpen && !modalOpen && !previewOpen) {
         document.documentElement.style.overflow = '';
         document.body.style.overflow = '';
+        document.documentElement.classList.remove('modal-open');
         document.body.classList.remove('modal-open');
       }
     }
@@ -2986,7 +2988,10 @@ class TamyizUnifiedApp {
     const validKey = legalDocs[tabKey] ? tabKey : 'delivery-protocol';
     const content = document.getElementById('tamyiz-modal-content');
     if (content) {
+      content.classList.add('is-legal');
       content.innerHTML = this.renderLegalModalContent(validKey);
+      const scroller = content.querySelector('.tamyiz-legal-modal-scroll');
+      if (scroller) scroller.scrollTop = 0;
     }
   }
 
@@ -3003,61 +3008,57 @@ class TamyizUnifiedApp {
     return `
       <div class="tamyiz-legal-modal-box" role="dialog" aria-modal="true" aria-label="${doc.title}">
         <div class="tamyiz-legal-modal-head">
-          <div>
-            <h3 style="font-family: var(--font-sub); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 0.25rem 0; color: #000;">
-              ${doc.title}
-            </h3>
-            <p style="font-size: 0.9rem; color: #55554F; margin: 0;">
-              ${doc.subtitle}
-            </p>
+          <div class="tamyiz-legal-modal-title-wrap">
+            <span class="tmz-label tamyiz-legal-modal-kicker">Policies · ${doc.code}</span>
+            <h3 class="tamyiz-legal-modal-title">${doc.title}</h3>
+            <p class="tamyiz-legal-modal-sub">${doc.subtitle}</p>
           </div>
-          <button class="tmz-modal-close-inline" onclick="window.tamyizApp.closeModal()" aria-label="Close">✕</button>
+          <button type="button" class="tmz-modal-close-inline" onclick="window.tamyizApp.closeModal()" aria-label="Close">✕</button>
         </div>
 
-        <div class="tamyiz-legal-tabs-row">
-          ${tabs.map(t => `
-            <button class="tamyiz-legal-tab-btn ${t.key === activeKey ? 'active' : ''}" onclick="window.tamyizApp.switchLegalModalTab('${t.key}')">
-              <span>${t.code}</span> ${t.label}
-            </button>
-          `).join('')}
-        </div>
+        <div class="tamyiz-legal-modal-scroll">
+          <div class="tamyiz-legal-tabs-row" role="tablist" aria-label="Policy sections">
+            ${tabs.map(t => `
+              <button type="button" class="tamyiz-legal-tab-btn ${t.key === activeKey ? 'active' : ''}" aria-pressed="${t.key === activeKey ? 'true' : 'false'}" onclick="window.tamyizApp.switchLegalModalTab('${t.key}')">
+                <span class="tamyiz-legal-tab-code">${t.code}</span>
+                <span>${t.label}</span>
+              </button>
+            `).join('')}
+          </div>
 
-        <div class="tamyiz-legal-modal-body" style="margin-bottom: 1.5rem;">
-          ${doc.sections.map(sec => `
-            <div class="tamyiz-legal-section-item">
-              <h4 class="tamyiz-legal-section-title">${sec.heading}</h4>
-              <div class="tamyiz-legal-section-text">
-                <p>${sec.content.replace(/\n/g, '<br/>')}</p>
+          <div class="tamyiz-legal-modal-body">
+            ${doc.sections.map(sec => `
+              <div class="tamyiz-legal-section-item">
+                <h4 class="tamyiz-legal-section-title">${sec.heading}</h4>
+                <div class="tamyiz-legal-section-text">${formatLegalContentHtml(sec.content)}</div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Business contact details -->
+          <div class="tamyiz-legal-contact-footer">
+            <div class="tamyiz-legal-contact-title">Business Contact Details</div>
+            <div class="tamyiz-legal-contact-grid">
+              <div class="tamyiz-legal-contact-col">
+                <div><strong>Business:</strong> TAMYIZ™, run by Basit Majeed &amp; Sahil Naseer</div>
+                <div><strong>Address:</strong> Sopore, Jammu &amp; Kashmir 193201, India</div>
+              </div>
+              <div class="tamyiz-legal-contact-col">
+                <div><strong>Email:</strong> <a href="mailto:tamyiz.co@gmail.com" class="tamyiz-legal-link">tamyiz.co@gmail.com</a></div>
+                <div><strong>WhatsApp / phone:</strong> <a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tamyiz-legal-link tamyiz-nowrap">${siteConfig.phone}</a></div>
+                <div><strong>Refunds:</strong> ask within 7 days · back in your account in 5–7 working days</div>
               </div>
             </div>
-          `).join('')}
-        </div>
-
-        <!-- Business contact details -->
-        <div class="tamyiz-legal-contact-footer">
-          <div style="font-weight: 800; text-transform: uppercase; margin-bottom: 0.35rem; color: #000;">
-            Business Contact Details
           </div>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.5rem; font-size: 0.72rem;">
-            <div>
-              <strong>Business:</strong> TAMYIZ™, run by Basit Majeed &amp; Sahil Naseer<br/>
-              <strong>Address:</strong> Sopore, Jammu &amp; Kashmir 193201, India<br/>
-            </div>
-            <div>
-              <strong>Email:</strong> <a href="mailto:tamyiz.co@gmail.com" style="text-decoration: underline; color: #000;">tamyiz.co@gmail.com</a><br/>
-              <strong>WhatsApp / phone:</strong> <a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="text-decoration: underline; color: #000; white-space: nowrap;">${siteConfig.phone}</a><br/>
-              <strong>Refunds:</strong> ask within 7 days • back in your account in 5–7 working days
-            </div>
-          </div>
-        </div>
 
-        <div style="margin-top: 1.25rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 0.75rem;">
-          <span style="font-family: monospace; font-size: 0.68rem; color: #888;">
-            DPDP ACT &amp; CONSUMER PROTECTION COMPLIANT
-          </span>
-          <button class="tamyiz-btn-vault-dl" style="padding: 0.45rem 1rem; font-size: 0.7rem;" onclick="window.tamyizApp.closeModal()">
-            Close Protocol Modal
-          </button>
+          <div class="tamyiz-legal-modal-foot">
+            <a href="/legal/${doc.slug}" class="tamyiz-legal-page-link" onclick="event.preventDefault(); window.tamyizApp.closeModal(); window.tamyizApp.navigateTo('/legal/${doc.slug}')">
+              Open full policy page ↗
+            </a>
+            <button type="button" class="tamyiz-legal-close-btn" onclick="window.tamyizApp.closeModal()">
+              Close
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -3087,7 +3088,7 @@ class TamyizUnifiedApp {
 
     this.openModalContent(`
       <div style="padding: 0.5rem 0;">
-        <span style="font-family: var(--font-sub); font-size: 0.72rem; font-weight: 800; color: var(--color-red-ink); letter-spacing: 0.12em; text-transform: uppercase;">TAMYIZ™ Protocol</span>
+        <span style="font-family: var(--font-sub); font-size: 0.72rem; font-weight: 800; color: var(--color-red-ink); letter-spacing: 0.12em; text-transform: uppercase;">TAMYIZ™ Policy</span>
         <h2 style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 900; margin: 0.4rem 0 1rem 0; text-transform: uppercase;">${policy.title}</h2>
         <div style="font-size: 0.92rem; color: #444; line-height: 1.7; white-space: pre-line; margin-bottom: 2rem;">
           ${policy.content}
@@ -3105,19 +3106,28 @@ class TamyizUnifiedApp {
     if (modal && content) {
       // One close button only: pop-ups that draw their own ✕ (policies, payment received) don't get a second one.
       const hasOwnClose = html.includes('window.tamyizApp.closeModal()" aria-label=');
+      const isLegal = html.includes('tamyiz-legal-modal-box');
+      content.classList.toggle('is-legal', isLegal);
       content.innerHTML = `
         ${hasOwnClose ? '' : '<button class="tmz-modal-close" onclick="window.tamyizApp.closeModal()" aria-label="Close">✕</button>'}
         ${html}
       `;
+      content.scrollTop = 0;
       modal.classList.add('active');
       this.setScrollLock(true);
+      if (isLegal) {
+        const scroller = content.querySelector('.tamyiz-legal-modal-scroll');
+        if (scroller) scroller.scrollTop = 0;
+      }
     }
   }
 
   closeModal() {
     const modal = document.getElementById('tamyiz-modal');
+    const content = document.getElementById('tamyiz-modal-content');
     if (modal) {
       modal.classList.remove('active');
+      if (content) content.classList.remove('is-legal');
       this.setScrollLock(false);
     }
   }
