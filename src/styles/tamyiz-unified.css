@@ -6730,37 +6730,39 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
 /* ---------- About us (/atelier), 24 Oct 2026: plain words, same type and spacing as the home hero ---------- */
 .tmz-wrap { max-width: 80rem; margin: 0 auto; padding: 0 3.5rem; }
 .tmz-about h1, .tmz-about h2, .tmz-about h3 { text-transform: none; color: #000; }
-.tmz-about-intro { padding: 5rem 0 3.5rem; background: linear-gradient(180deg, #FFFFFF 0%, #F4F4F2 100%); border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
-.tmz-about-intro h1 { margin: 0; font-family: var(--font-display); font-weight: 300; font-size: clamp(2.8rem, 6vw, 5rem); line-height: 1; letter-spacing: -0.05em; }
-.tmz-about-lede { margin: 1.5rem 0 0; max-width: 36rem; font-size: 1.3rem; line-height: 1.5; color: #2B2B29; }
+.tmz-about-intro { padding: 2.75rem 0 2rem; background: linear-gradient(180deg, #FFFFFF 0%, #F4F4F2 100%); border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
+.tmz-about-intro h1 { margin: 0; font-family: var(--font-display); font-weight: 300; font-size: clamp(2.4rem, 5vw, 4.2rem); line-height: 1; letter-spacing: -0.05em; }
+.tmz-about-lede { margin: 0.9rem 0 0; max-width: 36rem; font-size: 1.15rem; line-height: 1.45; color: #2B2B29; }
 
-.tmz-about-story { padding: 4.5rem 0; background: #FFFFFF; }
-.tmz-about-story-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); gap: 4.5rem; align-items: start; }
+.tmz-about-story { padding: 2.75rem 0; background: #FFFFFF; }
+.tmz-about-story-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); gap: 3rem; align-items: start; }
 .tmz-about-text h2, .tmz-about-people-section h2, .tmz-about-contact h2 {
-  margin: 0 0 1.25rem; font-family: var(--font-sub); font-weight: 600; font-size: 1.75rem; letter-spacing: -0.02em;
+  margin: 0 0 1rem; font-family: var(--font-sub); font-weight: 600; font-size: 1.55rem; letter-spacing: -0.02em;
 }
-.tmz-about-text p { margin: 0 0 1.1rem; max-width: 38rem; font-size: 1.1rem; line-height: 1.65; color: #2B2B29; }
-.tmz-about-facts { background: #F4F4F2; border-radius: 22px; padding: 1.6rem; }
-.tmz-about-meaning { margin: 0 0 1.4rem; font-size: 1rem; line-height: 1.55; color: #2B2B29; }
+.tmz-about-text p { margin: 0 0 0.85rem; max-width: 38rem; font-size: 1.02rem; line-height: 1.55; color: #2B2B29; }
+.tmz-about-facts { background: #F4F4F2; border-radius: 18px; padding: 1.25rem 1.4rem; }
+.tmz-about-meaning { margin: 0 0 1rem; font-size: 0.95rem; line-height: 1.5; color: #2B2B29; }
 .tmz-about-meaning strong { color: #000; }
 .tmz-about-facts dl { margin: 0; display: grid; gap: 0; }
-.tmz-about-facts dl > div { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: 1rem; padding: 0.85rem 0; border-top: 1px solid rgba(0, 0, 0, 0.1); }
+.tmz-about-facts dl > div { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0.85rem; padding: 0.6rem 0; border-top: 1px solid rgba(0, 0, 0, 0.1); }
 .tmz-about-facts dt { font-size: 0.85rem; color: var(--tmz-graphite); }
-.tmz-about-facts dd { margin: 0; font-size: 0.95rem; color: #000; }
+.tmz-about-facts dd { margin: 0; font-size: 0.92rem; color: #000; }
 .tmz-about-facts dd a { color: #000; text-decoration: underline; text-underline-offset: 3px; }
 
-.tmz-about-people-section { padding: 4.5rem 0; background: #F4F4F2; border-top: 1px solid rgba(0, 0, 0, 0.06); border-bottom: 1px solid rgba(0, 0, 0, 0.06); }
-.tmz-people-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
-.tmz-person { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 1.5rem; background: #FFFFFF; border-radius: 22px; padding: 1.5rem; }
-.tmz-person img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 14px; background: #E8E8E5; }
-.tmz-person h3 { margin: 0; font-family: var(--font-sub); font-weight: 600; font-size: 1.3rem; }
-.tmz-person-role { margin: 0.25rem 0 0.9rem; font-size: 0.85rem; color: var(--tmz-graphite); }
-.tmz-person-bio { margin: 0; font-size: 0.95rem; line-height: 1.6; color: #2B2B29; }
-.tmz-person blockquote { margin: 1rem 0 0; padding-left: 0.9rem; border-left: 2px solid #000; font-size: 0.95rem; line-height: 1.5; color: #000; }
-.tmz-person-links { margin: 1.1rem 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0 1.1rem; }
-.tmz-person-links a { display: inline-flex; align-items: center; gap: 0.25rem; min-height: 44px; font-size: 0.9rem; font-weight: 500; color: #000; text-decoration: underline; text-underline-offset: 3px; }
+.tmz-about-people-section { padding: 2.5rem 0; background: #F4F4F2; border-bottom: 1px solid rgba(0, 0, 0, 0.06); }
+.tmz-people-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.tmz-person { display: flex; flex-direction: column; gap: 0.9rem; background: #FFFFFF; border-radius: 18px; padding: 1.35rem; }
+.tmz-person-head { display: flex; align-items: center; gap: 1rem; }
+.tmz-person-head img { display: block; width: 5.25rem; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 12px; background: #E8E8E5; flex-shrink: 0; }
+.tmz-person-ident { min-width: 0; }
+.tmz-person h3 { margin: 0; font-family: var(--font-sub); font-weight: 600; font-size: 1.25rem; line-height: 1.2; }
+.tmz-person-role { margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--tmz-graphite); }
+.tmz-person-bio { margin: 0; font-size: 0.93rem; line-height: 1.55; color: #2B2B29; }
+.tmz-person blockquote { margin: 0.75rem 0 0; padding-left: 0.85rem; border-left: 2px solid #000; font-size: 0.9rem; line-height: 1.45; color: #000; }
+.tmz-person-links { margin: 0.65rem 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0 1rem; }
+.tmz-person-links a { display: inline-flex; align-items: center; gap: 0.25rem; min-height: 44px; font-size: 0.88rem; font-weight: 500; color: #000; text-decoration: underline; text-underline-offset: 3px; }
 
-.tmz-about-contact { padding: 4.5rem 0 5rem; background: #FFFFFF; }
+.tmz-about-contact { padding: 2.75rem 0 3.25rem; background: #FFFFFF; }
 .tmz-about-contact-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 34rem); gap: 4.5rem; align-items: start; }
 .tmz-about-contact p { margin: 0 0 0.9rem; max-width: 30rem; font-size: 1.05rem; line-height: 1.6; color: #2B2B29; }
 .tmz-about-contact p a { color: #000; text-decoration: underline; text-underline-offset: 3px; }
@@ -6781,14 +6783,22 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
 /* PHONES (up to 639px) */
 @media (max-width: 639px) {
   .tmz-wrap { padding: 0 1rem; }
-  .tmz-about-intro { padding: 2.5rem 0 2rem; }
-  .tmz-about-lede { font-size: 1.1rem; margin-top: 1rem; }
-  .tmz-about-story, .tmz-about-people-section, .tmz-about-contact { padding: 2.5rem 0; }
-  .tmz-about-text p { font-size: 1rem; }
-  .tmz-about-facts { padding: 1.2rem; }
-  .tmz-about-facts dl > div { grid-template-columns: 6.5rem minmax(0, 1fr); }
-  .tmz-person { grid-template-columns: 6.5rem minmax(0, 1fr); gap: 1rem; padding: 1.1rem; }
-  .tmz-person-bio { font-size: 0.9rem; }
+  .tmz-about-intro { padding: 1.35rem 0 1.25rem; }
+  .tmz-about-lede { font-size: 1rem; margin-top: 0.65rem; }
+  .tmz-about-story, .tmz-about-people-section, .tmz-about-contact { padding: 1.5rem 0; }
+  .tmz-about-text h2, .tmz-about-people-section h2, .tmz-about-contact h2 { margin-bottom: 0.75rem; font-size: 1.35rem; }
+  .tmz-about-story-grid, .tmz-about-contact-grid { gap: 1.5rem; }
+  .tmz-about-text p { font-size: 0.95rem; margin-bottom: 0.7rem; }
+  .tmz-about-facts { padding: 1rem; border-radius: 14px; }
+  .tmz-about-facts dl > div { grid-template-columns: 6rem minmax(0, 1fr); padding: 0.5rem 0; }
+  .tmz-people-grid { gap: 0.9rem; }
+  .tmz-person { gap: 0.7rem; padding: 1rem; border-radius: 14px; }
+  .tmz-person-head { gap: 0.75rem; }
+  .tmz-person-head img { width: 4rem; border-radius: 10px; }
+  .tmz-person h3 { font-size: 1.12rem; }
+  .tmz-person-bio { font-size: 0.88rem; line-height: 1.5; }
+  .tmz-person blockquote { margin-top: 0.6rem; font-size: 0.86rem; }
+  .tmz-person-links { margin-top: 0.45rem; gap: 0 0.9rem; }
   .tmz-field-row { grid-template-columns: 1fr; }
   .tmz-contact-actions .tmz-btn { flex: 1 1 auto; justify-content: center; }
 }

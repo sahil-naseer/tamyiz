@@ -18,10 +18,14 @@ function founderCard(f, portrait) {
   ].filter(Boolean);
   return `
     <article class="tmz-person">
-      <img src="${portrait}" alt="${f.fullName}" width="480" height="600" loading="lazy" decoding="async" />
+      <div class="tmz-person-head">
+        <img src="${portrait}" alt="${f.fullName}" width="480" height="600" loading="lazy" decoding="async" />
+        <div class="tmz-person-ident">
+          <h3>${f.fullName}</h3>
+          <p class="tmz-person-role">${f.role.replace('Co-Founder • ', 'Co-founder · ')}</p>
+        </div>
+      </div>
       <div class="tmz-person-body">
-        <h3>${f.fullName}</h3>
-        <p class="tmz-person-role">${f.role.replace('Co-Founder • ', 'Co-founder · ')}</p>
         <p class="tmz-person-bio">${f.bio}</p>
         <blockquote>${f.quote}</blockquote>
         <ul class="tmz-person-links">
@@ -44,6 +48,16 @@ export function renderAtelierPage(appInstance) {
         </div>
       </section>
 
+      <section class="tmz-about-people-section" aria-labelledby="founders-title">
+        <div class="tmz-wrap">
+          <h2 id="founders-title">The founders</h2>
+          <div class="tmz-people-grid">
+            ${founderCard(basit, '/assets/images/founders/basit-portrait.webp')}
+            ${founderCard(sahil, '/assets/images/founders/sahil-portrait.webp')}
+          </div>
+        </div>
+      </section>
+
       <section class="tmz-about-story">
         <div class="tmz-wrap tmz-about-story-grid">
           <div class="tmz-about-text">
@@ -60,16 +74,6 @@ export function renderAtelierPage(appInstance) {
               <div><dt>Talk to us</dt><dd><a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer">WhatsApp ${siteConfig.phone}</a></dd></div>
             </dl>
           </aside>
-        </div>
-      </section>
-
-      <section class="tmz-about-people-section" aria-labelledby="founders-title">
-        <div class="tmz-wrap">
-          <h2 id="founders-title">The founders</h2>
-          <div class="tmz-people-grid">
-            ${founderCard(basit, '/assets/images/founders/basit-portrait.webp')}
-            ${founderCard(sahil, '/assets/images/founders/sahil-portrait.webp')}
-          </div>
         </div>
       </section>
 
