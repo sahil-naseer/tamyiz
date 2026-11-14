@@ -44,7 +44,7 @@ export function renderEditionsPage(appInstance) {
               <input
                 type="text"
                 id="artifact-search-input"
-                class="tamyiz-search-input w-full pl-10 pr-9 py-2.5 bg-white border border-gray-300 rounded-full text-sm text-black placeholder-gray-400 transition-all focus:ring-2 focus:ring-black focus:outline-none focus:border-transparent"
+                class="tamyiz-search-input w-full pl-10 pr-9 py-2.5 bg-white border border-gray-300 rounded-full text-sm text-black placeholder-gray-400 transition-colors focus:ring-2 focus:ring-black focus:outline-none focus:border-transparent"
                 placeholder="Search e-books"
                 value="${String(appInstance.searchQuery).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}"
                 data-input-action="search"

@@ -152,6 +152,9 @@ export function openVideoModal(video) {
   modalEl.classList.add('is-open');
 
   // Trap ESC key
+  if (escListener) {
+    window.removeEventListener('keydown', escListener);
+  }
   escListener = (e) => {
     if (e.key === 'Escape') {
       closeVideoModal();

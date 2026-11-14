@@ -54,6 +54,7 @@ function tag(root) {
     const counters = new Map();
     root.querySelectorAll(selector).forEach((el) => {
       if (el.dataset.mo !== undefined || el.dataset.moDone !== undefined) return;
+      if (el.matches('.tmz-step') && el.closest('.is-pinned')) return;
       // The same page drawn again (bag changed, coupon applied...): what is already on screen stays put.
       if (sinceNav() > 1500 && inView(el)) { el.dataset.moDone = ''; return; }
       let i = 0;
@@ -77,7 +78,11 @@ function tag(root) {
 
 /** Everything that came into view together is revealed together, and tidied up together (one timer, one restyle). */
 function reveal(els) {
-  for (const el of els) { io.unobserve(el); el.classList.add('is-in'); }
+  for (const el of els) {
+    io.unobserve(el);
+    el.classList.add('is-in');
+    el.addEventListener('pointerenter', () => el.style.removeProperty('--mo-i'), { once: true, passive: true });
+  }
   // Afterwards the elements go back to their own hover transitions (a leftover delay would make hovers feel late).
   setTimeout(() => {
     for (const el of els) {
@@ -96,7 +101,7 @@ function countUp(root) {
     delete el.dataset.count;
     if (!(end > 0) || !el.firstChild) return;
     const text = el.firstChild; // changing the text node (not the element) keeps the page observer quiet
-    const start = performance.now() + 700;
+    const start = performance.now() + Math.max(0, 500 - sinceNav());
     const dur = 1100;
     const step = (now) => {
       const t = Math.max(0, Math.min(1, (now - start) / dur));
@@ -178,7 +183,13 @@ function dotGrid() {
   const onLeave = () => { pointer.on = false; kick(); };
   host.addEventListener('pointermove', onMove, { passive: true });
   host.addEventListener('pointerleave', onLeave);
-  dotsStop = () => { cancelAnimationFrame(raf); ro.disconnect(); dotsStop = null; };
+  dotsStop = () => {
+    cancelAnimationFrame(raf);
+    ro.disconnect();
+    host.removeEventListener('pointermove', onMove);
+    host.removeEventListener('pointerleave', onLeave);
+    dotsStop = null;
+  };
 }
 
 /**
@@ -196,7 +207,14 @@ function steps() {
       const pin = canPin();
       if (section.classList.contains('is-pinned') !== pin) {
         section.classList.toggle('is-pinned', pin);
-        if (!pin) {
+        if (pin) {
+          section.querySelectorAll('.tmz-step').forEach((li) => {
+            if (io) io.unobserve(li);
+            delete li.dataset.mo;
+            li.classList.remove('is-in');
+            li.style.removeProperty('--mo-i');
+          });
+        } else {
           section.querySelectorAll('.tmz-step').forEach((li) => li.classList.remove('is-active', 'is-past'));
           section.querySelectorAll('[data-draw]').forEach((art) => { art.dataset.drawSeen = ''; art.classList.add('is-drawn', 'is-instant'); });
         }

@@ -429,7 +429,7 @@ export function renderProductDetailPage(slug, appInstance) {
                       class="tmz-hover-invert"
                       data-action="open-review-modal"
                       data-id="${product.id}"
-                      style="font-family: var(--font-sub); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.55rem 1rem; border: 1.5px solid #0B0B0B; background: transparent; color: #0B0B0B; border-radius: 4px; cursor: pointer; transition: all 0.2s;"
+                      style="font-family: var(--font-sub); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.55rem 1rem; border: 1.5px solid #0B0B0B; background: transparent; color: #0B0B0B; border-radius: 4px; cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;"
                     >
                       Leave a Review ✍
                     </button>

@@ -77,7 +77,7 @@ class TamyizUnifiedApp {
     productsReady.then(() => {
       if (!loadState.failed) store.pruneUnavailable(); // a failed load must not empty the bag
       const y = window.scrollY;
-      this.renderShell();
+      this.updateCartBadge();
       this.renderCurrentPage();
       this.renderDrawerItems();
       window.scrollTo({ top: y, behavior: 'instant' });
@@ -231,6 +231,10 @@ class TamyizUnifiedApp {
     return { page: 'notfound', slug: null, anchor: hash };
   }
 
+  getScrollBehavior() {
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  }
+
   handleLocationChange(isUserNav = true) {
     const route = this.parseRoute(window.location.pathname, window.location.hash);
     const previousPage = this.currentPage;
@@ -253,7 +257,7 @@ class TamyizUnifiedApp {
           el = document.getElementById('format-guide') || document.getElementById('formats');
         }
         if (el) {
-          el.scrollIntoView({ behavior: 'smooth' });
+          el.scrollIntoView({ behavior: this.getScrollBehavior() });
         }
       }, 100);
     }
@@ -331,7 +335,7 @@ class TamyizUnifiedApp {
           el = document.getElementById('format-guide') || document.getElementById('formats');
         }
         if (el) {
-          el.scrollIntoView({ behavior: 'smooth' });
+          el.scrollIntoView({ behavior: this.getScrollBehavior() });
         }
       }, 80);
     }
@@ -402,11 +406,19 @@ class TamyizUnifiedApp {
     // On phones the round WhatsApp button sits over the page text, so step it
     // aside while the reader is scrolling and bring it back once they stop.
     let idle = null;
+    let ticking = false;
     const onScroll = () => {
-      update();
-      if (!document.body.classList.contains('is-scrolling')) document.body.classList.add('is-scrolling');
-      clearTimeout(idle);
-      idle = setTimeout(() => document.body.classList.remove('is-scrolling'), 700);
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        update();
+        if (window.innerWidth <= 768) {
+          if (!document.body.classList.contains('is-scrolling')) document.body.classList.add('is-scrolling');
+          clearTimeout(idle);
+          idle = setTimeout(() => document.body.classList.remove('is-scrolling'), 700);
+        }
+      });
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     update();
@@ -1206,6 +1218,7 @@ class TamyizUnifiedApp {
     const tmp = document.createElement('div');
     tmp.innerHTML = renderEditionsPage(this);
     grid.innerHTML = tmp.querySelector('#product-grid').innerHTML;
+    grid.querySelectorAll('.tamyiz-product-card').forEach((card) => { card.dataset.moDone = ''; });
     status.innerHTML = tmp.querySelector('#collection-status').innerHTML;
   }
 
@@ -1887,9 +1900,9 @@ class TamyizUnifiedApp {
       if (text) text.textContent = nextOpen ? 'Collapse Preview' : 'Expand Preview';
       if (icon) icon.textContent = nextOpen ? '↑' : '↓';
       if (nextOpen) {
-        content.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        content.scrollIntoView({ behavior: this.getScrollBehavior(), block: 'nearest' });
       } else if (scrollBack && btn) {
-        btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        btn.scrollIntoView({ behavior: this.getScrollBehavior(), block: 'center' });
       }
     }
   }
@@ -2191,7 +2204,7 @@ class TamyizUnifiedApp {
             ${escapeText(data.message || 'If this matches a purchase, we have emailed your download links.')}
           </div>
         `;
-        resultsContainer.scrollIntoView({ behavior: 'smooth' });
+        resultsContainer.scrollIntoView({ behavior: this.getScrollBehavior() });
       }
     } catch (err) {
       if (msgBox) {
@@ -2766,7 +2779,7 @@ class TamyizUnifiedApp {
     } else {
       const el = document.getElementById('editions');
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
+        el.scrollIntoView({ behavior: this.getScrollBehavior() });
       }
     }
   }
@@ -2778,7 +2791,7 @@ class TamyizUnifiedApp {
     } else {
       const el = document.getElementById('format-guide');
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
+        el.scrollIntoView({ behavior: this.getScrollBehavior() });
       }
     }
   }
