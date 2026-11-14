@@ -36,6 +36,7 @@
 .tmz-admin-login-card {
   max-width: 448px;
   margin: 7vh auto 0;
+  margin: 7dvh auto 0;
   padding: 36px 32px;
   border: 1px solid rgba(0, 0, 0, 0.22);
 }
@@ -1293,4 +1294,49 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+/* Mobile & Touch UX Polish for Admin Portal */
+@media (max-width: 639px), (pointer: coarse) {
+  .tmz-admin-input,
+  .tmz-admin-search-input,
+  .tmz-admin-root input,
+  .tmz-admin-root select,
+  .tmz-admin-root textarea {
+    font-size: 16px !important;
+  }
+
+  .tmz-admin-tab-btn,
+  .tmz-admin-btn,
+  .tmz-admin-btn-sm,
+  .tmz-stat-range-btn,
+  .tmz-admin-toast-close {
+    min-height: 44px;
+  }
+
+  .tmz-admin-toast-close {
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 639px) {
+  .tmz-admin-login-card {
+    margin: 3dvh auto 0;
+    padding: 24px 18px;
+  }
+
+  .tmz-admin-confirm-dialog {
+    padding: 18px 16px;
+  }
+
+  .tmz-admin-confirm-actions {
+    flex-wrap: wrap;
+  }
+
+  .tmz-admin-confirm-actions .tmz-admin-btn {
+    flex: 1 1 120px;
+  }
 }

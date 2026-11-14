@@ -467,7 +467,7 @@ export function renderOrderVaultHtml(order) {
 
             <!-- Financial Totals -->
             <div class="flex justify-end mt-4">
-              <div style="width: 290px;">
+              <div style="width: min(290px, 100%);">
                 <div class="flex justify-between py-1 text-xs">
                   <span style="color: #666;">Subtotal:</span>
                   <span style="font-weight: 600;">₹${order.subtotal.toLocaleString('en-IN')}</span>

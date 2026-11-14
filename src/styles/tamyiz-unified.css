@@ -4945,6 +4945,7 @@ img {
   width: 100%;
   max-width: 880px;
   max-height: 90vh;
+  max-height: 90dvh;
   border-radius: 4px;
   border: 1px solid var(--color-border);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
@@ -6292,6 +6293,12 @@ a.tamyiz-btn-preview-trigger {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 0.75rem !important;
   }
+
+@media (max-width: 359px) {
+  .tamyiz-product-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
 
   .tamyiz-product-card {
     display: flex !important;
@@ -8391,6 +8398,7 @@ body.tmz-modal-open {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .tmz-video-book-price {
@@ -9138,10 +9146,162 @@ body.tmz-modal-open {
 /* Sticky things (the header, the pinned section) need the page itself to be the only scroller.
    `overflow-x: hidden` on body and #app quietly made each of them a scroller, so the header never stuck.
    `clip` hides sideways overflow without that side effect (older browsers keep `hidden`). */
+html,
 body,
 #app {
   overflow-x: hidden;
   overflow-x: clip;
+}
+
+/* Mobile & Touch UX Polish */
+.tmz-icon-btn-44 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 999px;
+  color: var(--color-black, #0B0B0B);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tmz-icon-btn-44:hover {
+  background-color: rgba(11, 11, 11, 0.06);
+}
+
+.tmz-coupon-remove-btn {
+  margin: -8px -8px -8px 0;
+  flex-shrink: 0;
+}
+
+/* Prevent duplicate close button when a modal supplies close-sandbox-modal */
+.tamyiz-modal-box:has([data-action="close-sandbox-modal"]) > .tmz-modal-close {
+  display: none;
+}
+
+.tamyiz-modal-form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (max-width: 539px) {
+  .tamyiz-modal-form-grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.tamyiz-reader-modal {
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: left;
+  padding: 0.25rem 0 0;
+}
+
+.tamyiz-reader-close-btn {
+  background: transparent;
+  border: 1.5px solid rgba(11, 11, 11, 0.18);
+  cursor: pointer;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.tamyiz-reader-paper {
+  background: #FAFAF8;
+  border: 1px solid rgba(11, 11, 11, 0.08);
+  border-radius: 10px;
+  padding: 1.75rem 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.tamyiz-excerpt-dropcap {
+  text-align: left;
+}
+
+@media (min-width: 640px) {
+  .tamyiz-excerpt-dropcap {
+    text-align: justify;
+  }
+}
+
+.tamyiz-reader-sticky-cta {
+  position: sticky;
+  bottom: 0;
+  margin: 1.25rem 0 0;
+  padding: 1.05rem 1.25rem;
+  background: #0B0B0B;
+  color: #FFFFFF;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tmz-downloads-card {
+  padding: 2rem 1.75rem;
+}
+
+.tamyiz-summary-item .summary-item-info {
+  min-width: 0;
+}
+
+.tmz-video-modal-dialog {
+  max-height: 90vh;
+  max-height: 90dvh;
+}
+
+@media (max-width: 639px) {
+  .tamyiz-reader-paper {
+    padding: 1.25rem 1rem;
+  }
+
+  .tamyiz-reader-sticky-cta {
+    padding: 0.95rem 1rem;
+  }
+
+  .tmz-downloads-card {
+    padding: 1.35rem 1rem;
+  }
+
+  .tamyiz-invoice-card {
+    padding: 1.15rem !important;
+  }
+
+  .tamyiz-preview-modal {
+    max-height: 92dvh;
+  }
+
+  .tmz-video-modal-details {
+    padding: 16px !important;
+  }
+}
+
+@media (max-width: 479px) {
+  .tmz-home-side-thumb-wrap {
+    width: 104px;
+    flex-basis: 104px;
+  }
+}
+
+@media (max-width: 639px), (pointer: coarse) {
+  .tamyiz-modal-close-btn,
+  .tamyiz-cart-del {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .tamyiz-modal-tab-btn,
+  .tamyiz-card-video-pill-btn,
+  .tmz-btn-book-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 ::selection {

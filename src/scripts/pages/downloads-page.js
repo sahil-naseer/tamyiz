@@ -7,10 +7,10 @@ import { siteConfig } from '../../data/site-config.js';
 
 export function renderDownloadsPage(appInstance) {
   return `
-    <div class="tmz-downloads-page" style="padding: 3rem 1rem 6rem; max-width: 680px; margin: 0 auto; min-height: 60vh;">
-      <div style="text-align: center; margin-bottom: 2.5rem;">
+    <div class="tmz-downloads-page" style="padding: 2.5rem 1rem 5rem; max-width: 680px; margin: 0 auto; min-height: 60dvh;">
+      <div style="text-align: center; margin-bottom: 2rem;">
         <span class="tmz-label">Lost your file?</span>
-        <h1 style="font-family: var(--font-head); font-weight: 700; font-size: 2.2rem; line-height: 1.15; margin: 0 0 0.75rem; color: #0B0B0B;">
+        <h1 class="tmz-downloads-title" style="font-family: var(--font-head); font-weight: 700; font-size: clamp(1.65rem, 5.5vw, 2.2rem); line-height: 1.15; margin: 0 0 0.75rem; color: #0B0B0B;">
           Get your download links again
         </h1>
         <p style="font-size: 0.95rem; color: #5E5E59; line-height: 1.5; margin: 0;">
@@ -19,7 +19,7 @@ export function renderDownloadsPage(appInstance) {
       </div>
 
       <!-- Recovery Card Form -->
-      <div style="background: #FFFFFF; border: 1.5px solid rgba(11,11,11,0.12); border-radius: 4px; padding: 2rem 1.75rem; margin-bottom: 2rem;">
+      <div class="tmz-downloads-card" style="background: #FFFFFF; border: 1.5px solid rgba(11,11,11,0.12); border-radius: 4px; margin-bottom: 2rem;">
         <form id="tmz-recovery-form" data-submit-action="download-recovery" style="display: flex; flex-direction: column; gap: 1rem;">
           <div>
             <label for="recovery-input-email" style="display: block; font-family: var(--font-head); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; color: #0B0B0B;">
@@ -30,7 +30,7 @@ export function renderDownloadsPage(appInstance) {
               id="recovery-input-email"
               class="tmz-focus-border"
               placeholder="e.g. name@gmail.com"
-              style="width: 100%; box-sizing: border-box; padding: 0.85rem 1rem; font-size: 0.95rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 4px; outline: none; transition: border-color 0.2s;"
+              style="width: 100%; box-sizing: border-box; padding: 0.85rem 1rem; font-size: 1rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 4px; outline: none; transition: border-color 0.2s;"
             />
           </div>
 
@@ -48,7 +48,7 @@ export function renderDownloadsPage(appInstance) {
               id="recovery-input-phone"
               class="tmz-focus-border"
               placeholder="e.g. +91 98765 43210"
-              style="width: 100%; box-sizing: border-box; padding: 0.85rem 1rem; font-size: 0.95rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 4px; outline: none; transition: border-color 0.2s;"
+              style="width: 100%; box-sizing: border-box; padding: 0.85rem 1rem; font-size: 1rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 4px; outline: none; transition: border-color 0.2s;"
             />
           </div>
 
@@ -73,7 +73,7 @@ export function renderDownloadsPage(appInstance) {
         <p style="font-size: 0.85rem; color: #5E5E59; margin: 0 0 0.5rem;">
           Still cannot find your purchase or paid through a different gateway?
         </p>
-        <a href="https://wa.me/${siteConfig.whatsappNumber}?text=Hi%20TAMYIZ,%20I%20need%20help%20recovering%20my%20e-book%20order" target="_blank" rel="noopener noreferrer" style="font-size: 0.85rem; font-weight: 700; color: #0B0B0B; text-decoration: underline;">
+        <a href="https://wa.me/${siteConfig.whatsappNumber}?text=Hi%20TAMYIZ,%20I%20need%20help%20recovering%20my%20e-book%20order" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.5rem; font-size: 0.85rem; font-weight: 700; color: #0B0B0B; text-decoration: underline;">
           WhatsApp us (${siteConfig.phone}) ↗
         </a>
       </div>

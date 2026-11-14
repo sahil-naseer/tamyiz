@@ -115,7 +115,7 @@ export function renderHomePage(appInstance) {
 
       <!-- 2. BRAND PROMISE / VALUE STRIP -->
       <div class="tamyiz-promise-strip w-full">
-        <div class="max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-8 pr-20 lg:pr-28">
+        <div class="max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-8">
           <div class="tamyiz-promise-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-neutral-800 gap-8 lg:gap-0 items-start w-full">
             <div class="tamyiz-promise-item lg:px-8 first:lg:pl-0 last:lg:pr-0">
               <span class="tamyiz-promise-icon" aria-hidden="true">

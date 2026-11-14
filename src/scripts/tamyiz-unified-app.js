@@ -673,7 +673,7 @@ class TamyizUnifiedApp {
       <aside class="tamyiz-mobile-drawer" id="mobile-drawer" aria-label="Mobile Navigation">
         <div class="tamyiz-mobile-drawer-head">
           <span class="tmz-drawer-brand"><img src="/assets/brand/tamyiz-dome-sm.webp" alt="" width="48" height="14" /><img src="/assets/brand/tamyiz-wordmark.svg" alt="TAMYIZ" width="84" height="14" /></span>
-          <button style="font-size: 1.25rem; background: none; border: none; cursor: pointer; padding: 0.25rem;" data-action="close-mobile-menu" aria-label="Close menu">✕</button>
+          <button class="tmz-icon-btn-44" style="font-size: 1.25rem; background: none; border: none; cursor: pointer;" data-action="close-mobile-menu" aria-label="Close menu">✕</button>
         </div>
         <div class="tamyiz-mobile-drawer-body">
           <div>
@@ -719,7 +719,7 @@ class TamyizUnifiedApp {
       <aside class="tamyiz-drawer" id="cart-drawer" aria-label="Your bag">
         <div class="tamyiz-drawer-head">
           <div class="tamyiz-drawer-title">Your bag <span id="cart-count-label"></span></div>
-          <button style="font-size: 1.25rem; background: none; border: none; cursor: pointer; padding: 0.25rem;" data-action="close-cart" aria-label="Close bag">✕</button>
+          <button class="tmz-icon-btn-44" style="font-size: 1.25rem; background: none; border: none; cursor: pointer;" data-action="close-cart" aria-label="Close bag">✕</button>
         </div>
 
         <!-- Free digital shipping tracker -->
@@ -760,7 +760,7 @@ class TamyizUnifiedApp {
             <span id="cart-discount-label">Discount</span>
             <div style="display: flex; align-items: center; gap: 0.4rem;">
               <strong id="cart-discount-val">-₹0</strong>
-              <button data-action="remove-coupon" style="background: none; border: none; color: #888; font-size: 0.72rem; cursor: pointer;" title="Remove coupon">✕</button>
+              <button class="tmz-icon-btn-44 tmz-coupon-remove-btn" data-action="remove-coupon" style="background: none; border: none; color: #888; font-size: 0.8rem; cursor: pointer;" aria-label="Remove coupon" title="Remove coupon">✕</button>
             </div>
           </div>
 
@@ -1984,7 +1984,7 @@ class TamyizUnifiedApp {
             <span>→</span>
           </button>
 
-          <div style="display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.74rem; color: #888; margin-top: 0.25rem;">
+          <div style="display: flex; justify-content: space-between; gap: 0.45rem 0.75rem; flex-wrap: wrap; font-size: 0.74rem; color: #6B6B6B; margin-top: 0.25rem;">
             <span>✓ Instant access</span>
             <span>✓ No spam guarantee</span>
             <span>✓ DRM-free PDF ready</span>
@@ -2060,7 +2060,7 @@ class TamyizUnifiedApp {
     const toc = sample?.tableOfContents || product.tableOfContents || [];
 
     const html = `
-      <div class="tamyiz-reader-modal" style="max-width: 680px; margin: 0 auto; text-align: left; max-height: 80vh; overflow-y: auto; padding: 1.5rem 1rem;">
+      <div class="tamyiz-reader-modal">
         <!-- Reader Header -->
         <div style="border-bottom: 1.5px solid rgba(11,11,11,0.1); padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
           <div>
@@ -2080,8 +2080,9 @@ class TamyizUnifiedApp {
             </p>
           </div>
           <button
+            type="button"
+            class="tmz-icon-btn-44 tamyiz-reader-close-btn"
             data-action="close-modal"
-            style="background: transparent; border: 1.5px solid rgba(11,11,11,0.15); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: #0B0B0B; flex-shrink: 0;"
             aria-label="Close reader"
           >
             ✕
@@ -2089,14 +2090,14 @@ class TamyizUnifiedApp {
         </div>
 
         <!-- Book Reading Paper Body -->
-        <div class="tamyiz-reader-paper" style="background: #FAFAF8; border: 1px solid rgba(11,11,11,0.08); border-radius: 10px; padding: 2rem 1.75rem; margin-bottom: 1.5rem; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);">
+        <div class="tamyiz-reader-paper">
           <div style="font-family: var(--font-mono, monospace); font-size: 0.72rem; color: var(--color-red-ink, #c00); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; margin-bottom: 0.75rem;">
             § 01 / Selected Excerpt
           </div>
           <h4 style="font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; margin: 0 0 1.25rem; color: #0B0B0B;">
             ${subtitle}
           </h4>
-          <div class="tamyiz-excerpt-dropcap" style="font-family: var(--font-serif, 'Georgia', serif); font-size: 1.05rem; line-height: 1.85; color: #1D1D1D; text-align: justify; white-space: pre-line;">
+          <div class="tamyiz-excerpt-dropcap" style="font-family: var(--font-serif, 'Georgia', serif); font-size: 1.05rem; line-height: 1.85; color: #1D1D1D; white-space: pre-line;">
             ${text}
           </div>
           <div style="margin-top: 1.75rem; padding: 1rem 1.25rem; border-left: 3px solid #0B0B0B; background: #F1F1EE; font-family: var(--font-serif, 'Georgia', serif); font-style: italic; font-size: 0.95rem; color: #333;">
@@ -2121,7 +2122,7 @@ class TamyizUnifiedApp {
         ` : ''}
 
         <!-- Sticky Bottom Conversion Bar -->
-        <div style="position: sticky; bottom: -1.5rem; margin: 1.5rem -1rem -1.5rem; padding: 1.25rem 1.5rem; background: #0B0B0B; color: #FFF; border-radius: 0 0 16px 16px; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <div class="tamyiz-reader-sticky-cta">
           <div>
             <div style="font-family: var(--font-head); font-weight: 700; font-size: 1.05rem; margin-bottom: 0.2rem;">
               Unlock Full ${product.pages ? `${product.pages}-Page ` : ''}E-Book
@@ -2288,14 +2289,14 @@ class TamyizUnifiedApp {
             </select>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="tamyiz-modal-form-grid-2">
             <div>
               <label for="rev-input-name" style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">Your Name *</label>
-              <input type="text" id="rev-input-name" required placeholder="Sahil N." style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; font-size: 0.88rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 6px;" />
+              <input type="text" id="rev-input-name" required placeholder="Sahil N." style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; font-size: 1rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 6px;" />
             </div>
             <div>
               <label for="rev-input-email" style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">Purchase Email *</label>
-              <input type="email" id="rev-input-email" required placeholder="name@domain.com" style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; font-size: 0.88rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 6px;" />
+              <input type="email" id="rev-input-email" required placeholder="name@domain.com" style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; font-size: 1rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 6px;" />
             </div>
           </div>
 
@@ -3063,7 +3064,7 @@ class TamyizUnifiedApp {
             <span class="tamyiz-sandbox-dot"></span>
             <span>TAMYIZ™ UPI / CARD INSTANT VERIFICATION</span>
           </div>
-          <button style="background:none; border:none; font-size:1.25rem; cursor:pointer; padding: 0.2rem;" data-action="close-sandbox-modal" aria-label="Close modal">✕</button>
+          <button class="tmz-icon-btn-44" style="background:none; border:none; font-size:1.25rem; cursor:pointer;" data-action="close-sandbox-modal" aria-label="Close modal">✕</button>
         </div>
 
         <div class="tamyiz-sandbox-meta">
@@ -3217,7 +3218,7 @@ class TamyizUnifiedApp {
             <span style="color: #1E7B2E; font-size: 1.1rem; line-height: 1;">●</span>
             <span>PAYMENT RECEIVED</span>
           </div>
-          <button style="background:none; border:none; font-size:1.25rem; cursor:pointer; padding: 0.2rem;" data-action="close-modal" aria-label="Close modal">✕</button>
+          <button class="tmz-icon-btn-44" style="background:none; border:none; font-size:1.25rem; cursor:pointer;" data-action="close-modal" aria-label="Close modal">✕</button>
         </div>
 
         <div class="tamyiz-unlock-meta-box">
