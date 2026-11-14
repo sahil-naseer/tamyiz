@@ -554,4 +554,15 @@ test('admin & app: lazy-loaded /admin, centralized SITE_URL, zero blocking alert
 
   assert.ok(!/import\s*\{[^}]*AdminController[^}]*\}\s*from/.test(appCode), 'tamyiz-unified-app.js must not statically import AdminController');
   assert.ok(/import\(\s*['"]\.\/pages\/admin-page\.js['"]\s*\)/.test(appCode), 'tamyiz-unified-app.js must dynamically import admin-page.js');
+  assert.ok(/import\s*['"]\.\.\/\.\.\/styles\/admin\.css['"]/.test(adminCode), 'admin-page.js must lazy-import admin.css');
+  assert.ok(!fs.existsSync('src/admin/admin.js'), 'obsolete legacy src/admin/admin.js should remain removed');
+});
+
+test('sitemap.xml honors env.SITE_URL override', async () => {
+  const { onRequestGet } = await import('../functions/sitemap.xml.js');
+  const res = await onRequestGet({ env: { ...env(), SITE_URL: 'https://tamyiz.in/' } });
+  assert.equal(res.status, 200);
+  const xml = await res.text();
+  assert.ok(xml.includes('<loc>https://tamyiz.in/</loc>'));
+  assert.ok(!xml.includes('tamyiz.pages.dev'));
 });

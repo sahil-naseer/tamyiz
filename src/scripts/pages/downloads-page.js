@@ -3,6 +3,8 @@
  * Route: /downloads or /orders
  */
 
+import { siteConfig } from '../../data/site-config.js';
+
 export function renderDownloadsPage(appInstance) {
   return `
     <div class="tmz-downloads-page" style="padding: 3rem 1rem 6rem; max-width: 680px; margin: 0 auto; min-height: 60vh;">
@@ -73,8 +75,8 @@ export function renderDownloadsPage(appInstance) {
         <p style="font-size: 0.85rem; color: #5E5E59; margin: 0 0 0.5rem;">
           Still cannot find your purchase or paid through a different gateway?
         </p>
-        <a href="https://wa.me/919541722379?text=Hi%20TAMYIZ,%20I%20need%20help%20recovering%20my%20e-book%20order" target="_blank" rel="noopener noreferrer" style="font-size: 0.85rem; font-weight: 700; color: #0B0B0B; text-decoration: underline;">
-          WhatsApp us (+91 95417 22379) ↗
+        <a href="https://wa.me/${siteConfig.whatsappNumber}?text=Hi%20TAMYIZ,%20I%20need%20help%20recovering%20my%20e-book%20order" target="_blank" rel="noopener noreferrer" style="font-size: 0.85rem; font-weight: 700; color: #0B0B0B; text-decoration: underline;">
+          WhatsApp us (${siteConfig.phone}) ↗
         </a>
       </div>
     </div>

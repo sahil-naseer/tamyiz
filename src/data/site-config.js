@@ -5,13 +5,14 @@
 
 export const SITE_URL = 'https://tamyiz.pages.dev';
 export const SITE_HOST = 'tamyiz.pages.dev';
+const WHATSAPP_NUMBER = '919541722379';
 
 /** WhatsApp link with a pre-order message for one product (used while it is "coming soon"). */
 export function preorderWhatsAppUrl(productName, variant) {
   const fmt = variant && variant !== 'Standard' ? ` (${variant})` : '';
   const name = String(productName).replace(/&(amp|lt|gt|quot|#39);/g, (_, e) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" })[e]);
   const text = `Hello TAMYIZ, I'd like to pre-order: ${name}${fmt}. Please message me when it's ready.`;
-  return `https://wa.me/919541722379?text=${encodeURIComponent(text)}`;
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }
 
 export const siteConfig = {

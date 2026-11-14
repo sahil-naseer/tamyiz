@@ -3247,7 +3247,7 @@ class TamyizUnifiedApp {
       `WhatsApp: ${result.phone}\n` +
       `E-books:\n${itemsText}\n` +
       `Date: ${new Date(result.timestamp || Date.now()).toISOString().slice(0, 10)}`;
-    return `https://wa.me/919541722379?text=${encodeURIComponent(msg)}`;
+    return `https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(msg)}`;
   }
 
   downloadTaxInvoiceFromPayment() {

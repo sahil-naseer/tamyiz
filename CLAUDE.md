@@ -22,7 +22,7 @@ sold with Razorpay and delivered as private signed download links.
 
 ## E-books and /admin (24 Oct 2026)
 
-- The 8 template products are gone. Every e-book is added on `/admin` (`admin.html`, `src/admin/admin.js`): title,
+- Every e-book is added on `/admin` (`src/scripts/pages/admin-page.js` + `src/styles/admin.css`, lazy-loaded via `admin.html` / `/admin`): title,
   one-line summary, price, pages, description, chapters, cover (shrunk to 1200 px in the browser), PDF (max 25 MB).
 - Small covers: /admin also makes a 720 px `thumb:<id>` (served at `/api/cover/<id>?s=sm`); cards and the bag use
   `product.thumb` (falls back to the full cover). Opening /admin backfills thumbs for books that lack one.

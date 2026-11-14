@@ -12,6 +12,7 @@
  *   - Settings (Cloudflare KV diagnostics, payment keys, receipt mailer health)
  */
 
+import '../../styles/admin.css';
 import { siteConfig, SITE_URL } from '../../data/site-config.js';
 import { markCatalogUpdated } from '../../data/products.js';
 import { escapeText } from '../tamyiz-unified-app.js';
