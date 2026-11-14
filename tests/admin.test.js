@@ -294,3 +294,35 @@ test('e-book preview video: attach videoUrl to book, validate invalid video, and
   assert.equal(itemAfterFilm.video.provider, 'vimeo');
   assert.equal(itemAfterFilm.video.title, 'Distinction Cinematic Trailer');
 });
+
+test('backup routes: require login, export full KV JSON snapshot, and stream stored PDF', async () => {
+  const e = env();
+  assert.equal((await call(e, '/api/admin/backup')).status, 401);
+
+  const cookie = await session(e);
+  const draftRes = await save(e, cookie, form({ name: 'Draft Without PDF', status: 'draft' }, { cover: [JPEG, 'c.jpg'] }));
+  const { product: draftBook } = await draftRes.json();
+
+  assert.equal((await call(e, `/api/admin/products/${draftBook.id}/file`)).status, 401);
+  assert.equal((await call(e, `/api/admin/products/${draftBook.id}/file`, { headers: authed(cookie) })).status, 404);
+
+  const liveRes = await save(e, cookie, form({ name: 'Live With PDF', status: 'on-sale' }, { cover: [JPEG, 'c.jpg'], pdf: [PDF, 'book.pdf'] }));
+  const { product: liveBook } = await liveRes.json();
+
+  const pdfRes = await call(e, `/api/admin/products/${liveBook.id}/file`, { headers: authed(cookie) });
+  assert.equal(pdfRes.status, 200);
+  assert.equal(pdfRes.headers.get('Content-Type'), 'application/pdf');
+  assert.match(pdfRes.headers.get('Content-Disposition'), /attachment; filename="live-with-pdf\.pdf"/);
+  assert.deepEqual(new Uint8Array(await pdfRes.arrayBuffer()), PDF);
+
+  const backupRes = await call(e, '/api/admin/backup', { headers: authed(cookie) });
+  assert.equal(backupRes.status, 200);
+  assert.match(backupRes.headers.get('Content-Disposition'), /tamyiz-kv-backup-.*\.json/);
+  const snapshot = JSON.parse(await backupRes.text());
+  assert.equal(snapshot.version, 1);
+  assert.equal(snapshot.products.length, 2);
+  assert.ok(Array.isArray(snapshot.films));
+  assert.ok(Array.isArray(snapshot.orders));
+  assert.ok(Array.isArray(snapshot.leads));
+  assert.ok(snapshot.reviews && Array.isArray(snapshot.reviews.approved));
+});

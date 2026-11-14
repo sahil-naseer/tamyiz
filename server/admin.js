@@ -685,6 +685,85 @@ function getSettings(env) {
   });
 }
 
+async function readJsonKV(kv, key, fallback) {
+  try {
+    const raw = await kv.get(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/** Backup: export all non-binary KV collections (no secrets/env vars) as a downloadable JSON file. */
+async function backupStore(env) {
+  const kv = store(env);
+  const products = await loadCatalog(env);
+  const films = await readJsonKV(kv, 'showcase:videos', []);
+  const coupons = await readJsonKV(kv, 'store:coupons', {});
+  const announcement = await readJsonKV(kv, 'store:announcement', null);
+  const leads = await readJsonKV(kv, 'store:leads:index', []);
+  const pendingReviews = await readJsonKV(kv, 'store:reviews:pending', []);
+  const approvedReviews = await readJsonKV(kv, 'store:reviews:approved', []);
+
+  const orderIds = await readJsonKV(kv, 'orders:index', []);
+  const orders = [];
+  for (const id of (Array.isArray(orderIds) ? orderIds : []).slice(0, 500)) {
+    const ord = await readJsonKV(kv, `order:${id}`, null);
+    if (ord) orders.push(ord);
+  }
+
+  const abandonedIds = await readJsonKV(kv, 'store:abandoned:index', []);
+  const abandoned = [];
+  for (const id of (Array.isArray(abandonedIds) ? abandonedIds : []).slice(0, 500)) {
+    const rec = await readJsonKV(kv, `store:abandoned:${id}`, null);
+    if (rec) abandoned.push(rec);
+  }
+
+  const day = new Date().toISOString().slice(0, 10);
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    products,
+    films: Array.isArray(films) ? films : [],
+    coupons,
+    announcement,
+    orders,
+    leads: Array.isArray(leads) ? leads : [],
+    reviews: {
+      pending: Array.isArray(pendingReviews) ? pendingReviews : [],
+      approved: Array.isArray(approvedReviews) ? approvedReviews : [],
+    },
+    abandoned,
+  };
+
+  return new Response(JSON.stringify(payload, null, 2), {
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Content-Disposition': `attachment; filename="tamyiz-kv-backup-${day}.json"`,
+      'Cache-Control': 'private, no-store',
+    },
+  });
+}
+
+/** Backup: download an e-book's stored PDF straight from KV (admin only). */
+async function backupProductFile(env, id) {
+  const kv = store(env);
+  const product = findById(await loadCatalog(env), id);
+  if (!product) return json({ error: 'That e-book no longer exists.' }, 404);
+  const { value, metadata } = await kv.getWithMetadata(`file:${id}`, 'stream');
+  if (!value) return json({ error: 'No PDF has been uploaded for this e-book.' }, 404);
+  const safeSlug = String(product.slug || id).replace(/[^a-z0-9-]/gi, '-');
+  return new Response(value, {
+    headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${safeSlug}.pdf"`,
+      'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+      ...(metadata && metadata.size ? { 'Content-Length': String(metadata.size) } : {}),
+    },
+  });
+}
+
 /** Routes for /api/admin/<rest>. */
 export async function handleAdmin(request, env, rest, fetchImpl = fetch) {
   const method = request.method;
@@ -729,8 +808,11 @@ export async function handleAdmin(request, env, rest, fetchImpl = fetch) {
     if (flm && method === 'DELETE') return await handleAdminDeleteFilm(env, flm[1]);
     if (rest === 'customers' && method === 'GET') return await getCustomers(request, env);
     if (rest === 'settings' && method === 'GET') return getSettings(env);
+    if (rest === 'backup' && method === 'GET') return await backupStore(env);
     if (rest === 'products' && method === 'GET') return json({ products: (await loadCatalog(env)).map(adminView) });
     if (rest === 'products' && method === 'POST') return await saveProduct(request, env, null);
+    const f = rest.match(/^products\/([a-z0-9-]{3,40})\/file$/);
+    if (f && method === 'GET') return await backupProductFile(env, f[1]);
     const t = rest.match(/^products\/([a-z0-9-]{3,40})\/thumb$/);
     if (t && method === 'POST') return await saveThumb(request, env, t[1]);
     const m = rest.match(/^products\/([a-z0-9-]{3,40})$/);

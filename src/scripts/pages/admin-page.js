@@ -619,7 +619,8 @@ export class AdminController {
                   <strong style="color: #0B0B0B;">₹${Number(b.price).toLocaleString('en-IN')}</strong>
                   <span>·</span>
                   <span>${b.fileSize ? `PDF ${mb(b.fileSize)}` : '<span style="color:#9E1C14; font-weight:600;">Missing PDF</span>'}</span>
-                  ${b.pages ? `<span>·</span><span>${b.pages} pages</span>` : ''}
+                  <span>·</span>
+                  ${b.pages ? `<span>${b.pages} pages</span>` : '<span style="color:#92400E; font-weight:600;">Missing page count</span>'}
                   ${b.sampleExcerpt && b.sampleExcerpt.text ? `<span class="tmz-admin-status tmz-admin-status--info">Sample Ready</span>` : ''}
                   ${b.videoUrl ? `<span class="tmz-admin-status tmz-admin-status--ink">▶ Video</span>` : ''}
                 </div>
@@ -633,6 +634,11 @@ export class AdminController {
                 <button type="button" class="tmz-edit-book-btn tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm" data-id="${b.id}">
                   Edit
                 </button>
+                ${b.fileSize ? `
+                  <a href="/api/admin/products/${b.id}/file" download class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">
+                    ↓ PDF
+                  </a>
+                ` : ''}
                 ${b.status !== 'draft' ? `
                   <a href="/edition/${b.slug}" target="_blank" rel="noopener noreferrer" class="tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm">
                     View ↗
@@ -2620,6 +2626,19 @@ export class AdminController {
               ${cfg.hasAdmin2FA ? '2FA + Zero-KV Active' : 'Zero-KV Lockout Active'}
             </span>
           </div>
+        </div>
+      </div>
+
+      <div class="tmz-admin-panel tmz-frame" style="margin-top: 20px;">
+        <div class="tmz-admin-section-head" style="margin-bottom: 12px;">
+          <div>
+            <p class="tmz-label">DISASTER RECOVERY // KV SNAPSHOT</p>
+            <h2 class="tmz-admin-section-title">Store Backups</h2>
+            <p class="tmz-admin-section-sub">Download a full JSON snapshot of your e-book catalog, films, coupons, announcement, orders, leads, reviews, and abandoned carts. Individual e-book PDFs can be downloaded from the E-Books tab.</p>
+          </div>
+          <a href="/api/admin/backup" download class="tmz-admin-btn tmz-admin-btn-primary">
+            Download KV Backup (JSON) ↓
+          </a>
         </div>
       </div>
     `;
