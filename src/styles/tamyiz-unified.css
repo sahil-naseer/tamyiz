@@ -7502,15 +7502,25 @@ body, #app { overflow-x: hidden; overflow-x: clip; }
 .tmz-label::before { content: '['; content: '[' / ''; }
 .tmz-label::after { content: ']'; content: ']' / ''; }
 
-/* Solid yellow highlight mark (no protruding corner brackets). */
+/* Corner brackets round the words that matter (aligned flush with the highlight corners). */
 .tmz-mark {
   position: relative;
   display: inline-block;
-  padding: 0 0.16em;
-  border-radius: 2px;
+  padding: 0 0.22em;
   color: #000;
   background: linear-gradient(var(--tmz-yellow), var(--tmz-yellow)) no-repeat 0 50% / 100% 100%;   /* the highlighter */
 }
+.tmz-mark::before, .tmz-mark::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  width: 0.2em;
+  height: 0.2em;
+  border: 0.05em solid #000;
+  pointer-events: none;
+}
+.tmz-mark::before { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+.tmz-mark::after { bottom: 0; right: 0; border-left: 0; border-top: 0; }
 
 /* A frame with crosshair corners. */
 .tmz-frame {
@@ -7832,6 +7842,8 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
   html.mo .tmz-hero .tmz-line > span { animation: mo-rise 0.9s var(--mo-ease) backwards; animation-delay: calc(60ms - var(--mo-t, 0ms)); }
   html.mo .tmz-hero .tmz-line + .tmz-line > span { animation-delay: calc(160ms - var(--mo-t, 0ms)); }
   html.mo .tmz-hero .tmz-mark { animation: mo-wipe 0.7s var(--mo-ease) backwards; animation-delay: calc(700ms - var(--mo-t, 0ms)); }
+  html.mo .tmz-hero .tmz-mark::before { animation: mo-corner-a 0.7s var(--mo-ease) backwards; animation-delay: calc(750ms - var(--mo-t, 0ms)); }
+  html.mo .tmz-hero .tmz-mark::after { animation: mo-corner-b 0.7s var(--mo-ease) backwards; animation-delay: calc(750ms - var(--mo-t, 0ms)); }
   html.mo .tmz-hero-lede { animation: mo-up 0.7s var(--mo-ease) backwards; animation-delay: calc(260ms - var(--mo-t, 0ms)); }
   html.mo .tmz-hero-ctas { animation: mo-up 0.7s var(--mo-ease) backwards; animation-delay: calc(340ms - var(--mo-t, 0ms)); }
   html.mo .tmz-hero-proof { animation: mo-up 0.7s var(--mo-ease) backwards; animation-delay: calc(500ms - var(--mo-t, 0ms)); }
@@ -7847,6 +7859,9 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
   }
   html.mo [data-mo] .tmz-mark { background-size: 0% 100%; }
   html.mo [data-mo].is-in .tmz-mark { animation: mo-wipe 0.7s var(--mo-ease) 0.45s backwards; background-size: 100% 100%; }
+  html.mo [data-mo] .tmz-mark::before, html.mo [data-mo] .tmz-mark::after { opacity: 0; }
+  html.mo [data-mo].is-in .tmz-mark::before { animation: mo-corner-a 0.7s var(--mo-ease) 0.5s backwards; opacity: 1; }
+  html.mo [data-mo].is-in .tmz-mark::after { animation: mo-corner-b 0.7s var(--mo-ease) 0.5s backwards; opacity: 1; }
   html.mo .tmz-footer-giant[data-mo] { opacity: 1; transform: none; }
   html.mo .tmz-footer-giant[data-mo] img { transform: translateY(105%); }
   html.mo .tmz-footer-giant[data-mo].is-in img { transform: none; transition: transform 1.2s var(--mo-ease); }
@@ -7889,6 +7904,8 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
 @keyframes mo-page { from { opacity: 0; } }
 @keyframes mo-up { from { opacity: 0; transform: translateY(22px); } }
 @keyframes mo-rise { from { transform: translateY(115%); } }
+@keyframes mo-corner-a { from { opacity: 0; transform: translate(0.45em, 0.45em); } }
+@keyframes mo-corner-b { from { opacity: 0; transform: translate(-0.45em, -0.45em); } }
 @keyframes mo-wipe { from { background-size: 0% 100%; } }
 @keyframes mo-nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
 @media print { html.mo [data-mo] { opacity: 1 !important; transform: none !important; } .tmz-progress, .tmz-dots { display: none; } }
