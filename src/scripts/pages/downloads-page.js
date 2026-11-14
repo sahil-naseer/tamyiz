@@ -9,9 +9,7 @@ export function renderDownloadsPage(appInstance) {
   return `
     <div class="tmz-downloads-page" style="padding: 3rem 1rem 6rem; max-width: 680px; margin: 0 auto; min-height: 60vh;">
       <div style="text-align: center; margin-bottom: 2.5rem;">
-        <span style="font-family: var(--font-sub); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-red-ink); display: inline-block; margin-bottom: 0.4rem;">
-          Lost your file?
-        </span>
+        <span class="tmz-label">Lost your file?</span>
         <h1 style="font-family: var(--font-head); font-weight: 700; font-size: 2.2rem; line-height: 1.15; margin: 0 0 0.75rem; color: #0B0B0B;">
           Get your download links again
         </h1>
@@ -21,7 +19,7 @@ export function renderDownloadsPage(appInstance) {
       </div>
 
       <!-- Recovery Card Form -->
-      <div style="background: #FFFFFF; border: 1.5px solid rgba(11,11,11,0.12); border-radius: 16px; padding: 2rem 1.75rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 2rem;">
+      <div style="background: #FFFFFF; border: 1.5px solid rgba(11,11,11,0.12); border-radius: 4px; padding: 2rem 1.75rem; margin-bottom: 2rem;">
         <form id="tmz-recovery-form" data-submit-action="download-recovery" style="display: flex; flex-direction: column; gap: 1rem;">
           <div>
             <label for="recovery-input-email" style="display: block; font-family: var(--font-head); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; color: #0B0B0B;">
@@ -32,7 +30,7 @@ export function renderDownloadsPage(appInstance) {
               id="recovery-input-email"
               class="tmz-focus-border"
               placeholder="e.g. name@gmail.com"
-              style="width: 100%; box-sizing: border-box; padding: 0.85rem 1rem; font-size: 0.95rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; outline: none; transition: border-color 0.2s;"
+              style="width: 100%; box-sizing: border-box; padding: 0.85rem 1rem; font-size: 0.95rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 4px; outline: none; transition: border-color 0.2s;"
             />
           </div>
 
@@ -50,17 +48,17 @@ export function renderDownloadsPage(appInstance) {
               id="recovery-input-phone"
               class="tmz-focus-border"
               placeholder="e.g. +91 98765 43210"
-              style="width: 100%; box-sizing: border-box; padding: 0.85rem 1rem; font-size: 0.95rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; outline: none; transition: border-color 0.2s;"
+              style="width: 100%; box-sizing: border-box; padding: 0.85rem 1rem; font-size: 0.95rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 4px; outline: none; transition: border-color 0.2s;"
             />
           </div>
 
-          <div id="recovery-msg-box" style="display: none; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.88rem; line-height: 1.4;"></div>
+          <div id="recovery-msg-box" style="display: none; padding: 0.75rem 1rem; border-radius: 4px; font-size: 0.88rem; line-height: 1.4;"></div>
 
           <button
             type="submit"
             id="recovery-submit-btn"
             class="tmz-hover-dark"
-            style="width: 100%; padding: 0.95rem 1.5rem; background: #0B0B0B; color: #FFFFFF; font-family: var(--font-head); font-weight: 700; font-size: 0.92rem; letter-spacing: 0.05em; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"
+            style="width: 100%; padding: 0.95rem 1.5rem; background: #0B0B0B; color: #FFFFFF; font-family: var(--font-head); font-weight: 700; font-size: 0.92rem; letter-spacing: 0.05em; text-transform: uppercase; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"
           >
             <span>Email me my download links →</span>
           </button>
@@ -71,7 +69,7 @@ export function renderDownloadsPage(appInstance) {
       <div id="recovery-results-container" style="display: none;"></div>
 
       <!-- Assistance Footer -->
-      <div style="background: #FAF9F6; border: 1px dashed rgba(11,11,11,0.15); border-radius: 12px; padding: 1.25rem 1.5rem; text-align: center;">
+      <div style="background: #FAF9F6; border: 1px dashed rgba(11,11,11,0.15); border-radius: 4px; padding: 1.25rem 1.5rem; text-align: center;">
         <p style="font-size: 0.85rem; color: #5E5E59; margin: 0 0 0.5rem;">
           Still cannot find your purchase or paid through a different gateway?
         </p>

@@ -10984,3 +10984,203 @@ body[data-page="admin"] .tmz-progress {
   background: #0B0B0B !important;
   color: #FFFFFF !important;
 }
+/* ==========================================================================
+   POLISH 14 Nov 2026 (second pass). Brings the book page, bag, receipt, "get my links again" and 404 pages
+   into the paper-and-hairlines look, fixes layout bugs seen at tablet width, and adds three small one-shot
+   motions: the cover gliding to the book page, the bag count bumping, and drawings on 404 and after payment.
+   Same rules as above: nothing loops, only opacity/transform, "reduce motion" switches it all off.
+   ========================================================================== */
+
+/* --- Book page: cover frame (was letterboxed in black), tag, card, buttons --- */
+.tamyiz-pdp-main-img-wrap {
+  width: min(100%, 30rem);
+  max-height: none;
+  height: auto;
+  margin-inline: auto;
+  aspect-ratio: 2 / 3;
+  background: #E7E7E3;
+  border: 1px solid var(--tmz-hair);
+  border-radius: var(--tmz-r);
+}
+
+.tamyiz-pdp-main-img,
+.tamyiz-pdp-main-img-wrap:hover .tamyiz-pdp-main-img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+  transform: none;
+}
+
+.tamyiz-pdp-badge-pill {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  right: auto;
+  bottom: auto;
+  z-index: 2;
+  margin: 0;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0;
+  background: var(--tmz-yellow);
+  color: #000;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
+@media (max-width: 639px) {
+  .tamyiz-pdp-main-img-wrap {
+    width: min(100%, 19rem);
+    height: auto;
+    aspect-ratio: 2 / 3;
+  }
+
+  .tamyiz-pdp-main-img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+  }
+}
+
+.tamyiz-pdp-details-card,
+.tamyiz-pdp-sample-box,
+.tamyiz-checkout-card,
+.tamyiz-checkout-summary-card,
+.tamyiz-vault-card {
+  border-radius: var(--tmz-r);
+  border-color: var(--tmz-hair);
+  box-shadow: none;
+}
+
+.tamyiz-pdp-cat {
+  display: inline-flex;
+  gap: 0.6em;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tmz-graphite);
+}
+
+.tamyiz-pdp-cat::before {
+  content: '[';
+  content: '[' / '';
+}
+
+.tamyiz-pdp-cat::after {
+  content: ']';
+  content: ']' / '';
+}
+
+.tamyiz-tag-dispatch:not(.tamyiz-tag-soon) {
+  padding: 0.3rem 0.55rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--tmz-yellow);
+  color: #000;
+}
+
+.tamyiz-tag-dispatch.tamyiz-tag-soon {
+  border-radius: 0;
+}
+
+/* Buy now is the main action (solid, yellow on hover); Add to bag is the quiet one (outline). */
+.tamyiz-pdp-btn-buy-now {
+  background: #000;
+  color: #fff;
+  border-radius: var(--tmz-r);
+  box-shadow: none;
+}
+
+.tamyiz-pdp-btn-buy-now:hover {
+  background: var(--tmz-yellow);
+  color: #000;
+}
+
+.tamyiz-pdp-btn-add {
+  background: #fff;
+  color: #000;
+  border: 1px solid rgba(0, 0, 0, 0.28);
+  border-radius: var(--tmz-r);
+  box-shadow: none;
+}
+
+.tamyiz-pdp-btn-add:hover {
+  background: #000;
+  border-color: #000;
+  color: #fff;
+  transform: none;
+}
+
+/* --- Layout fix at tablet width: the "About us" panel stacked and left the right half of the screen empty. --- */
+@media (min-width: 700px) and (max-width: 1099px) {
+  .tmz-founders-inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 25rem);
+    grid-template-rows: 1fr auto;
+    padding: 4rem 2rem;
+    gap: 2rem 2.5rem;
+  }
+
+  .tmz-founders-head {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .tmz-founders .tmz-about-people {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    max-width: none;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .tmz-founders .tmz-about-foot {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+
+/* --- Drawings on the 404 page and after payment --- */
+.tmz-lost-art {
+  max-width: 34rem;
+  margin: 0 auto 2.5rem;
+}
+
+.tamyiz-vault-seal.tmz-paid-art {
+  display: block;
+  width: min(100%, 13rem);
+  height: auto;
+  margin: 0 auto 1.25rem;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+}
+
+/* --- Small one-shot motions --- */
+@media (prefers-reduced-motion: no-preference) {
+  .tamyiz-cart-badge.is-bump {
+    animation: tmz-bump 0.5s var(--mo-ease) 1;
+  }
+
+  @keyframes tmz-bump {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.45); }
+    100% { transform: scale(1); }
+  }
+
+  /* The cover that was clicked glides into the book page (started in navigateTo, tamyiz-unified-app.js). */
+  html.vt-cover .tamyiz-pdp-main-img-wrap {
+    view-transition-name: tmz-cover;
+  }
+
+  ::view-transition-group(tmz-cover) {
+    animation-duration: 0.55s;
+    animation-timing-function: var(--mo-ease);
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.3s;
+  }
+}

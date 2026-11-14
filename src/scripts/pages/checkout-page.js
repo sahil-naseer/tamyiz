@@ -7,6 +7,7 @@ import { store, hasCoupons } from '../store.js';
 import { escapeText } from '../tamyiz-unified-app.js';
 import { brandInfo } from '../../data/content.js';
 import { siteConfig } from '../../data/site-config.js';
+import { stepArt } from '../illustrations.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
@@ -37,7 +38,7 @@ export function renderCheckoutPage(appInstance) {
             <p style="color: var(--color-grey); font-size: 1rem; margin-bottom: 2rem;">
               Have a look at the shop and add the one you want.
             </p>
-            <button class="tamyiz-hero-btn-primary" data-nav="/editions">
+            <button class="tmz-btn tmz-btn-solid" data-nav="/editions">
               <span>BROWSE THE E-BOOKS</span>
               <span>→</span>
             </button>
@@ -302,10 +303,8 @@ export function renderOrderVaultHtml(order) {
       <div class="container max-w-4xl mx-auto">
         <div class="tamyiz-vault-card">
           <!-- Success Seal -->
-          <div class="tamyiz-vault-seal no-print">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
+          <div class="tamyiz-vault-seal tmz-paid-art no-print" data-draw>
+            ${stepArt[2]()}
           </div>
 
           <span class="tamyiz-vault-kicker no-print">Payment received</span>
@@ -347,8 +346,8 @@ export function renderOrderVaultHtml(order) {
           <!-- Receipt actions -->
           <div class="no-print flex flex-wrap gap-3 justify-center items-center mb-6">
             <button
-              class="tamyiz-hero-btn-primary"
-              style="padding: 0.75rem 1.6rem; font-size: 0.82rem; display:inline-flex; align-items:center; gap:0.4rem;"
+              class="tmz-btn tmz-btn-solid"
+              style="min-height: 44px; font-size: 0.85rem;"
               data-action="print-page"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

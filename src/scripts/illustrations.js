@@ -170,3 +170,39 @@ function artInstant() {
 }
 
 export const stepArt = [artPractical, artPlain, artInstant].map(once);
+
+/**
+ * 404: the same loose pages pass through the lens, but nothing comes out the other side
+ * (the floor where the stack would be stays empty, drawn faint).
+ */
+export const lostArt = once(() => {
+  const s = sheet();
+  const [gx, gy] = at(150, 40);
+  for (let i = 0; i <= 4; i += 1) {
+    s.line([s.p(gx - 78 + i * 39, gy - 78, 0), s.p(gx - 78 + i * 39, gy + 78, 0)], 'faint');
+    s.line([s.p(gx - 78, gy - 78 + i * 39, 0), s.p(gx + 78, gy - 78 + i * 39, 0)], 'faint');
+  }
+  const loose = [[-190, -20, 60, 34, 44], [-160, 34, 18, 26, 34], [-140, -48, 96, 24, 30], [-118, 4, 48, 38, 50], [-92, 40, 8, 26, 34], [-84, -30, 80, 30, 38]];
+  loose.forEach(([a, b, z, w, d], i) => {
+    const [x, y] = at(a, b);
+    s.group('il-float', `--f:${i}`, () => {
+      s.slab(x, y, z, w, d, 3);
+      if (w > 26) s.textLines(x, y, z + 3, w, d, [[0.3, 0.2, 0.8], [0.5, 0.2, 0.62]]);
+    });
+  });
+  const [lx, ly] = at(-10, 6);
+  s.slab(lx - 50, ly, 0, 100, 6, 128);
+  const pts = [];
+  for (let i = 0; i <= 48; i += 1) {
+    const t = (i / 48) * Math.PI * 2;
+    pts.push(s.p(lx + Math.cos(t) * 38, ly + 6, 64 + Math.sin(t) * 38));
+  }
+  s.line(pts, '');
+  // A short stub of a path that stops at the lens: nothing comes through.
+  const [ax, ay] = at(-64, 6);
+  s.line([s.p(ax, ay, 64), s.p(lx - 40, ly, 64)], 'flow');
+  // Where the page should be: only a dashed outline.
+  const [bx, by] = at(120, 40);
+  s.slab(bx - 30, by - 40, 0, 60, 80, 5, 'ghost');
+  return s.svg('tmz-il-hero tmz-il-lost', 10);
+});

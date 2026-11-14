@@ -186,7 +186,7 @@ go there; its phone rules are at the end of that block).
 - Sticky header fix: `body` and `#app` had `overflow-x: hidden`, which silently stopped `position: sticky` (the
   header scrolled away). They are now `overflow-x: clip`. Do not put `overflow: hidden/auto` on an ancestor of the
   header or of `.tmz-steps-pin`.
-- Checked 14 Nov 2026 (local): `npm test` 77 of 77, `npm audit` 0, axe 0 violations on home, /editions, an e-book
+- Checked 14 Nov 2026 (local): `npm test` 77 of 77 at the time (86 of 86 after the second pass below), `npm audit` 0, axe 0 violations on home, /editions, an e-book
   page, /atelier, /philosophy, a policy page, /checkout, /downloads, and /films (laptop and phone).
   Lighthouse mobile, local build, median of 5 runs: home performance 92 (the 24 Oct design scored 94 on the same
   machine), /editions 92, an e-book page 94; accessibility, best practices and SEO 100 on all three; CLS 0 to 0.06.
@@ -294,3 +294,32 @@ Hardened 14 Nov 2026:
 
 Still open (optional future improvements): own email domain (SPF/DKIM/DMARC — user plans to add when buying a custom domain),
 and Cloudflare dashboard WAF rate-limiting rules for `/api/*` and `/api/admin/*`.
+
+## Audit and polish, second pass (14 Nov 2026, afternoon)
+
+Security (tests in `tests/security.test.js`; `npm test` 86 of 86, `npm audit` 0):
+- Admin 2FA could be bypassed by anyone who knew the password: the session cookie and the OTP challenge were both
+  signed with the password itself, so the emailed code could be worked out offline (about 20 seconds) and a cookie
+  could be forged without logging in. Both are now signed with a key derived from a server-only secret plus the
+  password (`signingKey()` in `server/admin.js`). Set `ADMIN_SESSION_SECRET` (long random text, Secret) in Cloudflare;
+  until it is set the first of `DOWNLOAD_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_KEY_SECRET`, `BREVO_API_KEY` is
+  used. Adding or changing it logs every admin out once. Never sign with the password alone again.
+- Download links: new links are signed with `DOWNLOAD_SECRET` when set; links signed earlier with
+  `RAZORPAY_KEY_SECRET` are still accepted (`downloadSecrets()` in `server/payments.js`), so setting it breaks nothing.
+- CSP: `images.unsplash.com` removed (unused), `form-action 'self'` added (both places).
+- /admin overview says "Latest 500 orders only" once `orders:index` is full (totals only cover those 500).
+- Unused `@fontsource-variable/syne` dependency removed.
+- Still open, dashboard work only: Cloudflare WAF rate-limit rules for `/api/admin/login` and `/api/*` (the login
+  lockout is per Cloudflare instance, so it slows guessing but does not stop a spread-out attack), and a KV backup.
+
+Design and motion (all in the "POLISH 14 Nov 2026 (second pass)" block at the end of tamyiz-unified.css):
+- Book page: cover sits in a light 2:3 frame (no black bars), the E-BOOK tag is a yellow square tag top-left (it was
+  clipped), `[ E-BOOKS ]` label, yellow "Instant download" tag, square card. Buy now = solid (main action),
+  Add to bag = outline.
+- 404, empty bag, receipt and policy pop-up use `.tmz-btn` (the old pill buttons `tamyiz-hero-btn-*` are no longer used).
+- "About us" panel on home is two columns from 700 px (it used to stack and leave half the screen empty up to 1099 px).
+- /downloads: square corners and a `[ LOST YOUR FILE? ]` label.
+- Motion, all one-shot: the clicked cover glides to the book page (View Transitions, `navigateTo()`; plain swap where
+  unsupported or with "reduce motion"); the bag count bumps when something is added; a drawing on 404 (`lostArt`)
+  and after payment (`stepArt[2]`). Measured with the processor slowed 4x: 60 frames a second scrolling home and a
+  book page.

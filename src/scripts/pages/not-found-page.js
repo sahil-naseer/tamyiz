@@ -3,6 +3,7 @@
  * Cloudflare also answers these addresses with status 404 (dist/404.html), so search engines don't index them.
  */
 import { siteConfig } from '../../data/site-config.js';
+import { lostArt } from '../illustrations.js';
 
 export function renderNotFoundPage() {
   return `
@@ -20,15 +21,16 @@ export function renderNotFoundPage() {
       </section>
 
       <section class="py-16 text-center">
+        <div class="container tmz-lost-art" data-draw>${lostArt()}</div>
         <div class="container" style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;">
-          <a href="/editions" class="tamyiz-hero-btn-primary" data-nav="/editions">
+          <a href="/editions" class="tmz-btn tmz-btn-solid" data-nav="/editions">
             <span>SEE ALL E-BOOKS</span>
             <span aria-hidden="true">→</span>
           </a>
-          <a href="/" class="tamyiz-hero-btn-secondary" data-nav="/">
+          <a href="/" class="tmz-btn tmz-btn-line" data-nav="/">
             <span>HOME</span>
           </a>
-          <a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tamyiz-hero-btn-secondary">
+          <a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tmz-btn tmz-btn-line">
             <span>ASK ON WHATSAPP</span>
           </a>
         </div>

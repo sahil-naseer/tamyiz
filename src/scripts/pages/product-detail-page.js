@@ -18,7 +18,7 @@ export function renderProductDetailPage(slug, appInstance) {
         <p style="color: var(--color-grey); margin-bottom: 2rem;">
           We couldn't find that e-book. It may have moved.
         </p>
-        <button class="tamyiz-hero-btn-primary" data-nav="/editions">
+        <button class="tmz-btn tmz-btn-solid" data-nav="/editions">
           <span>See all e-books</span>
           <span>→</span>
         </button>

@@ -256,7 +256,34 @@ class TamyizUnifiedApp {
     }
   }
 
+  /**
+   * Opening an e-book from a card: the cover glides into place on the book's page (the browser's View Transitions,
+   * one short animation of a picture of the cover: transform and opacity only). Everything else just swaps as before.
+   * Browsers without it, and visitors who asked for less motion, get the plain swap.
+   */
   navigateTo(path, replace = false) {
+    const source = this._navSource || null;
+    this._navSource = null;
+    const card = source && source.closest ? source.closest('[data-product-card]') : null;
+    const cover = card ? card.querySelector('.tamyiz-img-primary') : null;
+    const canGlide = cover && /^\/edition\//.test(path) && typeof document.startViewTransition === 'function'
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!canGlide) return this._navigateNow(path, replace);
+    const root = document.documentElement;
+    try {
+      cover.style.viewTransitionName = 'tmz-cover';
+      // The name moves to the new page's cover only after the old page is gone (two elements with one name cancel the glide).
+      const t = document.startViewTransition(() => { this._navigateNow(path, replace); root.classList.add('vt-cover'); });
+      const done = () => { root.classList.remove('vt-cover'); cover.style.viewTransitionName = ''; };
+      t.finished.then(done, done);
+    } catch {
+      root.classList.remove('vt-cover');
+      cover.style.viewTransitionName = '';
+      this._navigateNow(path, replace);
+    }
+  }
+
+  _navigateNow(path, replace = false) {
     this.closeMobileMenu();
 
     const hasAnchor = path.includes('#');
@@ -325,9 +352,19 @@ class TamyizUnifiedApp {
   }
 
   updateCartBadge() {
+    const count = store.getCartCount();
+    // Tracked even before the header exists, so the first "add" after the page loads still counts as an increase.
+    const grew = this._lastCartCount !== undefined && count > this._lastCartCount;
+    this._lastCartCount = count;
     const badge = document.getElementById('header-cart-badge');
     if (badge) {
-      badge.textContent = store.getCartCount();
+      badge.textContent = count;
+      // A small one-shot bump when something is added (CSS .is-bump; switched off by "reduce motion").
+      if (grew) {
+        badge.classList.remove('is-bump');
+        void badge.offsetWidth;
+        badge.classList.add('is-bump');
+      }
     }
   }
 
@@ -516,7 +553,9 @@ class TamyizUnifiedApp {
         if (navEl.dataset.closeCart !== undefined) this.closeCart();
         if (navEl.dataset.closeVideoModal !== undefined && window.closeTamyizVideoModal) window.closeTamyizVideoModal();
         const path = navEl.dataset.nav || navEl.getAttribute('href');
+        this._navSource = navEl;
         if (path) this.navigateTo(path);
+        this._navSource = null;
       }
     });
 
@@ -3372,7 +3411,7 @@ class TamyizUnifiedApp {
         <div style="font-size: 0.92rem; color: #444; line-height: 1.7; white-space: pre-line; margin-bottom: 2rem;">
           ${policy.content}
         </div>
-        <button class="tamyiz-hero-btn-primary" style="padding: 0.75rem 1.75rem; font-size: 0.8rem;" data-action="close-modal">
+        <button class="tmz-btn tmz-btn-solid" style="min-height: 44px; font-size: 0.85rem;" data-action="close-modal">
           <span>Understood</span>
         </button>
       </div>
