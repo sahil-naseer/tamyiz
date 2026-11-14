@@ -486,13 +486,13 @@ export class AdminController {
             <span class="tmz-admin-tag-yellow">LIVE</span>
           </div>
           <b class="tmz-admin-kpi-val">₹${Number(kpis.totalRevenueINR || 0).toLocaleString('en-IN')}</b>
-          <span class="tmz-admin-kpi-sub">Verified payments settled</span>
+          <span class="tmz-admin-kpi-sub">${kpis.ordersCapped ? 'Latest 500 orders only' : 'Verified payments settled'}</span>
         </div>
 
         <div class="tmz-admin-kpi-card">
           <div class="tmz-admin-kpi-label"><span>02 // Total Orders</span></div>
           <b class="tmz-admin-kpi-val">${Number(kpis.totalOrders || 0).toLocaleString('en-IN')}</b>
-          <span class="tmz-admin-kpi-sub">Fulfilled digital deliveries</span>
+          <span class="tmz-admin-kpi-sub">${kpis.ordersCapped ? 'Latest 500 orders only' : 'Fulfilled digital deliveries'}</span>
         </div>
 
         <div class="tmz-admin-kpi-card">

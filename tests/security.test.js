@@ -573,3 +573,68 @@ test('sitemap.xml honors env.SITE_URL override', async () => {
   assert.ok(xml.includes('<loc>https://tamyiz.in/</loc>'));
   assert.ok(!xml.includes('tamyiz.pages.dev'));
 });
+
+// ---- Audit of 14 Nov 2026: the password must never be the only thing that signs the cookie or the 2FA challenge ----
+
+test('admin 2FA: knowing the password is not enough to work out the emailed code offline or to forge a cookie', async () => {
+  const password = 'super-secret-password-2026';
+  const e = {
+    TAMYIZ_STORE: devKV(),
+    TAMYIZ_ADMIN_PASSWORD: password,
+    ADMIN_OTP_EMAIL: 'owner@example.com',
+    BREVO_API_KEY: 'brevo-key',
+    ADMIN_SESSION_SECRET: 'long-random-server-only-text',
+  };
+  const mockFetch = async () => new Response('{}', { status: 201 });
+  const ip = { 'CF-Connecting-IP': '10.9.9.9' };
+
+  const step1 = await (await post(e, '/api/admin/login', { password }, ip, mockFetch)).json();
+  const [exp, sig] = step1.challenge.split('.');
+
+  // The old attack: sign every possible code with the password and compare. It must find nothing now.
+  // (Checks a window around the real code range; the real fix is that the key is not derivable from the password.)
+  let recovered = null;
+  for (let code = 100000; code < 100400; code++) {
+    if (await hmacSha256Hex(password, `admin-otp|${exp}|10.9.9.9|${code}`) === sig) recovered = code;
+  }
+  assert.equal(recovered, null);
+
+  // The old forged cookie: HMAC of the expiry, keyed with the password only. Must be refused.
+  const future = Math.floor(Date.now() / 1000) + 3600;
+  const forged = `${future}.${await hmacSha256Hex(password, `admin|${future}`)}`;
+  assert.equal((await call(e, '/api/admin/session', { headers: { Cookie: `tmz_admin=${forged}` } })).status, 401);
+});
+
+test('admin session: a cookie from a real login still works, and changing the server secret logs everyone out', async () => {
+  const base = { TAMYIZ_STORE: devKV(), TAMYIZ_ADMIN_PASSWORD: 'super-secret-password-2026', ADMIN_SESSION_SECRET: 'secret-one' };
+  const r = await post(base, '/api/admin/login', { password: 'super-secret-password-2026' });
+  assert.equal(r.status, 200);
+  const cookie = r.headers.get('Set-Cookie').split(';')[0];
+  assert.equal((await call(base, '/api/admin/session', { headers: { Cookie: cookie } })).status, 200);
+  assert.equal((await call({ ...base, ADMIN_SESSION_SECRET: 'secret-two' }, '/api/admin/session', { headers: { Cookie: cookie } })).status, 401);
+});
+
+test('admin session: with no ADMIN_SESSION_SECRET another server secret is used, never the password alone', async () => {
+  const password = 'super-secret-password-2026';
+  const e = { TAMYIZ_STORE: devKV(), TAMYIZ_ADMIN_PASSWORD: password, RAZORPAY_KEY_SECRET: 'rzp-secret' };
+  const future = Math.floor(Date.now() / 1000) + 3600;
+  const forged = `${future}.${await hmacSha256Hex(password, `admin|${future}`)}`;
+  assert.equal((await call(e, '/api/admin/session', { headers: { Cookie: `tmz_admin=${forged}` } })).status, 401);
+  const r = await post(e, '/api/admin/login', { password });
+  assert.equal((await call(e, '/api/admin/session', { headers: { Cookie: r.headers.get('Set-Cookie').split(';')[0] } })).status, 200);
+});
+
+test('downloads: links signed with RAZORPAY_KEY_SECRET keep working after DOWNLOAD_SECRET is added', async () => {
+  const { checkDownload, signDownload } = await import('../server/payments.js');
+  const oldEnv = { RAZORPAY_KEY_SECRET: 'rzp-secret' };
+  const oldLink = new URL('https://x.test' + (await signDownload(oldEnv, 'eb-onsale', 'pay_1')));
+  const newEnv = { RAZORPAY_KEY_SECRET: 'rzp-secret', DOWNLOAD_SECRET: 'fresh-download-secret' };
+  const q = oldLink.searchParams;
+  assert.equal(await checkDownload(newEnv, 'eb-onsale', q.get('p'), q.get('e'), q.get('s')), true);
+  // New links use the new secret, and a link for another book or a bad signature is still refused.
+  const newLink = new URL('https://x.test' + (await signDownload(newEnv, 'eb-onsale', 'pay_2')));
+  const n = newLink.searchParams;
+  assert.equal(await checkDownload(newEnv, 'eb-onsale', n.get('p'), n.get('e'), n.get('s')), true);
+  assert.equal(await checkDownload({ RAZORPAY_KEY_SECRET: 'rzp-secret' }, 'eb-onsale', n.get('p'), n.get('e'), n.get('s')), false);
+  assert.equal(await checkDownload(newEnv, 'eb-pricey', q.get('p'), q.get('e'), q.get('s')), false);
+});

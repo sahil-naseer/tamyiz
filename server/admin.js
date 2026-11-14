@@ -2,7 +2,7 @@
  * /api/admin/*: the private side of /admin.
  *
  * Login: the password is the Cloudflare secret TAMYIZ_ADMIN_PASSWORD (or ADMIN_PASSWORD; 12+ characters). A correct password gets a
- * signed cookie (HttpOnly, Secure, SameSite=Strict, 12 hours). Changing ADMIN_PASSWORD logs everyone out.
+ * signed cookie (HttpOnly, Secure, SameSite=Strict, 12 hours). The cookie is signed with a key made from ADMIN_SESSION_SECRET (or another server secret) plus the password, never the password alone. Changing ADMIN_PASSWORD logs everyone out.
  * Ten wrong passwords from one address lock logins from it for 15 minutes.
  * Every change also needs the header X-Tamyiz-Admin: 1 (pages on other sites can't send it).
  */
@@ -25,6 +25,21 @@ const MAX_THUMB_BYTES = 400 * 1024;
 // TAMYIZ_ADMIN_PASSWORD is accepted too: Cloudflare's dashboard once kept a ghost "ADMIN_PASSWORD" it wouldn't show.
 const adminPassword = (env) => String(env.TAMYIZ_ADMIN_PASSWORD || env.ADMIN_PASSWORD || '');
 const passwordReady = (env) => adminPassword(env).length >= MIN_PASSWORD;
+
+/**
+ * The key that signs the session cookie and the 2FA challenge. It must NOT be the password alone: anyone who knows
+ * the password could then forge a cookie or work out the emailed code offline, which makes 2FA pointless
+ * (found in the 14 Nov 2026 audit). It is derived from a server-only secret plus the password, so changing the
+ * password still logs everyone out. Set ADMIN_SESSION_SECRET (any long random text) in Cloudflare; until then the
+ * first of the other server secrets is used. Only with no secret at all (local development) does it fall back to the password.
+ */
+export const sessionSecretName = (env) =>
+  ['ADMIN_SESSION_SECRET', 'DOWNLOAD_SECRET', 'RAZORPAY_WEBHOOK_SECRET', 'RAZORPAY_KEY_SECRET', 'BREVO_API_KEY'].find((k) => env[k]) || null;
+async function signingKey(env) {
+  const name = sessionSecretName(env);
+  if (!name) return adminPassword(env);
+  return hmacSha256Hex(String(env[name]), `tmz-admin-signing-key-v1|${adminPassword(env)}`);
+}
 
 async function sha256Hex(s) {
   const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(s)));
@@ -49,7 +64,7 @@ export async function isAdmin(request, env) {
   if (!raw) return false;
   const [exp, sig] = raw.split('.');
   if (!exp || !sig || Number(exp) < Math.floor(Date.now() / 1000)) return false;
-  const expected = await hmacSha256Hex(adminPassword(env), `admin|${exp}`);
+  const expected = await hmacSha256Hex(await signingKey(env), `admin|${exp}`);
   if (!timingSafeEqual(expected, sig)) return false;
 
   // Server-side session revocation: tokens issued before the last logout are revoked
@@ -152,7 +167,7 @@ async function login(request, env, fetchImpl = fetch) {
       crypto.getRandomValues(rand);
       const otpCode = String(100000 + (rand[0] % 900000));
       const otpExp = Math.floor(Date.now() / 1000) + 600; // 10 minutes
-      const otpSig = await hmacSha256Hex(adminPassword(env), `admin-otp|${otpExp}|${ip}|${otpCode}`);
+      const otpSig = await hmacSha256Hex(await signingKey(env), `admin-otp|${otpExp}|${ip}|${otpCode}`);
       const sent = await sendAdminOtpEmail(env, otpEmails, otpCode, ip, fetchImpl).catch(() => false);
       if (!sent) {
         return json({ error: 'Could not send 2FA verification email via Brevo. Check BREVO_API_KEY.' }, 502);
@@ -173,7 +188,7 @@ async function login(request, env, fetchImpl = fetch) {
     if (!otpExp || !otpSig || otpExp < Math.floor(Date.now() / 1000)) {
       return json({ error: 'Verification code expired. Please sign in again.' }, 401);
     }
-    const expectedOtpSig = await hmacSha256Hex(adminPassword(env), `admin-otp|${otpExp}|${ip}|${submittedOtp}`);
+    const expectedOtpSig = await hmacSha256Hex(await signingKey(env), `admin-otp|${otpExp}|${ip}|${submittedOtp}`);
     if (!timingSafeEqual(expectedOtpSig, otpSig)) {
       recordLoginFail(env, ip);
       await new Promise((r) => setTimeout(r, 400));
@@ -183,7 +198,7 @@ async function login(request, env, fetchImpl = fetch) {
 
   clearLoginFails(env, ip);
   const exp = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
-  const sig = await hmacSha256Hex(adminPassword(env), `admin|${exp}`);
+  const sig = await hmacSha256Hex(await signingKey(env), `admin|${exp}`);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Set-Cookie': cookieHeader(`${exp}.${sig}`, SESSION_SECONDS) },
@@ -408,6 +423,8 @@ async function getOverview(env) {
       totalCustomers: buyers.size,
       totalProducts: catalog.length,
       onSaleProducts: catalog.filter((p) => p.status === 'on-sale').length,
+      // The order list keeps the latest 500 orders; past that these totals only cover those 500 (the page says so).
+      ordersCapped: totalOrders >= 500,
     },
     bestSellers
   });
@@ -660,6 +677,7 @@ function getSettings(env) {
       hasResend: Boolean(env.RESEND_API_KEY),
       receiptSender: env.RECEIPT_FROM || 'tamyiz.co@gmail.com',
       hasDownloadSecret: Boolean(env.DOWNLOAD_SECRET),
+      hasAdminSessionSecret: Boolean(env.ADMIN_SESSION_SECRET),
       hasAnalyticsToken: Boolean(env.CF_API_TOKEN),
       hasAdmin2FA: Boolean(env.ADMIN_OTP_EMAIL && env.BREVO_API_KEY),
       adminOtpEmail: env.ADMIN_OTP_EMAIL || '',

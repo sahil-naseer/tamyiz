@@ -114,13 +114,19 @@ export async function findCoupon(env, code) {
   return { code: clean, type: c.type === 'flat' ? 'flat' : 'percent', value: Number(c.value) || 0, label: String(c.label || ''), minOrder: Number(c.minOrder) || 0 };
 }
 
-/** Secret used to sign download links. Sandbox-only fallback so local testing works without keys. */
-function downloadSecret(env) {
-  if (env.DOWNLOAD_SECRET) return String(env.DOWNLOAD_SECRET);
-  if (env.RAZORPAY_KEY_SECRET) return String(env.RAZORPAY_KEY_SECRET);
-  if (sandboxEnabled(env)) return 'tamyiz-sandbox-only';
-  return null;
+/**
+ * Secrets that can sign download links, newest first. New links use the first. Old links stay valid when DOWNLOAD_SECRET
+ * is added later, because links made with RAZORPAY_KEY_SECRET are still accepted (so setting DOWNLOAD_SECRET never
+ * breaks links already emailed to buyers). Sandbox-only fallback so local testing works without keys.
+ */
+function downloadSecrets(env) {
+  const list = [];
+  if (env.DOWNLOAD_SECRET) list.push(String(env.DOWNLOAD_SECRET));
+  if (env.RAZORPAY_KEY_SECRET) list.push(String(env.RAZORPAY_KEY_SECRET));
+  if (!list.length && sandboxEnabled(env)) list.push('tamyiz-sandbox-only');
+  return list;
 }
+const downloadSecret = (env) => downloadSecrets(env)[0] || null;
 
 const DOWNLOAD_DAYS = 365;
 
@@ -134,11 +140,16 @@ export async function signDownload(env, productId, paymentId, now = Date.now()) 
 }
 
 export async function checkDownload(env, productId, paymentId, exp, sig) {
-  const secret = downloadSecret(env);
-  if (!secret || !paymentId || !exp || !sig) return false;
+  const secrets = downloadSecrets(env);
+  if (!secrets.length || !paymentId || !exp || !sig) return false;
   if (Number(exp) < Math.floor(Date.now() / 1000)) return false;
-  const expected = await hmacSha256Hex(secret, `dl|${productId}|${paymentId}|${exp}`);
-  return timingSafeEqual(expected, sig);
+  let ok = false;
+  // Check every accepted secret (no early exit), so timing does not reveal which one matched.
+  for (const secret of secrets) {
+    const expected = await hmacSha256Hex(secret, `dl|${productId}|${paymentId}|${exp}`);
+    if (timingSafeEqual(expected, sig)) ok = true;
+  }
+  return ok;
 }
 
 export const MAX_DOWNLOADS = 10;
