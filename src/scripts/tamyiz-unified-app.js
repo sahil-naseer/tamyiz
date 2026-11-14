@@ -1997,7 +1997,7 @@ class TamyizUnifiedApp {
       safeSet('tmz_sample_unlocked_' + product.id, 'true');
       safeSet('tmz_user_email', email);
 
-      this.showToast('Chapter 1 unlocked! Enjoy reading.', 'success');
+      store.showToast('Chapter 1 unlocked! Enjoy reading.', 'success');
       this.renderSampleReader(product, data.sample);
     } catch (err) {
       if (errBox) {
@@ -2311,7 +2311,7 @@ class TamyizUnifiedApp {
       if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to submit review');
 
       this.closeModal();
-      this.showToast('Thank you! Your review has been submitted for moderation.', 'success');
+      store.showToast('Thank you! Your review has been submitted for moderation.', 'success');
     } catch (err) {
       if (errBox) {
         errBox.textContent = err.message;
@@ -2823,7 +2823,7 @@ class TamyizUnifiedApp {
         if (count > 0) {
           setTimeout(() => {
             this.openCart();
-            this.showToast(`Restored ${count} book${count === 1 ? '' : 's'} to your bag!`, 'success');
+            store.showToast(`Restored ${count} book${count === 1 ? '' : 's'} to your bag!`, 'success');
           }, 350);
         }
       }

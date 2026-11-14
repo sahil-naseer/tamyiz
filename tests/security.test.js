@@ -556,6 +556,12 @@ test('admin & app: lazy-loaded /admin, centralized SITE_URL, zero blocking alert
   assert.ok(/import\(\s*['"]\.\/pages\/admin-page\.js['"]\s*\)/.test(appCode), 'tamyiz-unified-app.js must dynamically import admin-page.js');
   assert.ok(/import\s*['"]\.\.\/\.\.\/styles\/admin\.css['"]/.test(adminCode), 'admin-page.js must lazy-import admin.css');
   assert.ok(!fs.existsSync('src/admin/admin.js'), 'obsolete legacy src/admin/admin.js should remain removed');
+
+  const appMethods = new Set([...appCode.matchAll(/^  (?:async )?([a-zA-Z0-9_]+)\s*\(/gm)].map((m) => m[1]));
+  const appProps = new Set([...appCode.matchAll(/this\.([a-zA-Z0-9_]+)\s*=/g)].map((m) => m[1]));
+  const missingCalls = [...new Set([...appCode.matchAll(/this\.([a-zA-Z0-9_]+)\s*\(/g)].map((m) => m[1]))]
+    .filter((name) => !appMethods.has(name) && !appProps.has(name));
+  assert.deepEqual(missingCalls, [], `Missing this.<method>() definitions in tamyiz-unified-app.js: ${missingCalls.join(', ')}`);
 });
 
 test('sitemap.xml honors env.SITE_URL override', async () => {
