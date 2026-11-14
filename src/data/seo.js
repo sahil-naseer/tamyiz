@@ -3,8 +3,9 @@
 // link previews see the right title and picture), and by the app (updates the tab title when you move between pages).
 import { products } from './products.js';
 import { legalDocs } from '../scripts/pages/legal-page.js';
+import { SITE_URL } from './site-config.js';
 
-export const SITE_URL = 'https://tamyiz.pages.dev';
+export { SITE_URL };
 const BRAND = 'TAMYIZ™';
 const DEFAULT_IMAGE = '/og/tamyiz.jpg';
 const DEFAULT_DESCRIPTION =

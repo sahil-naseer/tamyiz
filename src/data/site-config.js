@@ -3,6 +3,9 @@
  * Single source of truth for contact details, social channels, coordinates, and brand metadata.
  */
 
+export const SITE_URL = 'https://tamyiz.pages.dev';
+export const SITE_HOST = 'tamyiz.pages.dev';
+
 /** WhatsApp link with a pre-order message for one product (used while it is "coming soon"). */
 export function preorderWhatsAppUrl(productName, variant) {
   const fmt = variant && variant !== 'Standard' ? ` (${variant})` : '';

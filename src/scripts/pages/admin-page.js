@@ -12,7 +12,7 @@
  *   - Settings (Cloudflare KV diagnostics, payment keys, receipt mailer health)
  */
 
-import { siteConfig } from '../../data/site-config.js';
+import { siteConfig, SITE_URL } from '../../data/site-config.js';
 import { markCatalogUpdated } from '../../data/products.js';
 import { escapeText } from '../tamyiz-unified-app.js';
 import { openVideoModal } from '../components/video-modal.js';
@@ -102,6 +102,106 @@ export class AdminController {
     let data = {};
     try { data = await res.json(); } catch {}
     return { status: res.status, ok: res.ok, data };
+  }
+
+  /** Show a non-blocking toast notification inside the admin console. */
+  notify(message, type = 'info') {
+    let region = document.getElementById('tmz-admin-toast-region');
+    if (!region) {
+      region = document.createElement('div');
+      region.id = 'tmz-admin-toast-region';
+      region.className = 'tmz-admin-toast-region';
+      region.setAttribute('aria-live', 'polite');
+      document.body.appendChild(region);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `tmz-admin-toast tmz-admin-toast--${type}`;
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+
+    const text = document.createElement('span');
+    text.textContent = String(message || '');
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'tmz-admin-toast-close';
+    closeBtn.setAttribute('aria-label', 'Dismiss notification');
+    closeBtn.textContent = '×';
+
+    const remove = () => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(6px)';
+      setTimeout(() => toast.remove(), 180);
+    };
+
+    closeBtn.addEventListener('click', remove);
+    toast.appendChild(text);
+    toast.appendChild(closeBtn);
+    region.appendChild(toast);
+
+    setTimeout(() => {
+      if (toast.isConnected) remove();
+    }, 4200);
+  }
+
+  /** Show an accessible inline confirmation dialog instead of blocking browser confirmation dialogs. */
+  confirmAction(message, { title = 'Confirm Action', confirmText = 'Confirm', cancelText = 'Cancel', danger = true } = {}) {
+    return new Promise((resolve) => {
+      const prevFocus = document.activeElement;
+      const backdrop = document.createElement('div');
+      backdrop.className = 'tmz-admin-confirm-backdrop';
+
+      const dialog = document.createElement('div');
+      dialog.className = 'tmz-admin-confirm-dialog';
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+
+      const heading = document.createElement('h3');
+      heading.className = 'tmz-admin-confirm-title';
+      heading.textContent = title;
+
+      const body = document.createElement('p');
+      body.className = 'tmz-admin-confirm-message';
+      body.textContent = String(message || '');
+
+      const actions = document.createElement('div');
+      actions.className = 'tmz-admin-confirm-actions';
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'tmz-admin-btn tmz-admin-btn-secondary';
+      cancelBtn.textContent = cancelText;
+
+      const okBtn = document.createElement('button');
+      okBtn.type = 'button';
+      okBtn.className = `tmz-admin-btn ${danger ? 'tmz-admin-btn-danger' : 'tmz-admin-btn-primary'}`;
+      okBtn.textContent = confirmText;
+
+      actions.appendChild(cancelBtn);
+      actions.appendChild(okBtn);
+      dialog.appendChild(heading);
+      dialog.appendChild(body);
+      dialog.appendChild(actions);
+      backdrop.appendChild(dialog);
+      document.body.appendChild(backdrop);
+
+      const close = (result) => {
+        document.removeEventListener('keydown', onKeyDown);
+        backdrop.remove();
+        if (prevFocus && typeof prevFocus.focus === 'function') prevFocus.focus();
+        resolve(result);
+      };
+
+      const onKeyDown = (e) => {
+        if (e.key === 'Escape') close(false);
+      };
+
+      document.addEventListener('keydown', onKeyDown);
+      backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(false); });
+      cancelBtn.addEventListener('click', () => close(false));
+      okBtn.addEventListener('click', () => close(true));
+      cancelBtn.focus();
+    });
   }
 
   render(container, subRoute = 'overview') {
@@ -587,15 +687,20 @@ export class AdminController {
       btn.addEventListener('click', async () => {
         const id = btn.dataset.id;
         const name = btn.dataset.name;
-        if (!confirm(`Delete "${name}"? This permanently removes the e-book, its cover and download file. Existing customer links will be deactivated.`)) return;
+        const confirmed = await this.confirmAction(
+          `Delete "${name}"? This permanently removes the e-book, its cover and download file. Existing customer links will be deactivated.`,
+          { title: 'Delete E-Book', confirmText: 'Delete E-Book' }
+        );
+        if (!confirmed) return;
 
         const res = await this.api(`products/${id}`, { method: 'DELETE' });
         if (!res.ok) {
-          alert(res.data.error || 'Failed to delete e-book.');
+          this.notify(res.data?.error || 'Failed to delete e-book.', 'error');
           return;
         }
         markCatalogUpdated();
         this.app?.refreshProducts?.({ fresh: true });
+        this.notify(`Deleted "${name}".`, 'success');
         this.renderProductsTab(mount);
       });
     });
@@ -778,7 +883,7 @@ export class AdminController {
         note.textContent = `New cover ready (${canvas.width}×${canvas.height}, ${Math.round(this.coverBlob.size / 1024)} KB)${trimmed ? ' — white border trimmed' : ''}`;
         prev.style.display = 'block';
       } catch {
-        alert('Could not process that image file. Please choose a valid JPG, PNG or WebP.');
+        this.notify('Could not process that image file. Please choose a valid JPG, PNG or WebP.', 'error');
       }
     });
 
@@ -787,7 +892,7 @@ export class AdminController {
       const file = pdfInput.files[0];
       if (!file) return;
       if (file.size > MAX_PDF_BYTES) {
-        alert(`PDF file is ${mb(file.size)}. Maximum upload limit is 25 MB.`);
+        this.notify(`PDF file is ${mb(file.size)}. Maximum upload limit is 25 MB.`, 'error');
         pdfInput.value = '';
         return;
       }
@@ -799,7 +904,7 @@ export class AdminController {
       testVideoBtn.addEventListener('click', () => {
         const vUrl = document.getElementById('tmz-f-video')?.value.trim();
         if (!vUrl) {
-          alert('Please enter a YouTube, Vimeo, or direct MP4 URL first.');
+          this.notify('Please enter a YouTube, Vimeo, or direct MP4 URL first.', 'info');
           return;
         }
         if (window.openTamyizVideoModal) {
@@ -888,7 +993,7 @@ export class AdminController {
         if (xhr.status === 401) return this.renderLoginView();
         if (xhr.status < 200 || xhr.status >= 300) {
           msg.style.color = '#B3261E';
-          msg.textContent = res.error || 'Failed to save e-book.';
+          msg.textContent = res.error || res.data?.error || 'Failed to save e-book.';
           return;
         }
 
@@ -1256,7 +1361,7 @@ export class AdminController {
         if (res.ok) {
           this.renderFilmsTab(mount);
         } else {
-          alert(res.data?.error || 'Failed to update film status.');
+          this.notify(res.data?.error || 'Failed to update film status.', 'error');
           btn.disabled = false;
         }
       });
@@ -1267,14 +1372,19 @@ export class AdminController {
       btn.addEventListener('click', async () => {
         const id = btn.dataset.id;
         const title = btn.dataset.title;
-        if (!confirm(`Are you sure you want to delete the film "${title}"? This cannot be undone.`)) return;
+        const confirmed = await this.confirmAction(
+          `Are you sure you want to delete the film "${title}"? This cannot be undone.`,
+          { title: 'Delete Film', confirmText: 'Delete Film' }
+        );
+        if (!confirmed) return;
         btn.disabled = true;
         btn.textContent = 'Deleting…';
         const res = await this.api(`films/${id}`, { method: 'DELETE' });
         if (res.ok) {
+          this.notify(`Deleted film "${title}".`, 'success');
           this.renderFilmsTab(mount);
         } else {
-          alert(res.data?.error || 'Failed to delete film.');
+          this.notify(res.data?.error || 'Failed to delete film.', 'error');
           btn.disabled = false;
         }
       });
@@ -1293,7 +1403,7 @@ export class AdminController {
         const book = prodId ? this.products.find(p => p.id === prodId) : null;
 
         if (!videoUrl) {
-          alert('Please enter a video URL to preview.');
+          this.notify('Please enter a video URL to preview.', 'info');
           return;
         }
 
@@ -1565,10 +1675,10 @@ export class AdminController {
         });
         btn.disabled = false;
         if (res.ok) {
-          alert('Receipt and download link re-sent to customer email.');
+          this.notify('Receipt and download link re-sent to customer email.', 'success');
           btn.textContent = 'Sent ✓';
         } else {
-          alert(res.data.error || 'Could not resend email.');
+          this.notify(res.data?.error || 'Could not resend email.', 'error');
           btn.textContent = 'Re-send Email ✉';
         }
       });
@@ -1651,7 +1761,7 @@ export class AdminController {
                   ${list.map(c => {
                     const dateStr = c.lastSeenAt ? new Date(c.lastSeenAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
                     const cleanPhone = (c.phone || '').replace(/[^0-9+]/g, '');
-                    const waText = encodeURIComponent(`Hi! We noticed you left ${(c.items || []).map(i => i.name).join(', ')} in your TAMYIZ reading bag. Resume your checkout anytime: https://tamyiz.pages.dev/checkout?resume=${(c.items || []).map(i => i.productId).join(',')}`);
+                    const waText = encodeURIComponent(`Hi! We noticed you left ${(c.items || []).map(i => i.name).join(', ')} in your TAMYIZ reading bag. Resume your checkout anytime: ${SITE_URL}/checkout?resume=${(c.items || []).map(i => i.productId).join(',')}`);
                     const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}?text=${waText}` : null;
                     const isRecovered = c.status === 'recovered';
 
@@ -1706,15 +1816,16 @@ export class AdminController {
 
     // Copy All Emails
     document.getElementById('tmz-copy-abandoned-emails-btn')?.addEventListener('click', () => {
-      if (uniqueEmails.length === 0) return alert('No emails to copy.');
-      navigator.clipboard.writeText(uniqueEmails.join(', ')).then(() => {
-        alert(`Copied ${uniqueEmails.length} unique emails to clipboard!`);
-      });
+      if (uniqueEmails.length === 0) return this.notify('No emails to copy.', 'info');
+      navigator.clipboard.writeText(uniqueEmails.join(', ')).then(
+        () => this.notify(`Copied ${uniqueEmails.length} unique emails to clipboard.`, 'success'),
+        () => this.notify('Clipboard access blocked. Please copy manually.', 'error')
+      );
     });
 
     // Export CSV
     document.getElementById('tmz-export-abandoned-btn')?.addEventListener('click', () => {
-      if (list.length === 0) return alert('No abandoned carts to export.');
+      if (list.length === 0) return this.notify('No abandoned carts to export.', 'info');
       const headers = ['Last Seen', 'Email', 'Phone', 'Total (INR)', 'Items', 'Status'];
       // Cells starting with = + - @ are prefixed with ' so Excel/Sheets never run them as formulas.
       const cell = (v) => { let t = String(v ?? ''); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; };
@@ -1748,10 +1859,10 @@ export class AdminController {
           body: JSON.stringify({ id })
         });
         if (res.ok) {
-          alert('Recovery email sent with 10% discount and 1-click cart restore link!');
+          this.notify('Recovery email sent with 1-click cart restore link.', 'success');
           this.renderAbandonedTab(mount);
         } else {
-          alert(res.error || 'Failed to send recovery email');
+          this.notify(res.data?.error || 'Failed to send recovery email.', 'error');
           btn.disabled = false;
           btn.textContent = 'Send Recovery Email';
         }
@@ -1762,12 +1873,17 @@ export class AdminController {
     mount.querySelectorAll('.tmz-del-abandoned-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const id = e.currentTarget.dataset.id;
-        if (!confirm('Remove this abandoned cart record?')) return;
+        const confirmed = await this.confirmAction('Remove this abandoned cart record?', {
+          title: 'Remove Abandoned Cart',
+          confirmText: 'Remove'
+        });
+        if (!confirmed) return;
         const res = await this.api(`abandoned/${id}`, { method: 'DELETE' });
         if (res.ok) {
+          this.notify('Abandoned cart record removed.', 'success');
           this.renderAbandonedTab(mount);
         } else {
-          alert(res.error || 'Failed to remove record');
+          this.notify(res.data?.error || 'Failed to remove record.', 'error');
         }
       });
     });
@@ -1883,9 +1999,18 @@ export class AdminController {
     mount.querySelectorAll('.tmz-delete-coupon-btn').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const code = btn.dataset.code;
-        if (!confirm(`Delete coupon "${code}"?`)) return;
+        const confirmed = await this.confirmAction(`Delete coupon "${code}"?`, {
+          title: 'Delete Coupon',
+          confirmText: 'Delete'
+        });
+        if (!confirmed) return;
         const res = await this.api(`coupons/${code}`, { method: 'DELETE' });
-        if (res.ok) this.renderCouponsTab(mount);
+        if (res.ok) {
+          this.notify(`Coupon "${code}" deleted.`, 'success');
+          this.renderCouponsTab(mount);
+        } else {
+          this.notify(res.data?.error || 'Failed to delete coupon.', 'error');
+        }
       });
     });
   }
@@ -1993,15 +2118,16 @@ export class AdminController {
 
     // Copy all emails
     document.getElementById('tmz-copy-leads-btn')?.addEventListener('click', () => {
-      if (uniqueEmails.length === 0) return alert('No emails to copy.');
-      navigator.clipboard.writeText(uniqueEmails.join(', ')).then(() => {
-        alert(`Copied ${uniqueEmails.length} unique emails to clipboard!`);
-      });
+      if (uniqueEmails.length === 0) return this.notify('No emails to copy.', 'info');
+      navigator.clipboard.writeText(uniqueEmails.join(', ')).then(
+        () => this.notify(`Copied ${uniqueEmails.length} unique emails to clipboard.`, 'success'),
+        () => this.notify('Clipboard access blocked. Please copy manually.', 'error')
+      );
     });
 
     // Export CSV
     document.getElementById('tmz-export-leads-btn')?.addEventListener('click', () => {
-      if (leads.length === 0) return alert('No leads to export.');
+      if (leads.length === 0) return this.notify('No leads to export.', 'info');
       const headers = ['Date', 'Email', 'Phone', 'Product Name', 'Product ID'];
       const cell = (v) => { let t = String(v ?? ''); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; };
       const rows = leads.map(l => [cell(l.createdAt), cell(l.email), cell(l.phone), cell(l.productName), cell(l.productId)]);
@@ -2019,12 +2145,17 @@ export class AdminController {
     mount.querySelectorAll('.tmz-del-lead-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const id = e.currentTarget.dataset.id;
-        if (!confirm('Remove this lead from the list?')) return;
+        const confirmed = await this.confirmAction('Remove this lead from the list?', {
+          title: 'Remove Lead',
+          confirmText: 'Remove'
+        });
+        if (!confirmed) return;
         const res = await this.api(`leads/${id}`, { method: 'DELETE' });
         if (res.ok) {
+          this.notify('Lead removed.', 'success');
           this.renderLeadsTab(mount);
         } else {
-          alert(res.error || 'Failed to remove lead');
+          this.notify(res.data?.error || 'Failed to remove lead.', 'error');
         }
       });
     });
@@ -2168,9 +2299,10 @@ export class AdminController {
         const id = e.currentTarget.dataset.id;
         const res = await this.api(`reviews/${id}/approve`, { method: 'POST' });
         if (res.ok) {
+          this.notify('Review approved.', 'success');
           this.renderReviewsTab(mount);
         } else {
-          alert(res.error || 'Failed to approve review');
+          this.notify(res.data?.error || 'Failed to approve review.', 'error');
         }
       });
     });
@@ -2179,12 +2311,17 @@ export class AdminController {
     mount.querySelectorAll('.tmz-delete-rev-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const id = e.currentTarget.dataset.id;
-        if (!confirm('Permanently remove this review?')) return;
+        const confirmed = await this.confirmAction('Permanently remove this review?', {
+          title: 'Remove Review',
+          confirmText: 'Remove'
+        });
+        if (!confirmed) return;
         const res = await this.api(`reviews/${id}`, { method: 'DELETE' });
         if (res.ok) {
+          this.notify('Review removed.', 'success');
           this.renderReviewsTab(mount);
         } else {
-          alert(res.error || 'Failed to remove review');
+          this.notify(res.data?.error || 'Failed to remove review.', 'error');
         }
       });
     });

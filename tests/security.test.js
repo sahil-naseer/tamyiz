@@ -520,3 +520,38 @@ test('frontend: zero inline event handlers and public/_headers matches hardened 
   assert.ok(scriptSrc.includes("'self'"));
   assert.ok(!scriptSrc.includes("'unsafe-inline'"), 'public/_headers script-src must not allow unsafe-inline');
 });
+
+test('site config: getSiteUrl/getSiteHost default & env.SITE_URL override propagate to receipts', async () => {
+  const { getSiteUrl, getSiteHost } = await import('../server/site.js');
+  const { receiptEmail } = await import('../server/payments.js');
+
+  assert.equal(getSiteUrl({}), 'https://tamyiz.pages.dev');
+  assert.equal(getSiteHost({}), 'tamyiz.pages.dev');
+  assert.equal(getSiteUrl({ SITE_URL: 'https://tamyiz.in/' }), 'https://tamyiz.in');
+  assert.equal(getSiteHost({ SITE_URL: 'https://tamyiz.in/' }), 'tamyiz.in');
+
+  const receipt = receiptEmail({
+    email: 'reader@example.com',
+    referenceId: 'ORD-1',
+    paymentId: 'pay_1',
+    totalINR: 299,
+    downloads: [{ name: 'Book', price: 299, downloadUrl: 'https://tamyiz.in/api/download/b1' }],
+  }, { SITE_URL: 'https://tamyiz.in/' });
+
+  assert.ok(receipt.html.includes('TAMYIZ (tamyiz.in)'));
+  assert.ok(!receipt.html.includes('tamyiz.pages.dev'));
+});
+
+test('admin & app: lazy-loaded /admin, centralized SITE_URL, zero blocking alert/confirm or stale 10% copy', async () => {
+  const fs = await import('node:fs');
+  const adminCode = fs.readFileSync('src/scripts/pages/admin-page.js', 'utf8');
+  const appCode = fs.readFileSync('src/scripts/tamyiz-unified-app.js', 'utf8');
+
+  assert.ok(!/\b(?:alert|confirm)\s*\(/.test(adminCode), 'admin-page.js must use toast/confirm dialogs instead of blocking alert()/confirm()');
+  assert.ok(!adminCode.includes('10% discount'), 'admin-page.js must not mention removed 10% recovery discount');
+  assert.ok(!adminCode.includes('https://tamyiz.pages.dev'), 'admin-page.js must import SITE_URL instead of hardcoding domain');
+  assert.ok(!/alert\s*\(\s*res\.error\b/.test(adminCode), 'admin-page.js must read res.data?.error on this.api() responses');
+
+  assert.ok(!/import\s*\{[^}]*AdminController[^}]*\}\s*from/.test(appCode), 'tamyiz-unified-app.js must not statically import AdminController');
+  assert.ok(/import\(\s*['"]\.\/pages\/admin-page\.js['"]\s*\)/.test(appCode), 'tamyiz-unified-app.js must dynamically import admin-page.js');
+});

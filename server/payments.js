@@ -1,5 +1,6 @@
 import { loadCatalog, findById } from './catalog.js';
 import { markCartRecovered } from './abandoned.js';
+import { getSiteHost } from './site.js';
 
 /**
  * TAMYIZ™ payments: prices, coupons, Razorpay orders and verification, download links, receipt email.
@@ -210,8 +211,9 @@ export async function handleDownload(request, env, productId) {
  * or Resend (RESEND_API_KEY; needs a domain you own). Returns true only if the provider accepted it.
  * Never blocks the purchase: the download is always shown on screen too.
  */
-export function receiptEmail({ email, phone, referenceId, paymentId, totalINR, downloads, date }) {
+export function receiptEmail({ email, phone, referenceId, paymentId, totalINR, downloads, date }, env = {}) {
   const e = escapeHtml;
+  const siteHost = e(getSiteHost(env));
   const inr = (n) => '₹' + Number(n || 0).toLocaleString('en-IN');
   const when = new Date(date || Date.now()).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
   const rows = downloads.map((dl) => `
@@ -246,7 +248,7 @@ export function receiptEmail({ email, phone, referenceId, paymentId, totalINR, d
       <p style="font-size:14px;line-height:1.6;color:#3A3A36;margin:22px 0 0;padding:14px 16px;background:#F7F7F5;border-radius:12px;">Lost the file or need help? WhatsApp us on <b>+91 95417 22379</b> or reply to this email with your order number, and we'll send it again.</p>
     </div>
     <div style="padding:18px 28px;border-top:1px solid #ECECE8;font-size:12px;line-height:1.6;color:#7A7A75;">
-      This is your receipt from TAMYIZ (tamyiz.pages.dev), run by Sahil Naseer and Basit Majeed, Sopore, Jammu &amp; Kashmir 193201, India.<br/>
+      This is your receipt from TAMYIZ (${siteHost}), run by Sahil Naseer and Basit Majeed, Sopore, Jammu &amp; Kashmir 193201, India.<br/>
       Questions: tamyiz.co@gmail.com · Personal licence: please don't share the file.
     </div>
   </div>
@@ -263,7 +265,7 @@ export function receiptEmail({ email, phone, referenceId, paymentId, totalINR, d
 export async function sendReceiptEmail(order, env = {}, fetchImpl = fetch) {
   const to = String(order.email || '').trim();
   if (!to.includes('@') || (!env.BREVO_API_KEY && !env.RESEND_API_KEY)) return false;
-  const { subject, html, text } = receiptEmail(order);
+  const { subject, html, text } = receiptEmail(order, env);
   const fromEmail = String(env.RECEIPT_FROM || 'tamyiz.co@gmail.com').replace(/^.*<|>.*$/g, '').trim();
   try {
     const res = env.BREVO_API_KEY

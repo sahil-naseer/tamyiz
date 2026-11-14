@@ -1,5 +1,6 @@
 import { json } from './payments.js';
 import { loadCatalog, findById, findBySlug, publicProduct } from './catalog.js';
+import { getSiteUrl } from './site.js';
 
 export async function handleSampleLead(request, env) {
   if (request.method !== 'POST') {
@@ -126,7 +127,7 @@ export async function sendSampleWelcomeEmail(env, to, product, fetchImpl = fetch
   const fromEmail = String(env.RECEIPT_FROM || 'tamyiz.co@gmail.com').replace(/^.*<|>.*$/g, '').trim();
   const plainName = String(product.name || '').replace(/&(amp|lt|gt|quot|#39);/g, (m, c) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" })[c]);
   const subject = `Your sample of "${plainName}" from TAMYIZ`;
-  const bookUrl = `https://tamyiz.pages.dev/edition/${product.slug || product.id}`;
+  const bookUrl = `${getSiteUrl(env)}/edition/${product.slug || product.id}`;
   const text = [
     `TAMYIZ`,
     ``,

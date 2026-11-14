@@ -26,7 +26,6 @@ import { renderAtelierPage } from './pages/atelier-page.js';
 import { renderDownloadsPage } from './pages/downloads-page.js';
 import { renderCheckoutPage } from './pages/checkout-page.js';
 import { renderLegalPage, legalDocs, formatLegalContentHtml } from './pages/legal-page.js';
-import { AdminController } from './pages/admin-page.js';
 import { openVideoModal } from './components/video-modal.js';
 import { initMotion } from './motion.js';
 
@@ -54,7 +53,7 @@ class TamyizUnifiedApp {
     this.activePreviewProduct = null;
     this.activePreviewTab = 0;
     this.announcement = null;
-    this.adminController = new AdminController(this);
+    this.adminController = null;
 
     this.init();
   }
@@ -937,7 +936,7 @@ class TamyizUnifiedApp {
         break;
 
       case 'admin':
-        this.adminController.render(mainEl, this.currentSlug || 'overview');
+        this.loadAndRenderAdmin(mainEl, this.currentSlug || 'overview');
         break;
 
       default:
@@ -950,6 +949,50 @@ class TamyizUnifiedApp {
 
     // Update active nav links in header
     this.updateActiveNavIndicators();
+  }
+
+  async loadAndRenderAdmin(mainEl, subRoute) {
+    if (this.adminController) {
+      this.adminController.render(mainEl, subRoute);
+      return;
+    }
+
+    mainEl.innerHTML = `
+      <div class="tmz-admin-root">
+        <div class="tmz-admin-container">
+          <div class="tmz-admin-loading tmz-frame">
+            <p class="tmz-label">TAMYIZ // ADMIN CONSOLE</p>
+            <p>Loading admin console…</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    try {
+      const { AdminController } = await import('./pages/admin-page.js');
+      if (!this.adminController) {
+        this.adminController = new AdminController(this);
+      }
+      if (this.currentPage === 'admin') {
+        this.adminController.render(mainEl, this.currentSlug || subRoute || 'overview');
+      }
+    } catch {
+      if (this.currentPage !== 'admin') return;
+      mainEl.innerHTML = `
+        <div class="tmz-admin-root">
+          <div class="tmz-admin-container">
+            <div class="tmz-admin-loading tmz-frame">
+              <p class="tmz-label">TAMYIZ // ADMIN CONSOLE</p>
+              <p>Could not load admin console. Check your connection and try again.</p>
+              <button type="button" id="tmz-admin-retry-btn" class="tmz-admin-btn tmz-admin-btn-primary" style="margin-top: 12px;">Retry</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('tmz-admin-retry-btn')?.addEventListener('click', () => {
+        this.loadAndRenderAdmin(mainEl, this.currentSlug || subRoute);
+      });
+    }
   }
 
   applyPageMeta() {

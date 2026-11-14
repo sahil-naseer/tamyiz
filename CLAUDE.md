@@ -15,6 +15,8 @@ sold with Razorpay and delivered as private signed download links.
   (tamyiz-unified-app.js) must also be added to `allPages()` in seo.js, or it 404s when opened directly.
 - E-book pages `/edition/<slug>` and `/sitemap.xml` are made live by Pages Functions (`functions/edition/[slug].js`,
   `functions/sitemap.xml.js`) from the catalogue, so each e-book's cover is its share preview. Default share picture: `public/og/tamyiz.jpg`.
+- Canonical domain is centralized in `src/data/site-config.js` (`SITE_URL` / `SITE_HOST`) and `server/site.js` (`getSiteUrl(env)` / `getSiteHost(env)` reading optional `env.SITE_URL`, defaulting to `https://tamyiz.pages.dev`).
+- `/admin` (`src/scripts/pages/admin-page.js`) is dynamically imported only when visiting `/admin` in `tamyiz-unified-app.js` and uses non-blocking toast notifications (`notify()`) and confirmation dialogs (`confirmAction()`).
 - Server code: one Pages Function for all of `/api/*` (`functions/api/[[path]].js` → `server/router.js`). The Vite dev
   server runs the same router (`vite.config.js`), so local and live behave the same.
 

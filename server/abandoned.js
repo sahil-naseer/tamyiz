@@ -1,5 +1,6 @@
 import { json, escapeHtml } from './payments.js';
 import { loadCatalog, findById } from './catalog.js';
+import { getSiteUrl } from './site.js';
 
 // One record per email. A hash of the whole address (the old id used only its first 18 characters, so two
 // different emails could share - and overwrite - one record).
@@ -191,7 +192,7 @@ export async function sendAbandonedCartRecoveryEmail(request, env, fetchImpl = f
   const targetEmail = rec.email;
   const items = rec.items || [];
   const resumeParam = encodeURIComponent(items.map((i) => i.productId).join(','));
-  const resumeUrl = `https://tamyiz.pages.dev/checkout?resume=${resumeParam}`;
+  const resumeUrl = `${getSiteUrl(env)}/checkout?resume=${resumeParam}`;
 
   const fromEmail = String(env.RECEIPT_FROM || 'tamyiz.co@gmail.com').replace(/^.*<|>.*$/g, '').trim();
   const subject = 'Your TAMYIZ bag is saved';

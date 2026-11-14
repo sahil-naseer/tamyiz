@@ -8,7 +8,7 @@
  *   /legal/terms
  */
 
-import { siteConfig } from '../../data/site-config.js';
+import { siteConfig, SITE_HOST } from '../../data/site-config.js';
 
 export const legalDocs = {
   'delivery-protocol': {
@@ -115,7 +115,7 @@ You can ask to see, correct or delete your details, or withdraw your consent, at
     sections: [
       {
         heading: '01. Who Runs TAMYIZ',
-        content: `TAMYIZ™ (tamyiz.pages.dev) is run by its co-founders from Sopore, Jammu & Kashmir 193201, India.
+        content: `TAMYIZ™ (${SITE_HOST}) is run by its co-founders from Sopore, Jammu & Kashmir 193201, India.
 Co-founded by Basit Majeed and Sahil Naseer.`
       },
       {
