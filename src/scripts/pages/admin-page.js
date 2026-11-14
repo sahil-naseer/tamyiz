@@ -163,6 +163,9 @@ export class AdminController {
           <div id="tmz-admin-login-msg" class="tmz-admin-msg"></div>
           <button type="submit" id="tmz-admin-login-btn" class="tmz-admin-btn tmz-admin-btn-primary tmz-admin-btn-block">Sign In to Dashboard</button>
         </form>
+        <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(0,0,0,0.1); text-align: center;">
+          <a href="/" data-nav="/" style="font-size: 13px; color: var(--tmz-graphite, #55554F); text-decoration: none; font-weight: 500;">← Back to Storefront</a>
+        </div>
       </div>
     `;
 
@@ -222,19 +225,34 @@ export class AdminController {
     const mount = document.getElementById('tmz-admin-content');
     if (!mount) return;
 
-    const tabs = [
-      { id: 'overview', idx: '01', label: 'Overview' },
-      { id: 'products', idx: '02', label: 'E-Books & Catalog' },
-      { id: 'films', idx: '03', label: 'Films' },
-      { id: 'orders', idx: '04', label: 'Orders' },
-      { id: 'abandoned', idx: '05', label: 'Abandoned Bags' },
-      { id: 'coupons', idx: '06', label: 'Coupons' },
-      { id: 'leads', idx: '07', label: 'Sample Leads' },
-      { id: 'reviews', idx: '08', label: 'Reviews' },
-      { id: 'announcement', idx: '09', label: 'Banner' },
-      { id: 'customers', idx: '10', label: 'Customers' },
-      { id: 'analytics', idx: '11', label: 'Analytics' },
-      { id: 'settings', idx: '12', label: 'Settings' }
+    const navGroups = [
+      {
+        heading: 'Catalog & Orders',
+        items: [
+          { id: 'overview', idx: '01', label: 'Overview' },
+          { id: 'products', idx: '02', label: 'E-Books' },
+          { id: 'films', idx: '03', label: 'Films' },
+          { id: 'orders', idx: '04', label: 'Orders' },
+        ],
+      },
+      {
+        heading: 'Growth & Readers',
+        items: [
+          { id: 'abandoned', idx: '05', label: 'Abandoned Bags' },
+          { id: 'coupons', idx: '06', label: 'Coupons' },
+          { id: 'leads', idx: '07', label: 'Sample Leads' },
+          { id: 'reviews', idx: '08', label: 'Reviews' },
+          { id: 'announcement', idx: '09', label: 'Banner' },
+        ],
+      },
+      {
+        heading: 'Audience & System',
+        items: [
+          { id: 'customers', idx: '10', label: 'Customers' },
+          { id: 'analytics', idx: '11', label: 'Analytics' },
+          { id: 'settings', idx: '12', label: 'Settings' },
+        ],
+      },
     ];
 
     mount.innerHTML = `
@@ -256,18 +274,25 @@ export class AdminController {
         </div>
       </header>
 
-      <!-- Navigation Tabs -->
-      <nav class="tmz-admin-tabs" aria-label="Admin sections">
-        ${tabs.map((t) => `
-          <button type="button" class="tmz-admin-tab-btn ${this.activeTab === t.id ? 'is-active' : ''}" data-tab="${t.id}">
-            <span class="tmz-admin-tab-idx">${t.idx}</span>
-            <span>${t.label}</span>
-          </button>
-        `).join('')}
-      </nav>
+      <!-- Organized Workspace: Left Sidebar + Right Panel -->
+      <div class="tmz-admin-workspace">
+        <nav class="tmz-admin-tabs" aria-label="Admin sections">
+          ${navGroups.map((grp) => `
+            <div class="tmz-admin-nav-group">
+              <div class="tmz-admin-nav-heading">${grp.heading}</div>
+              ${grp.items.map((t) => `
+                <button type="button" class="tmz-admin-tab-btn ${this.activeTab === t.id ? 'is-active' : ''}" data-tab="${t.id}">
+                  <span class="tmz-admin-tab-idx">${t.idx}</span>
+                  <span>${t.label}</span>
+                </button>
+              `).join('')}
+            </div>
+          `).join('')}
+        </nav>
 
-      <!-- Dynamic Tab Mount -->
-      <div id="tmz-admin-tab-body"></div>
+        <!-- Dynamic Tab Mount -->
+        <div id="tmz-admin-tab-body" class="tmz-admin-main"></div>
+      </div>
     `;
 
     document.getElementById('tmz-admin-logout').addEventListener('click', async () => {
@@ -353,7 +378,7 @@ export class AdminController {
     const kpis = data.kpis || {};
 
     mount.innerHTML = `
-      <div class="tmz-admin-kpi-grid">
+      <div class="tmz-admin-kpi-grid tmz-admin-kpi-grid--4">
         <div class="tmz-admin-kpi-card tmz-admin-kpi-card--ink">
           <div class="tmz-admin-kpi-label">
             <span>01 // Gross Revenue</span>
@@ -921,7 +946,7 @@ export class AdminController {
         </div>
 
         <!-- KPI Mini Stats -->
-        <div class="tmz-admin-kpi-grid">
+        <div class="tmz-admin-kpi-grid tmz-admin-kpi-grid--4">
           <div class="tmz-admin-kpi-card">
             <div class="tmz-admin-kpi-label"><span>01 // Total Films</span></div>
             <b class="tmz-admin-kpi-val">${totalFilms}</b>
@@ -1587,7 +1612,7 @@ export class AdminController {
         </div>
 
         <!-- KPI Grid -->
-        <div class="tmz-admin-kpi-grid">
+        <div class="tmz-admin-kpi-grid tmz-admin-kpi-grid--3">
           <div class="tmz-admin-kpi-card">
             <div class="tmz-admin-kpi-label"><span>01 // Unclaimed Revenue</span></div>
             <b class="tmz-admin-kpi-val tmz-admin-kpi-val--danger">₹${(data.totalLostRevenue || 0).toLocaleString('en-IN')}</b>
@@ -1895,7 +1920,7 @@ export class AdminController {
         </div>
 
         <!-- KPI Grid -->
-        <div class="tmz-admin-kpi-grid">
+        <div class="tmz-admin-kpi-grid tmz-admin-kpi-grid--3">
           <div class="tmz-admin-kpi-card">
             <div class="tmz-admin-kpi-label"><span>01 // Total Samples Unlocked</span></div>
             <b class="tmz-admin-kpi-val">${totalLeads}</b>
@@ -2023,7 +2048,7 @@ export class AdminController {
         </div>
 
         <!-- KPI Grid -->
-        <div class="tmz-admin-kpi-grid">
+        <div class="tmz-admin-kpi-grid tmz-admin-kpi-grid--3">
           <div class="tmz-admin-kpi-card">
             <div class="tmz-admin-kpi-label"><span>01 // Pending Moderation</span></div>
             <b class="tmz-admin-kpi-val ${pending.length > 0 ? 'tmz-admin-kpi-val--danger' : ''}">${pending.length}</b>

@@ -7502,23 +7502,15 @@ body, #app { overflow-x: hidden; overflow-x: clip; }
 .tmz-label::before { content: '['; content: '[' / ''; }
 .tmz-label::after { content: ']'; content: ']' / ''; }
 
-/* Corner brackets round the words that matter. */
+/* Solid yellow highlight mark (no protruding corner brackets). */
 .tmz-mark {
   position: relative;
   display: inline-block;
-  padding: 0 0.17em;
+  padding: 0 0.16em;
+  border-radius: 2px;
   color: #000;
   background: linear-gradient(var(--tmz-yellow), var(--tmz-yellow)) no-repeat 0 50% / 100% 100%;   /* the highlighter */
 }
-.tmz-mark::before, .tmz-mark::after {
-  content: '';
-  position: absolute;
-  width: 0.22em;
-  height: 0.22em;
-  border: 0.05em solid #000;
-}
-.tmz-mark::before { top: 0.06em; left: -0.05em; border-right: 0; border-bottom: 0; }
-.tmz-mark::after { bottom: -0.04em; right: -0.05em; border-left: 0; border-top: 0; }
 
 /* A frame with crosshair corners. */
 .tmz-frame {
@@ -7840,8 +7832,6 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
   html.mo .tmz-hero .tmz-line > span { animation: mo-rise 0.9s var(--mo-ease) backwards; animation-delay: calc(60ms - var(--mo-t, 0ms)); }
   html.mo .tmz-hero .tmz-line + .tmz-line > span { animation-delay: calc(160ms - var(--mo-t, 0ms)); }
   html.mo .tmz-hero .tmz-mark { animation: mo-wipe 0.7s var(--mo-ease) backwards; animation-delay: calc(700ms - var(--mo-t, 0ms)); }
-  html.mo .tmz-hero .tmz-mark::before { animation: mo-corner-a 0.7s var(--mo-ease) backwards; animation-delay: calc(750ms - var(--mo-t, 0ms)); }
-  html.mo .tmz-hero .tmz-mark::after { animation: mo-corner-b 0.7s var(--mo-ease) backwards; animation-delay: calc(750ms - var(--mo-t, 0ms)); }
   html.mo .tmz-hero-lede { animation: mo-up 0.7s var(--mo-ease) backwards; animation-delay: calc(260ms - var(--mo-t, 0ms)); }
   html.mo .tmz-hero-ctas { animation: mo-up 0.7s var(--mo-ease) backwards; animation-delay: calc(340ms - var(--mo-t, 0ms)); }
   html.mo .tmz-hero-proof { animation: mo-up 0.7s var(--mo-ease) backwards; animation-delay: calc(500ms - var(--mo-t, 0ms)); }
@@ -7857,9 +7847,6 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
   }
   html.mo [data-mo] .tmz-mark { background-size: 0% 100%; }
   html.mo [data-mo].is-in .tmz-mark { animation: mo-wipe 0.7s var(--mo-ease) 0.45s backwards; background-size: 100% 100%; }
-  html.mo [data-mo] .tmz-mark::before, html.mo [data-mo] .tmz-mark::after { opacity: 0; }
-  html.mo [data-mo].is-in .tmz-mark::before { animation: mo-corner-a 0.7s var(--mo-ease) 0.5s backwards; opacity: 1; }
-  html.mo [data-mo].is-in .tmz-mark::after { animation: mo-corner-b 0.7s var(--mo-ease) 0.5s backwards; opacity: 1; }
   html.mo .tmz-footer-giant[data-mo] { opacity: 1; transform: none; }
   html.mo .tmz-footer-giant[data-mo] img { transform: translateY(105%); }
   html.mo .tmz-footer-giant[data-mo].is-in img { transform: none; transition: transform 1.2s var(--mo-ease); }
@@ -7902,8 +7889,6 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
 @keyframes mo-page { from { opacity: 0; } }
 @keyframes mo-up { from { opacity: 0; transform: translateY(22px); } }
 @keyframes mo-rise { from { transform: translateY(115%); } }
-@keyframes mo-corner-a { from { opacity: 0; transform: translate(0.45em, 0.45em); } }
-@keyframes mo-corner-b { from { opacity: 0; transform: translate(-0.45em, -0.45em); } }
 @keyframes mo-wipe { from { background-size: 0% 100%; } }
 @keyframes mo-nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
 @media print { html.mo [data-mo] { opacity: 1 !important; transform: none !important; } .tmz-progress, .tmz-dots { display: none; } }
@@ -8369,18 +8354,28 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
 /* ==========================================================================
    ADMIN CONSOLE — "Paper and Hairlines" editorial workspace
    ========================================================================== */
+/* Hide storefront chrome on /admin so the admin portal renders as a clean dedicated workspace */
+body[data-page="admin"] #tmz-announcement-banner,
+body[data-page="admin"] .tamyiz-header,
+body[data-page="admin"] .tamyiz-footer,
+body[data-page="admin"] .tamyiz-whatsapp-fab,
+body[data-page="admin"] .tmz-progress {
+  display: none !important;
+}
+
 .tmz-admin-root {
-  min-height: 88vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   color: #0B0B0B;
   font-family: var(--font-body);
-  padding: 28px 0 88px;
+  padding: 24px 0 64px;
   background:
     linear-gradient(180deg, rgba(241, 241, 239, 0) 0%, var(--tmz-paper, #F1F1EF) 240px),
-    radial-gradient(rgba(0, 0, 0, 0.16) 1px, transparent 1.2px) 0 0 / 22px 22px,
+    radial-gradient(rgba(0, 0, 0, 0.14) 1px, transparent 1.2px) 0 0 / 22px 22px,
     var(--tmz-paper, #F1F1EF);
 }
 .tmz-admin-container {
-  max-width: 1240px;
+  max-width: 1320px;
   margin: 0 auto;
   padding: 0 clamp(16px, 3vw, 32px);
 }
@@ -8494,8 +8489,8 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
 
 /* Console Masthead Top Bar */
 .tmz-admin-topbar {
-  padding: 20px 26px;
-  margin-bottom: 14px;
+  padding: 18px 24px;
+  margin-bottom: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -8506,7 +8501,7 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
 .tmz-admin-topbar-title {
   font-family: var(--font-head);
   font-weight: 600;
-  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
   letter-spacing: -0.03em;
   line-height: 1.15;
   margin: 0;
@@ -8514,7 +8509,7 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
 }
 .tmz-admin-topbar-sub {
   margin: 4px 0 0;
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--tmz-graphite, #55554F);
 }
 .tmz-admin-topbar-actions {
@@ -8532,33 +8527,60 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
   flex-shrink: 0;
 }
 
-/* Navigation Tab Strip */
+/* Workspace Layout: Sidebar + Main Content */
+.tmz-admin-workspace {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.tmz-admin-main {
+  min-width: 0;
+}
+
+/* Navigation Sidebar (Desktop) & Single-Row Strip (Mobile/Tablet) */
 .tmz-admin-tabs {
+  position: sticky;
+  top: 20px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  flex-direction: column;
+  gap: 14px;
   background: #FFFFFF;
   border: 1px solid var(--tmz-hair, rgba(0, 0, 0, 0.12));
   border-radius: var(--tmz-r, 4px);
-  padding: 6px;
-  margin-bottom: 24px;
+  padding: 14px 10px;
+}
+.tmz-admin-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.tmz-admin-nav-heading {
+  font-family: var(--font-sub);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tmz-graphite, #55554F);
+  padding: 2px 10px 6px;
 }
 .tmz-admin-tab-btn {
+  width: 100%;
   font-family: var(--font-sub);
   font-weight: 600;
   font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 8px 12px;
+  letter-spacing: 0.04em;
+  padding: 9px 10px;
   border-radius: 3px;
   border: 1px solid transparent;
   background: transparent;
-  color: var(--tmz-graphite, #55554F);
+  color: #2B2B29;
   cursor: pointer;
   white-space: nowrap;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  text-align: left;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .tmz-admin-tab-btn:hover {
@@ -8569,12 +8591,14 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
   background: #0B0B0B;
   color: #FFFFFF;
   border-color: #0B0B0B;
-  box-shadow: inset 0 -2px 0 var(--tmz-yellow, #FFD60A);
+  box-shadow: inset 3px 0 0 var(--tmz-yellow, #FFD60A);
 }
 .tmz-admin-tab-idx {
-  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
   font-variant-numeric: tabular-nums;
   opacity: 0.55;
+  flex-shrink: 0;
 }
 .tmz-admin-tab-btn.is-active .tmz-admin-tab-idx {
   color: var(--tmz-yellow, #FFD60A);
@@ -8590,7 +8614,13 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
   border: 1px solid var(--tmz-hair, rgba(0, 0, 0, 0.12));
   border-radius: var(--tmz-r, 4px);
   overflow: hidden;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+}
+.tmz-admin-kpi-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.tmz-admin-kpi-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .tmz-admin-kpi-card {
   background: #FFFFFF;
@@ -8712,7 +8742,7 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
 /* Overview Grid & Ledger */
 .tmz-admin-overview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
   gap: 18px;
 }
 .tmz-admin-action-stack {
@@ -9111,7 +9141,7 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
 /* Coupons Grid */
 .tmz-admin-coupon-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 14px;
 }
 .tmz-admin-coupon-card {
@@ -9224,15 +9254,15 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
 }
 .tmz-admin-telemetry-cols {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
 }
-.tmz-admin-telemetry-cols h3 {
+#tmz-admin-content .tmz-admin-telemetry-cols h3 {
   font-family: var(--font-sub);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: uppercase !important;
   color: #D6D6D1;
   margin: 0 0 12px;
   padding-bottom: 8px;
@@ -9276,7 +9306,58 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
 .tmz-admin-diag-row:last-child { border-bottom: none; padding-bottom: 0; }
 
 /* Admin Responsive Tweaks */
+@media (max-width: 1120px) {
+  .tmz-admin-kpi-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 960px) {
+  .tmz-admin-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .tmz-admin-tabs {
+    position: static;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 8px;
+    scrollbar-width: none;
+  }
+  .tmz-admin-tabs::-webkit-scrollbar { display: none; }
+  .tmz-admin-nav-group {
+    flex-direction: row;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .tmz-admin-nav-heading { display: none; }
+  .tmz-admin-tab-btn {
+    width: auto;
+    padding: 8px 12px;
+  }
+  .tmz-admin-tab-btn.is-active {
+    box-shadow: inset 0 -2px 0 var(--tmz-yellow, #FFD60A);
+  }
+  .tmz-admin-overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 @media (max-width: 720px) {
+  .tmz-admin-root {
+    padding: 16px 0 48px;
+  }
+  .tmz-admin-topbar {
+    padding: 16px 18px;
+  }
+  .tmz-admin-panel,
+  .tmz-admin-panel--ink {
+    padding: 18px;
+  }
+  .tmz-admin-kpi-grid--3,
+  .tmz-admin-telemetry-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .tmz-admin-product-card {
     grid-template-columns: 64px minmax(0, 1fr);
     gap: 14px;
@@ -9292,6 +9373,11 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
   .tmz-admin-search-input {
     min-width: 0;
     width: 100%;
+  }
+}
+@media (max-width: 520px) {
+  .tmz-admin-kpi-grid--4 {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
