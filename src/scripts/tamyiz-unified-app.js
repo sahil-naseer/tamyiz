@@ -3383,8 +3383,8 @@ class TamyizUnifiedApp {
     const modal = document.getElementById('tamyiz-modal');
     const content = document.getElementById('tamyiz-modal-content');
     if (modal && content) {
-      // One close button only: pop-ups that draw their own ✕ (policies, payment received) don't get a second one.
-      const hasOwnClose = html.includes('data-action="close-modal" aria-label=');
+      // One close button only: pop-ups that draw their own ✕ (reader, policies, payment received) don't get a second one.
+      const hasOwnClose = /\bdata-action="close-modal"[^>]*\baria-label=/.test(html) || /\baria-label=[^>]*\bdata-action="close-modal"/.test(html);
       const isLegal = html.includes('tamyiz-legal-modal-box');
       content.classList.toggle('is-legal', isLegal);
       content.innerHTML = `

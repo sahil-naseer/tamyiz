@@ -562,6 +562,7 @@ test('admin & app: lazy-loaded /admin, centralized SITE_URL, zero blocking alert
   const missingCalls = [...new Set([...appCode.matchAll(/this\.([a-zA-Z0-9_]+)\s*\(/g)].map((m) => m[1]))]
     .filter((name) => !appMethods.has(name) && !appProps.has(name));
   assert.deepEqual(missingCalls, [], `Missing this.<method>() definitions in tamyiz-unified-app.js: ${missingCalls.join(', ')}`);
+  assert.ok(!appCode.includes(`html.includes('data-action="close-modal" aria-label=')`), 'openModalContent must match own close buttons even with intervening attributes/newlines');
 });
 
 test('sitemap.xml honors env.SITE_URL override', async () => {
