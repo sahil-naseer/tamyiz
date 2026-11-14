@@ -85,7 +85,7 @@ export function renderAtelierPage(appInstance) {
             <p class="tmz-about-reply">We reply ourselves, usually within a day.</p>
           </div>
 
-          <form class="tamyiz-contact-form tmz-contact-form" id="atelier-contact-form" onsubmit="event.preventDefault(); window.tamyizApp.handleContactSubmit();">
+          <form class="tamyiz-contact-form tmz-contact-form" id="atelier-contact-form" data-submit-action="contact">
             <div class="tmz-field-row">
               <div>
                 <label class="tamyiz-form-label" for="contact-name">Your name</label>

@@ -384,7 +384,8 @@ async function getOverview(env) {
     if (raw) {
       try {
         const ord = JSON.parse(raw);
-        totalRevenueINR += (ord.totalINR || 0);
+        if (ord.status === 'refunded') continue;
+        totalRevenueINR += Math.max(0, (ord.totalINR || 0) - (ord.refundedINR || 0));
         if (ord.email) buyers.add(ord.email.toLowerCase());
         else if (ord.phone) buyers.add(ord.phone);
         for (const item of (ord.items || [])) {

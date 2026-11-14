@@ -94,7 +94,8 @@ export function openVideoModal(video) {
             <a
               href="/edition/${escapeText(video.book.slug)}"
               class="tmz-btn-book-link"
-              onclick="event.preventDefault(); window.closeTamyizVideoModal(); window.tamyizApp.navigateTo('/edition/${escapeText(video.book.slug)}')"
+              data-nav="/edition/${escapeText(video.book.slug)}"
+              data-close-video-modal
             >
               Read This E-Book <span aria-hidden="true">→</span>
             </a>
@@ -105,7 +106,7 @@ export function openVideoModal(video) {
   ` : '';
 
   modalEl.innerHTML = `
-    <div class="tmz-video-modal-backdrop" onclick="window.closeTamyizVideoModal()"></div>
+    <div class="tmz-video-modal-backdrop" data-action="close-video-modal"></div>
     <div
       class="tmz-video-modal-dialog"
       role="dialog"
@@ -116,7 +117,7 @@ export function openVideoModal(video) {
       <button
         type="button"
         class="tmz-video-modal-close"
-        onclick="window.closeTamyizVideoModal()"
+        data-action="close-video-modal"
         aria-label="Close video player (Esc)"
         id="tmz-video-close-btn"
       >

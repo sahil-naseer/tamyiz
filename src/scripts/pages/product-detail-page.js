@@ -18,7 +18,7 @@ export function renderProductDetailPage(slug, appInstance) {
         <p style="color: var(--color-grey); margin-bottom: 2rem;">
           We couldn't find that e-book. It may have moved.
         </p>
-        <button class="tamyiz-hero-btn-primary" onclick="window.tamyizApp.navigateTo('/editions')">
+        <button class="tamyiz-hero-btn-primary" data-nav="/editions">
           <span>See all e-books</span>
           <span>→</span>
         </button>
@@ -40,14 +40,14 @@ export function renderProductDetailPage(slug, appInstance) {
         <div class="container">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4">
             <nav class="tamyiz-breadcrumbs" aria-label="Breadcrumb">
-              <a href="/" class="crumb-link" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/')">Home</a>
+              <a href="/" class="crumb-link" data-nav="/">Home</a>
               <span class="crumb-sep">/</span>
-              <a href="/editions" class="crumb-link" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')">E-books</a>
+              <a href="/editions" class="crumb-link" data-nav="/editions">E-books</a>
               <span class="crumb-sep">/</span>
               <span class="crumb-current">${product.name}</span>
             </nav>
 
-            <button class="tamyiz-btn-back-link" onclick="window.tamyizApp.navigateTo('/editions')">
+            <button class="tamyiz-btn-back-link" data-nav="/editions">
               <span>← All e-books</span>
             </button>
           </div>
@@ -78,7 +78,8 @@ export function renderProductDetailPage(slug, appInstance) {
                   ${product.images.map((img, idx) => `
                     <button
                       class="tamyiz-pdp-thumb-btn ${idx === activeImgIndex ? 'active' : ''}"
-                      onclick="window.tamyizApp.setPdpImage(${idx})"
+                      data-action="set-pdp-image"
+                      data-arg="${idx}"
                       aria-label="View image ${idx + 1}"
                     >
                       <img src="${img}" alt="${product.name} view ${idx + 1}" />
@@ -93,11 +94,11 @@ export function renderProductDetailPage(slug, appInstance) {
                 <div class="tamyiz-pdp-video-box mt-6" id="pdp-video-preview">
                   <div
                     class="tamyiz-pdp-video-card"
-                    onclick="window.tamyizApp.playProductVideo('${product.id}')"
+                    data-action="play-product-video"
+                    data-id="${product.id}"
                     role="button"
                     tabindex="0"
                     aria-label="Watch video preview of ${product.name}"
-                    onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); window.tamyizApp.playProductVideo('${product.id}');}"
                   >
                     <div class="tamyiz-pdp-video-thumb-container">
                       <img
@@ -137,7 +138,7 @@ export function renderProductDetailPage(slug, appInstance) {
                       id="sample-toggle-btn"
                       aria-expanded="false"
                       aria-controls="pdp-sample-content"
-                      onclick="window.tamyizApp.toggleSampleViewer()"
+                      data-action="toggle-sample-viewer"
                     >
                       <span id="sample-toggle-text">Expand Preview</span>
                       <span id="sample-toggle-icon">↓</span>
@@ -191,7 +192,8 @@ export function renderProductDetailPage(slug, appInstance) {
                       <button
                         type="button"
                         class="tamyiz-sample-toggle-btn"
-                        onclick="window.tamyizApp.toggleSampleViewer({ scrollBack: true })"
+                        data-action="toggle-sample-viewer"
+                        data-scroll-back
                       >
                         <span>Collapse Preview</span>
                         <span aria-hidden="true">↑</span>
@@ -248,7 +250,9 @@ export function renderProductDetailPage(slug, appInstance) {
                         <button
                           type="button"
                           class="tamyiz-pdp-format-pill ${opt === currentSelectedOption ? 'active' : ''}"
-                          onclick="window.tamyizApp.selectProductSize('${product.id}', '${opt}', this)"
+                          data-action="select-product-size"
+                          data-id="${product.id}"
+                          data-variant="${opt}"
                         >
                           <span class="pill-dot"></span>
                           <span>${opt}</span>
@@ -262,14 +266,16 @@ export function renderProductDetailPage(slug, appInstance) {
                 <div class="tamyiz-pdp-actions-stack">
                   <button
                     class="tamyiz-pdp-btn-add"
-                    onclick="window.tamyizApp.quickAddToCart('${product.id}')"
+                    data-action="quick-add"
+                    data-id="${product.id}"
                   >
                     ${buyLabel(product, product.price, 'pdp')}
                   </button>
 
                   ${isAvailable(product) ? `<button
                     class="tamyiz-pdp-btn-buy-now"
-                    onclick="window.tamyizApp.buyNowDirect('${product.id}')"
+                    data-action="buy-now"
+                    data-id="${product.id}"
                   >
                     <span>Buy Now • Direct Checkout →</span>
                   </button>` : ''}
@@ -278,7 +284,8 @@ export function renderProductDetailPage(slug, appInstance) {
                     <button
                       type="button"
                       class="tamyiz-pdp-btn-video-action"
-                      onclick="window.tamyizApp.playProductVideo('${product.id}')"
+                      data-action="play-product-video"
+                      data-id="${product.id}"
                       id="pdp-open-video-btn"
                     >
                       <span class="tamyiz-pdp-video-icon-circle" aria-hidden="true">
@@ -294,7 +301,8 @@ export function renderProductDetailPage(slug, appInstance) {
                   <button
                     type="button"
                     class="tamyiz-pdp-btn-sample"
-                    onclick="window.tamyizApp.openSampleModal('${product.id}')"
+                    data-action="open-sample-modal"
+                    data-id="${product.id}"
                     id="pdp-open-sample-btn"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -355,7 +363,7 @@ export function renderProductDetailPage(slug, appInstance) {
                 <div class="tamyiz-pdp-accordions" id="pdp-accordions">
                   <!-- Accordion 1: What's Inside -->
                   <div class="tamyiz-pdp-acc-item open" id="acc-inside">
-                    <button class="tamyiz-pdp-acc-trigger" onclick="window.tamyizApp.toggleAccordion('acc-inside')">
+                    <button class="tamyiz-pdp-acc-trigger" data-action="toggle-accordion" data-arg="acc-inside">
                       <span>01 / WHAT'S INSIDE</span>
                       <span class="tamyiz-pdp-acc-icon">−</span>
                     </button>
@@ -368,7 +376,7 @@ export function renderProductDetailPage(slug, appInstance) {
 
                   <!-- Accordion 2: Technical Format & Compatibility -->
                   <div class="tamyiz-pdp-acc-item" id="acc-compat">
-                    <button class="tamyiz-pdp-acc-trigger" onclick="window.tamyizApp.toggleAccordion('acc-compat')">
+                    <button class="tamyiz-pdp-acc-trigger" data-action="toggle-accordion" data-arg="acc-compat">
                       <span>02 / FORMAT &amp; DEVICES</span>
                       <span class="tamyiz-pdp-acc-icon">+</span>
                     </button>
@@ -390,7 +398,7 @@ export function renderProductDetailPage(slug, appInstance) {
 
                   <!-- Accordion 3: Your copy & refunds -->
                   <div class="tamyiz-pdp-acc-item" id="acc-license">
-                    <button class="tamyiz-pdp-acc-trigger" onclick="window.tamyizApp.toggleAccordion('acc-license')">
+                    <button class="tamyiz-pdp-acc-trigger" data-action="toggle-accordion" data-arg="acc-license">
                       <span>03 / YOUR COPY &amp; REFUNDS</span>
                       <span class="tamyiz-pdp-acc-icon">+</span>
                     </button>
@@ -400,7 +408,7 @@ export function renderProductDetailPage(slug, appInstance) {
                       </p>
                       <p style="font-size: 0.86rem; color: #555; line-height: 1.6; margin: 0;">
                         Problem with the file? WhatsApp us and we'll fix it. Charged twice, or a file we can't fix: full refund within 7 days
-                        (<a href="/legal/license" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/legal/license')" style="text-decoration: underline;">refund policy</a>).
+                        (<a href="/legal/license" data-nav="/legal/license" style="text-decoration: underline;">refund policy</a>).
                       </p>
                     </div>
                   </div>
@@ -418,10 +426,10 @@ export function renderProductDetailPage(slug, appInstance) {
                     </div>
                     <button
                       type="button"
-                      onclick="window.tamyizApp.openReviewModal('${product.id}')"
+                      class="tmz-hover-invert"
+                      data-action="open-review-modal"
+                      data-id="${product.id}"
                       style="font-family: var(--font-sub); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.55rem 1rem; border: 1.5px solid #0B0B0B; background: transparent; color: #0B0B0B; border-radius: 4px; cursor: pointer; transition: all 0.2s;"
-                      onmouseover="this.style.background='#0B0B0B'; this.style.color='#FFF'"
-                      onmouseout="this.style.background='transparent'; this.style.color='#0B0B0B'"
                     >
                       Leave a Review ✍
                     </button>
@@ -447,7 +455,7 @@ export function renderProductDetailPage(slug, appInstance) {
                   More from TAMYIZ
                 </h3>
               </div>
-              <button class="tamyiz-btn-nav-outline" onclick="window.tamyizApp.navigateTo('/editions')">
+              <button class="tamyiz-btn-nav-outline" data-nav="/editions">
                 <span>All e-books</span>
                 <span>→</span>
               </button>

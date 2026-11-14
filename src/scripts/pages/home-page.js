@@ -41,7 +41,7 @@ export function emptyShopBlock() {
               <div class="tmz-shop-empty" role="alert">
                 <h3>Couldn't load the e-books</h3>
                 <p>Your connection may have dropped, or our server is busy. Your bag is safe.</p>
-                <button type="button" class="tmz-btn tmz-btn-solid" onclick="window.tamyizApp.retryProducts()">Try again</button>
+                <button type="button" class="tmz-btn tmz-btn-solid" data-action="retry-products">Try again</button>
               </div>`;
   }
   return `
@@ -71,8 +71,8 @@ export function renderHomePage(appInstance) {
             <div class="tmz-hero-side">
               <p class="tmz-hero-lede">Short, practical e-books, written for beginners. Download the PDF and start reading in a minute.</p>
               <div class="tmz-hero-ctas">
-                <a href="/#editions" class="tmz-btn tmz-btn-solid" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#editions')">Browse the e-books <span class="tmz-btn-arrow" aria-hidden="true">↓</span></a>
-                <a href="/#philosophy" class="tmz-btn tmz-btn-line" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#philosophy')">How we write</a>
+                <a href="/#editions" class="tmz-btn tmz-btn-solid" data-nav="/#editions">Browse the e-books <span class="tmz-btn-arrow" aria-hidden="true">↓</span></a>
+                <a href="/#philosophy" class="tmz-btn tmz-btn-line" data-nav="/#philosophy">How we write</a>
               </div>
             </div>
           </div>
@@ -107,7 +107,7 @@ export function renderHomePage(appInstance) {
             </figure>
           </div>
           <div class="tmz-about-foot">
-            <a href="/atelier" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/atelier')">Read the full story <span aria-hidden="true">→</span></a>
+            <a href="/atelier" data-nav="/atelier">Read the full story <span aria-hidden="true">→</span></a>
             <a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tmz-about-wa">Questions? WhatsApp us, we reply ourselves.</a>
           </div>
         </div>
@@ -178,7 +178,7 @@ export function renderHomePage(appInstance) {
               <span class="tmz-label">The shop</span>
               <h2 style="font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; text-transform: uppercase;">Latest e-books</h2>
             </div>
-            ${products.length > 3 ? `<button class="tamyiz-btn-nav-outline" onclick="window.tamyizApp.navigateTo('/editions')">
+            ${products.length > 3 ? `<button class="tamyiz-btn-nav-outline" data-nav="/editions">
               <span>View all ${products.length} e-books</span>
               <span>→</span>
             </button>` : ''}
@@ -190,7 +190,7 @@ export function renderHomePage(appInstance) {
           </div>
 
           ${products.length > 3 ? `<div style="text-align: center; margin-top: 3.5rem;">
-            <button class="tamyiz-btn-primary-large" onclick="window.tamyizApp.navigateTo('/editions')">
+            <button class="tamyiz-btn-primary-large" data-nav="/editions">
               <span>See all ${products.length} e-books</span>
               <span>→</span>
             </button>
@@ -216,7 +216,7 @@ ${formatGuideSection()}
           ${anyAvailable()
             ? `<h2 class="tmz-closing-title">Pick an e-book and <span class="tmz-mark tmz-nowrap">start reading</span> in a minute.</h2>
           <div class="tmz-hero-ctas">
-            <a href="/editions" class="tmz-btn tmz-btn-solid" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')">See all the e-books <span aria-hidden="true">→</span></a>
+            <a href="/editions" class="tmz-btn tmz-btn-solid" data-nav="/editions">See all the e-books <span aria-hidden="true">→</span></a>
             <a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tmz-btn tmz-btn-line">Ask us on WhatsApp ↗</a>
           </div>`
             : `<h2 class="tmz-closing-title">The first e-books are <span class="tmz-mark tmz-nowrap">on the way.</span></h2>
@@ -270,7 +270,7 @@ export async function loadHomeFilmsShowcase() {
               <h2 style="font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; text-transform: uppercase;">Ideas deserve to be seen.</h2>
               <p style="color: var(--color-muted); font-size: 1rem; max-width: 620px; margin-top: 0.5rem;">Explore the thinking, stories and perspectives behind our publications.</p>
             </div>
-            <button class="tamyiz-btn-nav-outline" onclick="window.tamyizApp.navigateTo('/films')">
+            <button class="tamyiz-btn-nav-outline" data-nav="/films">
               <span>Explore all films</span>
               <span>→</span>
             </button>
@@ -284,8 +284,8 @@ export async function loadHomeFilmsShowcase() {
                 role="button"
                 tabindex="0"
                 aria-label="Play ${escapeText(featured.title)}"
-                onclick="window.playHomeFilm('${escapeText(featured.id)}')"
-                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); window.playHomeFilm('${escapeText(featured.id)}');}"
+                data-action="play-home-film"
+                data-arg="${escapeText(featured.id)}"
               >
                 <img
                   src="${escapeText(featured.thumbnailUrl || (featured.provider === 'youtube' && featured.videoId ? `https://img.youtube.com/vi/${featured.videoId}/hqdefault.jpg` : '/og/tamyiz.jpg'))}"
@@ -309,7 +309,7 @@ export async function loadHomeFilmsShowcase() {
 
               <div class="tmz-home-film-info">
                 <h3 class="tmz-home-film-title">
-                  <a href="#" onclick="event.preventDefault(); window.playHomeFilm('${escapeText(featured.id)}')">
+                  <a href="#" data-action="play-home-film" data-arg="${escapeText(featured.id)}">
                     ${escapeText(featured.title)}
                   </a>
                 </h3>
@@ -318,7 +318,7 @@ export async function loadHomeFilmsShowcase() {
                   <a
                     href="/edition/${escapeText(featured.book.slug)}"
                     class="tmz-film-book-link"
-                    onclick="event.preventDefault(); window.tamyizApp.navigateTo('/edition/${escapeText(featured.book.slug)}')"
+                    data-nav="/edition/${escapeText(featured.book.slug)}"
                   >
                     <div class="tmz-film-card-book">
                       <img src="${escapeText(featured.book.coverThumb || `/api/cover/${featured.book.id}?s=sm`)}" alt="" width="20" height="28" class="tmz-film-book-thumb" />
@@ -340,8 +340,8 @@ export async function loadHomeFilmsShowcase() {
                       role="button"
                       tabindex="0"
                       aria-label="Play ${escapeText(sec.title)}"
-                      onclick="window.playHomeFilm('${escapeText(sec.id)}')"
-                      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); window.playHomeFilm('${escapeText(sec.id)}');}"
+                      data-action="play-home-film"
+                      data-arg="${escapeText(sec.id)}"
                     >
                       <img
                         src="${escapeText(sec.thumbnailUrl || (sec.provider === 'youtube' && sec.videoId ? `https://img.youtube.com/vi/${sec.videoId}/hqdefault.jpg` : '/og/tamyiz.jpg'))}"
@@ -363,7 +363,7 @@ export async function loadHomeFilmsShowcase() {
                         ${sec.duration ? `<span class="tmz-badge-dur-sm">${escapeText(sec.duration)}</span>` : ''}
                       </div>
                       <h4 class="tmz-home-side-title">
-                        <a href="#" onclick="event.preventDefault(); window.playHomeFilm('${escapeText(sec.id)}')">
+                        <a href="#" data-action="play-home-film" data-arg="${escapeText(sec.id)}">
                           ${escapeText(sec.title)}
                         </a>
                       </h4>
@@ -371,7 +371,7 @@ export async function loadHomeFilmsShowcase() {
                         <a
                           href="/edition/${escapeText(sec.book.slug)}"
                           class="tmz-home-side-book"
-                          onclick="event.preventDefault(); window.tamyizApp.navigateTo('/edition/${escapeText(sec.book.slug)}')"
+                          data-nav="/edition/${escapeText(sec.book.slug)}"
                         >
                           ${escapeText(sec.book.name)} →
                         </a>
@@ -384,7 +384,7 @@ export async function loadHomeFilmsShowcase() {
           </div>
 
           <div style="text-align: center; margin-top: 3rem;">
-            <button class="tamyiz-btn-primary-large" onclick="window.tamyizApp.navigateTo('/films')">
+            <button class="tamyiz-btn-primary-large" data-nav="/films">
               <span>Explore all films</span>
               <span>→</span>
             </button>
@@ -415,13 +415,13 @@ export function renderProductCardHtml(p, appInstance) {
 
   return `
     <div class="tamyiz-product-card flex flex-col h-full" id="card-${p.id}" data-product-card="${p.id}">
-      <div class="tamyiz-product-thumb" onclick="window.tamyizApp.navigateTo('/edition/${slug}')">
+      <div class="tamyiz-product-thumb" data-nav="/edition/${slug}">
         <img src="${p.thumb || p.images[0]}" alt="${p.name}" class="tamyiz-img-primary" width="480" height="720" loading="lazy" decoding="async" />
         <img src="${p.images[1] || p.thumb || p.images[0]}" alt="" aria-hidden="true" class="tamyiz-img-hover" width="480" height="720" loading="lazy" decoding="async" />
 
         <span class="tamyiz-badge-digital">${isAvailable(p) ? p.badge : 'COMING SOON'}</span>
 
-        <button class="tamyiz-btn-wishlist ${store.isInWishlist(p.id) ? 'active' : ''}" data-id="${p.id}" onclick="event.stopPropagation(); window.tamyizApp.toggleWishlist('${p.id}')" aria-label="Wishlist">
+        <button class="tamyiz-btn-wishlist ${store.isInWishlist(p.id) ? 'active' : ''}" data-id="${p.id}" data-action="toggle-wishlist" data-stop aria-label="Wishlist">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="${store.isInWishlist(p.id) ? 'var(--color-red)' : 'none'}" stroke="currentColor" stroke-width="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
@@ -432,7 +432,7 @@ export function renderProductCardHtml(p, appInstance) {
         <div>
           <span class="tamyiz-product-cat">${p.category}</span>
           ${isAvailable(p) ? '' : '<span class="tamyiz-card-status">Coming soon</span>'}
-          <h3 class="tamyiz-product-name"><a href="/edition/${slug}" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/edition/${slug}')">${p.name}</a></h3>
+          <h3 class="tamyiz-product-name"><a href="/edition/${slug}" data-nav="/edition/${slug}">${p.name}</a></h3>
 
           <div class="tamyiz-product-pricing flex items-baseline gap-2" id="pricing-${p.id}" aria-label="Price: ₹${currentPrice.toLocaleString('en-IN')}${currentOrigPrice ? `, original price ₹${currentOrigPrice.toLocaleString('en-IN')}` : ''}">
             <span class="tamyiz-price-cur font-bold text-black" id="price-${p.id}">₹${currentPrice.toLocaleString('en-IN')}</span>
@@ -444,7 +444,9 @@ export function renderProductCardHtml(p, appInstance) {
               <button
                 type="button"
                 class="tamyiz-card-video-pill-btn"
-                onclick="event.stopPropagation(); window.tamyizApp.playProductVideo('${p.id}')"
+                data-action="play-product-video"
+                data-id="${p.id}"
+                data-stop
                 title="Watch preview video of ${p.name}"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -456,7 +458,7 @@ export function renderProductCardHtml(p, appInstance) {
           ` : ''}
 
           ${hasVariants ? `
-            <div class="tamyiz-size-selector-wrap" onclick="event.stopPropagation()">
+            <div class="tamyiz-size-selector-wrap" data-stop>
               <div class="tamyiz-size-selector-label font-mono text-[11px] uppercase tracking-wider mb-1 flex items-center gap-1.5">
                 <span class="text-gray-500 font-semibold">FORMAT:</span>
                 <span style="color: var(--color-black); font-weight: 800;" id="size-label-${p.id}" class="tamyiz-size-label">${currentSelectedOption}</span>
@@ -466,7 +468,8 @@ export function renderProductCardHtml(p, appInstance) {
                   <button class="tamyiz-size-pill-btn ${opt === currentSelectedOption ? 'active' : ''}" 
                           aria-pressed="${opt === currentSelectedOption ? 'true' : 'false'}"
                           data-variant="${opt}"
-                          onclick="window.tamyizApp.selectProductSize('${p.id}', '${opt}', this)">
+                          data-action="select-product-size"
+                          data-id="${p.id}">
                     ${opt}
                   </button>
                 `).join('')}
@@ -476,10 +479,10 @@ export function renderProductCardHtml(p, appInstance) {
         </div>
 
         <div class="tamyiz-card-actions-row">
-          <button class="tamyiz-btn-quick-add" id="btn-quick-${p.id}" style="background: var(--color-red); font-size: 0.82rem; padding: 0.82rem; border: none; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;" onclick="window.tamyizApp.quickAddToCart('${p.id}')">
+          <button class="tamyiz-btn-quick-add" id="btn-quick-${p.id}" style="background: var(--color-red); font-size: 0.82rem; padding: 0.82rem; border: none; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;" data-action="quick-add" data-id="${p.id}">
             ${buyLabel(p, currentPrice, 'card')}
           </button>
-          <a class="tamyiz-btn-preview-trigger" href="/edition/${slug}" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/edition/${slug}')">
+          <a class="tamyiz-btn-preview-trigger" href="/edition/${slug}" data-nav="/edition/${slug}">
             <span>See what's inside →</span>
           </a>
         </div>

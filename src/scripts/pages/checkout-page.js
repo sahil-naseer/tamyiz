@@ -37,7 +37,7 @@ export function renderCheckoutPage(appInstance) {
             <p style="color: var(--color-grey); font-size: 1rem; margin-bottom: 2rem;">
               Have a look at the shop and add the one you want.
             </p>
-            <button class="tamyiz-hero-btn-primary" onclick="window.tamyizApp.navigateTo('/editions')">
+            <button class="tamyiz-hero-btn-primary" data-nav="/editions">
               <span>BROWSE THE E-BOOKS</span>
               <span>→</span>
             </button>
@@ -75,7 +75,7 @@ export function renderCheckoutPage(appInstance) {
           <div class="tamyiz-checkout-grid">
             <!-- LEFT COLUMN: CUSTOMER DETAILS & PAYMENT METHOD -->
             <div class="tamyiz-checkout-left-col">
-              <form id="checkout-form" onsubmit="event.preventDefault(); window.tamyizApp.submitCheckout();">
+              <form id="checkout-form" data-submit-action="checkout">
                 <!-- STEP 1: INSTANT DELIVERY DETAILS -->
                 <div class="tamyiz-checkout-card mb-6">
                   <div class="tamyiz-step-header">
@@ -125,7 +125,7 @@ export function renderCheckoutPage(appInstance) {
                     </div>
                     <p style="font-size: 0.78rem; color: #5E5E59; margin: 0.75rem 0 0; line-height: 1.5;">
                       We use these to send your receipt and download links, and may remind you once if you don't finish the order.
-                      <a href="/legal/privacy" onclick="event.preventDefault(); window.tamyizApp.openLegalModal('privacy')" style="color: #0B0B0B; text-decoration: underline;">Privacy policy</a>
+                      <a href="/legal/privacy" data-action="open-legal-modal" data-arg="privacy" style="color: #0B0B0B; text-decoration: underline;">Privacy policy</a>
                     </p>
                   </div>
                 </div>
@@ -188,7 +188,8 @@ export function renderCheckoutPage(appInstance) {
                       <button
                         type="button"
                         class="summary-item-remove"
-                        onclick="window.tamyizApp.removeSummaryItem('${item.cartItemId}')"
+                        data-action="remove-summary-item"
+                        data-arg="${item.cartItemId}"
                         title="Remove from bag"
                         aria-label="Remove ${item.name} from bag"
                       >✕</button>
@@ -212,7 +213,7 @@ export function renderCheckoutPage(appInstance) {
                       </div>
                       <button
                         type="button"
-                        onclick="window.tamyizApp.removeCouponFromCheckout()"
+                        data-action="remove-checkout-coupon"
                         style="color: var(--color-red-ink); background: none; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 800;"
                       >
                         REMOVE
@@ -226,12 +227,12 @@ export function renderCheckoutPage(appInstance) {
                         placeholder="PROMO CODE"
                         class="tamyiz-coupon-input flex-1"
                         style="text-transform: uppercase;"
-                        onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.tamyizApp.applyCouponFromCheckout(); }"
+                        data-enter-action="apply-checkout-coupon"
                       />
                       <button
                         type="button"
                         class="tamyiz-btn-apply-coupon"
-                        onclick="window.tamyizApp.applyCouponFromCheckout()"
+                        data-action="apply-checkout-coupon"
                       >
                         Apply Code
                       </button>
@@ -334,7 +335,7 @@ export function renderOrderVaultHtml(order) {
                     ${item.downloadUrl ? 'target="_blank" rel="noopener noreferrer"' : ''}
                     class="tamyiz-btn-download-vault"
                     style="display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; text-decoration: none;"
-                    ${!item.downloadUrl ? `data-book-name="${escapeText(item.name)}" onclick="event.preventDefault(); window.tamyizApp.triggerDownloadSim(this.dataset.bookName)"` : ''}
+                    ${!item.downloadUrl ? `data-book-name="${escapeText(item.name)}" data-action="trigger-download-sim"` : ''}
                   >
                     <span>${item.actionLabel || 'Download Edition ↗'}</span>
                   </a>
@@ -348,7 +349,7 @@ export function renderOrderVaultHtml(order) {
             <button
               class="tamyiz-hero-btn-primary"
               style="padding: 0.75rem 1.6rem; font-size: 0.82rem; display:inline-flex; align-items:center; gap:0.4rem;"
-              onclick="window.print()"
+              data-action="print-page"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 6 2 18 2 18 9"></polyline>
@@ -360,7 +361,8 @@ export function renderOrderVaultHtml(order) {
             <button
               class="tamyiz-btn-nav-outline"
               style="padding: 0.75rem 1.6rem; font-size: 0.82rem; display:inline-flex; align-items:center; gap:0.4rem;"
-              onclick="window.tamyizApp.downloadInvoice('${order.orderId}')"
+              data-action="download-invoice"
+              data-arg="${order.orderId}"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -381,7 +383,7 @@ export function renderOrderVaultHtml(order) {
             <button
               class="tamyiz-btn-nav-outline"
               style="padding: 0.75rem 1.4rem; font-size: 0.82rem;"
-              onclick="window.tamyizApp.resetOrderAndReturnHome()"
+              data-action="reset-order-home"
             >
               <span>Continue Browsing Editions →</span>
             </button>

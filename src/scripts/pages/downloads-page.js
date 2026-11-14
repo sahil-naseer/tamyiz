@@ -20,7 +20,7 @@ export function renderDownloadsPage(appInstance) {
 
       <!-- Recovery Card Form -->
       <div style="background: #FFFFFF; border: 1.5px solid rgba(11,11,11,0.12); border-radius: 16px; padding: 2rem 1.75rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 2rem;">
-        <form id="tmz-recovery-form" onsubmit="window.tamyizApp.submitDownloadRecovery(event)" style="display: flex; flex-direction: column; gap: 1rem;">
+        <form id="tmz-recovery-form" data-submit-action="download-recovery" style="display: flex; flex-direction: column; gap: 1rem;">
           <div>
             <label for="recovery-input-email" style="display: block; font-family: var(--font-head); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; color: #0B0B0B;">
               Your Purchase Email Address
@@ -28,10 +28,9 @@ export function renderDownloadsPage(appInstance) {
             <input
               type="email"
               id="recovery-input-email"
+              class="tmz-focus-border"
               placeholder="e.g. name@gmail.com"
               style="width: 100%; box-sizing: border-box; padding: 0.85rem 1rem; font-size: 0.95rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; outline: none; transition: border-color 0.2s;"
-              onfocus="this.style.borderColor='#0B0B0B'"
-              onblur="this.style.borderColor='rgba(11,11,11,0.2)'"
             />
           </div>
 
@@ -47,10 +46,9 @@ export function renderDownloadsPage(appInstance) {
             <input
               type="tel"
               id="recovery-input-phone"
+              class="tmz-focus-border"
               placeholder="e.g. +91 98765 43210"
               style="width: 100%; box-sizing: border-box; padding: 0.85rem 1rem; font-size: 0.95rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; outline: none; transition: border-color 0.2s;"
-              onfocus="this.style.borderColor='#0B0B0B'"
-              onblur="this.style.borderColor='rgba(11,11,11,0.2)'"
             />
           </div>
 
@@ -59,9 +57,8 @@ export function renderDownloadsPage(appInstance) {
           <button
             type="submit"
             id="recovery-submit-btn"
+            class="tmz-hover-dark"
             style="width: 100%; padding: 0.95rem 1.5rem; background: #0B0B0B; color: #FFFFFF; font-family: var(--font-head); font-weight: 700; font-size: 0.92rem; letter-spacing: 0.05em; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"
-            onmouseover="this.style.background='#222'"
-            onmouseout="this.style.background='#0B0B0B'"
           >
             <span>Email me my download links →</span>
           </button>

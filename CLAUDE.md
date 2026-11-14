@@ -63,8 +63,8 @@ About ten commits landed on 2 Nov. Everything below is in `server/` (routes in `
   reviews, abandoned bags). Logging out revokes the session on the server, not just in the browser.
 - Coupons, gifts and banner: dynamic coupons (`store:coupons`), gift orders, link re-send, and a site announcement
   banner (`store:announcement`, public `GET /api/announcement`).
-- Free Chapter 1 sample (`/api/sample`, `sample.js`): lead capture, an on-page reader, a welcome email sequence that
-  includes the SAMPLE10 gift, and a leads manager on /admin. Limit: 10 requests per IP per 15 min.
+- Free Chapter 1 sample (`/api/sample`, `sample.js`): lead capture, an on-page reader, a welcome email, and a leads manager
+  on /admin. Limit: 10 requests per IP per 15 min.
 - Download recovery portal (`/api/recover-downloads`, `recovery.js`): a buyer enters their email to get links again
   (masked email shown). Limit: 8 per IP per 15 min.
 - Reader reviews (`/api/reviews`, `reviews.js`): every new review is saved as `pending`; only reviews approved on
@@ -73,9 +73,9 @@ About ten commits landed on 2 Nov. Everything below is in `server/` (routes in `
   reviews only. Book structured data (Google Book schema, with aggregate reviews) was added on 2 Nov in the SEO commit.
 - Abandoned bag recovery (`/api/abandoned-cart`, `abandoned.js`): captures the email at checkout, a funnel view on
   /admin, and a 1-click restore of the bag. Limit: 20 per IP per 15 min.
-- Security headers: `public/_headers` sets X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy and a
-  Content-Security-Policy. The CSP still allows `'unsafe-inline'` scripts (needed by the current page); tightening it
-  is a known to-do. Dev dependencies were patched ("0 vulnerabilities" per commit 972b8d9); re-run `npm audit` after any install.
+- Security headers: `public/_headers` and `server/security-headers.js` set X-Frame-Options DENY, nosniff,
+  Referrer-Policy, Permissions-Policy and a Content-Security-Policy (`script-src 'self' https://checkout.razorpay.com`,
+  without `'unsafe-inline'`). Dev dependencies were patched ("0 vulnerabilities"); re-run `npm audit` after any install.
 - Rate limits are counters stored in KV. KV's free plan allows only 1,000 writes per day (see Storage), and each
   counted request is a write, so a flood of requests could use up the day's writes and break orders and uploads.
   Prefer Cloudflare's own rate limiting rules in front of /api for anything public.
@@ -185,8 +185,7 @@ go there; its phone rules are at the end of that block).
   header scrolled away). They are now `overflow-x: clip`. Do not put `overflow: hidden/auto` on an ancestor of the
   header or of `.tmz-steps-pin`.
 - Checked 14 Nov 2026 (local): `npm test` 77 of 77, `npm audit` 0, axe 0 violations on home, /editions, an e-book
-  page, /atelier, /philosophy, a policy page, /checkout, /downloads (laptop and phone). /films with no films has one
-  older axe note (heading order in the empty state: an h3 with no h2 before it; still to fix).
+  page, /atelier, /philosophy, a policy page, /checkout, /downloads, and /films (laptop and phone).
   Lighthouse mobile, local build, median of 5 runs: home performance 92 (the 24 Oct design scored 94 on the same
   machine), /editions 92, an e-book page 94; accessibility, best practices and SEO 100 on all three; CLS 0 to 0.06.
 - Phones and touch screens get a lighter version on purpose: each drawing fades up as one piece (no line-by-line
@@ -220,9 +219,8 @@ tamyiz-unified.css). Don't ship below this.
 3. What gets unlocked is read back from the Razorpay order notes written at creation (`itemsToNotes`/`notesToItems`).
 4. Prices come from the catalogue in KV (set on /admin), read by the server at order time. The bag refreshes every
    item's price from the catalogue on load (`store.pruneUnavailable`), so it always shows what will be charged.
-   Promo codes (changed 2 Nov 2026): the 24 Oct note "none" is out of date. Coupons now live in KV (`store:coupons`,
-   managed on /admin) plus one hard-coded code, `SAMPLE10` (10%, in `VALID_COUPONS`, server/payments.js). The repo is
-   PUBLIC, so anything hard-coded there is public: use /admin coupons for real promotions, and treat SAMPLE10 as known to everyone.
+   Promo codes: coupons live dynamically in KV (`store:coupons`, managed on /admin). `VALID_COUPONS` in
+   `server/payments.js` is empty (the old hard-coded `SAMPLE10` code was removed).
    Automatic volume discount: 2 books = 20% off, 3+ books = 25% off (`calculateOrderTotal`), applied before any coupon.
 5. The sandbox simulator (free unlock, for testing) runs only when `TAMYIZ_SANDBOX=true`. Never set it in production.
    Without keys and without sandbox, checkout returns a polite 503 pointing buyers to WhatsApp.
@@ -239,10 +237,10 @@ tamyiz-unified.css). Don't ship below this.
   FAQ, delivery policy, checkout and legal contact block now mention the email receipt. Better later: own domain
   (Brevo or Resend) so the sender looks clean and spam risk drops. Buyers before 25 Oct 22:45 IST got no email.
 
-2 Nov 2026 to-dos (found while updating this file):
-- Tighten the CSP (drop `'unsafe-inline'` for scripts) when the page's inline scripts are moved out.
-- Add Cloudflare rate limiting rules for `/api/*` and `/api/admin/*` so abuse doesn't spend KV writes.
-- Decide whether the hard-coded `SAMPLE10` stays; it is visible to anyone reading the public repo.
+2 Nov 2026 to-dos (status):
+- ~~Tighten the CSP (drop `'unsafe-inline'` for scripts)~~ (Done 14 Nov 2026: inline event handlers removed, `'unsafe-inline'` dropped from `script-src`).
+- Add Cloudflare dashboard WAF rate limiting rules for `/api/*` and `/api/admin/*` so abuse doesn't spend KV writes.
+- ~~Decide whether the hard-coded `SAMPLE10` stays~~ (Removed 14 Nov 2026: `VALID_COUPONS = {}`).
 - Checked 2 Nov 2026 on commit a9939a8: `npm test` 52 of 52 pass, `npm audit` 0 vulnerabilities. Re-run both after every change.
 
 ## Security and compliance audit (7 Nov 2026)
@@ -259,7 +257,7 @@ Fixed in branch `fix/pre-launch-audit` (tests: `tests/security.test.js`; `npm te
 - Abandoned bags: id = hash of the whole email; item names/prices come from the catalogue; "emailed" only if Brevo accepted.
 - Admin: logout needs a valid session; banner links must be http(s) or /path; CSV exports are formula-safe; the
   "Admin Portal" link is kept in the footer and mobile menu (`1cb67a6`).
-- Coupons: the bag checks codes with `GET /api/coupon?code=` (SAMPLE10 + /admin coupons). Flat coupons can have `minOrder`.
+- Coupons: the bag checks codes with `GET /api/coupon?code=` (dynamic /admin coupons only). Flat coupons can have `minOrder`.
 - Security headers for Functions responses are added in `server/security-headers.js` (Cloudflare does NOT apply
   `public/_headers` to Functions). Keep the CSP in both places in step.
 - Emails that used to be "fire and forget" are now awaited (Cloudflare can cancel unawaited work).
@@ -283,5 +281,14 @@ Fixed in `main` on 8 Nov 2026 (`npm test` 72 of 72, `npm audit` 0):
 - `/admin` login protection: wrong passwords use zero KV writes (in-memory rate-limit bucket) and support stateless
   HMAC-signed 6-digit Email OTP 2FA via Brevo when `ADMIN_OTP_EMAIL` is set.
 
-Still open (optional future improvements): own email domain (SPF/DKIM/DMARC), refund webhook (`refund.processed`),
-removing `'unsafe-inline'` from `script-src` CSP once inline `onclick` handlers are refactored.
+Hardened 14 Nov 2026:
+- Removed hard-coded `SAMPLE10` promo code across server, emails, admin copy, and tests (only dynamic `/admin` coupons remain).
+- Added Razorpay `refund.processed` webhook handling in `server/payments.js` (idempotent refund recording, download
+  and recovery revocation on full refund, net revenue in `/api/admin/overview`, refund status badges on `/admin`).
+- Removed all inline HTML `on*=` event handlers across `src/scripts/` via delegated listeners and dropped
+  `'unsafe-inline'` from CSP `script-src` in `server/security-headers.js` and `public/_headers`.
+- Added `<h2 class="sr-only">All films</h2>` to `.tmz-films-grid` on `/films`, removed unused `.tmz-footer-wordmark`
+  CSS and legacy placeholder/copy leftovers.
+
+Still open (optional future improvements): own email domain (SPF/DKIM/DMARC — user plans to add when buying a custom domain),
+and Cloudflare dashboard WAF rate-limiting rules for `/api/*` and `/api/admin/*`.

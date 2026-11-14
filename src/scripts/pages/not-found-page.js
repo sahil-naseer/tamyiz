@@ -21,11 +21,11 @@ export function renderNotFoundPage() {
 
       <section class="py-16 text-center">
         <div class="container" style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;">
-          <a href="/editions" class="tamyiz-hero-btn-primary" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')">
+          <a href="/editions" class="tamyiz-hero-btn-primary" data-nav="/editions">
             <span>SEE ALL E-BOOKS</span>
             <span aria-hidden="true">→</span>
           </a>
-          <a href="/" class="tamyiz-hero-btn-secondary" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/')">
+          <a href="/" class="tamyiz-hero-btn-secondary" data-nav="/">
             <span>HOME</span>
           </a>
           <a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tamyiz-hero-btn-secondary">

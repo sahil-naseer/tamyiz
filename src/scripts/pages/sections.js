@@ -52,7 +52,7 @@ export function principlesSection({ id = '', withButton = true } = {}) {
         ${withButton ? `
         <div class="container">
           <div class="tamyiz-section-foot">
-            <a class="tamyiz-btn-nav-outline" href="/#format-guide" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#format-guide')">
+            <a class="tamyiz-btn-nav-outline" href="/#format-guide" data-nav="/#format-guide">
               <span>How to read on your device</span>
               <span>→</span>
             </a>

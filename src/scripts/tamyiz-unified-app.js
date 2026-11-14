@@ -89,8 +89,9 @@ class TamyizUnifiedApp {
     window.addEventListener('popstate', () => this.handleLocationChange(true));
     window.addEventListener('hashchange', () => this.handleLocationChange(true));
 
-    // 4. Bind persistent store events
+    // 4. Bind persistent store events & global delegated DOM actions (CSP-safe: zero inline handlers)
     this.bindStore();
+    this.bindDelegatedEvents();
 
     // 5. Header scroll listener
     this.bindScrollHeader();
@@ -372,6 +373,207 @@ class TamyizUnifiedApp {
     update();
   }
 
+  /**
+   * Central delegated event listeners so templates need no inline on*= handlers,
+   * allowing strict CSP script-src without 'unsafe-inline'.
+   */
+  bindDelegatedEvents() {
+    if (this._delegatedBound) return;
+    this._delegatedBound = true;
+
+    const runAction = (action, el, e) => {
+      const arg = el.dataset.arg;
+      const id = el.dataset.id;
+      const variant = el.dataset.variant;
+
+      switch (action) {
+        case 'noop':
+          return;
+        case 'toggle-mobile-menu':
+          return this.toggleMobileMenu();
+        case 'close-mobile-menu':
+          return this.closeMobileMenu();
+        case 'open-cart':
+          return this.openCart();
+        case 'close-cart':
+          return this.closeCart();
+        case 'scroll-format-guide':
+          if (el.dataset.closeMenu !== undefined) this.closeMobileMenu();
+          return this.scrollToFormatGuide();
+        case 'open-legal-modal':
+          if (el.dataset.closeMenu !== undefined) this.closeMobileMenu();
+          return this.openLegalModal(arg);
+        case 'switch-legal-tab':
+          return this.switchLegalModalTab(arg);
+        case 'instant-checkout-nav':
+          return this.handleInstantCheckoutNav();
+        case 'remove-coupon':
+          return this.removeCoupon();
+        case 'apply-coupon':
+          return this.applyCoupon();
+        case 'bag-checkout':
+          return this.handleBagCheckout();
+        case 'close-modal':
+          return this.closeModal();
+        case 'close-preview-modal':
+          return this.closeProductPreview();
+        case 'reset-filters':
+          return this.resetAllFilters();
+        case 'explore-editions-from-cart':
+          this.closeCart();
+          return this.scrollToEditions();
+        case 'remove-from-bag':
+          return this.removeFromBag(arg);
+        case 'set-preview-tab':
+          return this.setPreviewTab(Number(arg));
+        case 'select-modal-format':
+          return this.selectModalFormat(id, variant);
+        case 'quick-buy-modal':
+          return this.quickBuyFromModal(id);
+        case 'open-review-modal':
+          return this.openReviewModal(id);
+        case 'sample-buy-full':
+          this.quickAddToCart(id);
+          this.closeModal();
+          return this.openCart();
+        case 'close-sandbox-modal':
+          return this.closeSandboxModal();
+        case 'confirm-sandbox':
+          return this.confirmSandboxPayment(el.dataset.orderId, el.dataset.email, el.dataset.phone);
+        case 'download-receipt-from-payment':
+          return this.downloadTaxInvoiceFromPayment(arg);
+        case 'close-video-modal':
+          return window.closeTamyizVideoModal && window.closeTamyizVideoModal();
+        case 'clear-search':
+          return this.clearSearch();
+        case 'play-film':
+          return window.playFilmById && window.playFilmById(arg);
+        case 'filter-films':
+          return window.filterFilmsCategory && window.filterFilmsCategory(arg);
+        case 'toggle-faq':
+          return this.toggleFaq(arg);
+        case 'set-pdp-image':
+          return this.setPdpImage(Number(arg));
+        case 'play-product-video':
+          return this.playProductVideo(id);
+        case 'toggle-sample-viewer':
+          return this.toggleSampleViewer(el.dataset.scrollBack !== undefined ? { scrollBack: true } : undefined);
+        case 'select-product-size':
+          return this.selectProductSize(id, variant, el);
+        case 'quick-add':
+          return this.quickAddToCart(id);
+        case 'buy-now':
+          return this.buyNowDirect(id);
+        case 'open-sample-modal':
+          return this.openSampleModal(id);
+        case 'toggle-accordion':
+          return this.toggleAccordion(arg);
+        case 'remove-summary-item':
+          return this.removeSummaryItem(arg);
+        case 'remove-checkout-coupon':
+          return this.removeCouponFromCheckout();
+        case 'apply-checkout-coupon':
+          return this.applyCouponFromCheckout();
+        case 'trigger-download-sim':
+          return this.triggerDownloadSim(el.dataset.bookName);
+        case 'print-page':
+          return window.print();
+        case 'download-invoice':
+          return this.downloadInvoice(arg);
+        case 'reset-order-home':
+          return this.resetOrderAndReturnHome();
+        case 'retry-products':
+          return this.retryProducts();
+        case 'play-home-film':
+          return window.playHomeFilm && window.playHomeFilm(arg);
+        case 'toggle-wishlist':
+          return this.toggleWishlist(id);
+        default:
+          return undefined;
+      }
+    };
+
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+
+      const actionEl = target.closest('[data-action]');
+      if (actionEl) {
+        if (actionEl.dataset.selfOnly !== undefined && target !== actionEl) return;
+        if (actionEl.dataset.stop !== undefined) e.stopPropagation();
+        if (actionEl.tagName === 'A' || actionEl.dataset.prevent !== undefined) e.preventDefault();
+        runAction(actionEl.dataset.action, actionEl, e);
+        return;
+      }
+
+      if (target.closest('[data-stop]')) return;
+
+      const navEl = target.closest('[data-nav]');
+      if (navEl) {
+        if (navEl.tagName === 'A' && (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)) return;
+        e.preventDefault();
+        if (navEl.dataset.closeMenu !== undefined) this.closeMobileMenu();
+        if (navEl.dataset.closeModal !== undefined) this.closeModal();
+        if (navEl.dataset.closeCart !== undefined) this.closeCart();
+        if (navEl.dataset.closeVideoModal !== undefined && window.closeTamyizVideoModal) window.closeTamyizVideoModal();
+        const path = navEl.dataset.nav || navEl.getAttribute('href');
+        if (path) this.navigateTo(path);
+      }
+    });
+
+    document.addEventListener('submit', (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLFormElement)) return;
+      const submitAction = target.dataset.submitAction;
+      if (!submitAction) return;
+      if (submitAction === 'sample-lead') return this.submitSampleLead(e, target.dataset.id);
+      if (submitAction === 'product-review') return this.submitProductReview(e, target.dataset.id);
+      if (submitAction === 'download-recovery') return this.submitDownloadRecovery(e);
+      if (submitAction === 'contact') {
+        e.preventDefault();
+        return this.handleContactSubmit();
+      }
+      if (submitAction === 'checkout') {
+        e.preventDefault();
+        return this.submitCheckout();
+      }
+    });
+
+    document.addEventListener('input', (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      const inputAction = target.dataset.inputAction;
+      if (!inputAction) return;
+      if (inputAction === 'search') return this.handleSearch(target.value);
+      if (inputAction === 'validate-dispatch') return this.validateDispatchField(target.dataset.arg);
+    });
+
+    document.addEventListener('change', (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      const changeAction = target.dataset.changeAction;
+      if (changeAction === 'sort') return this.handleSort(target.value);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+
+      if (e.key === 'Enter' && target.dataset.enterAction) {
+        e.preventDefault();
+        return runAction(target.dataset.enterAction, target, e);
+      }
+
+      if (e.key === 'Enter' || e.key === ' ') {
+        const btnRole = target.closest('[role="button"][data-action]');
+        if (btnRole) {
+          e.preventDefault();
+          runAction(btnRole.dataset.action, btnRole, e);
+        }
+      }
+    });
+  }
+
   // Render Shell once (Header, Bag Drawer, Mobile Drawer, Main Container, Footer, Modals)
   renderShell() {
     const app = document.getElementById('app');
@@ -385,7 +587,7 @@ class TamyizUnifiedApp {
       <header class="tamyiz-header is-home-page" id="navbar">
         <div class="tamyiz-header-inner">
           <div class="tamyiz-header-left">
-            <button class="tamyiz-header-menu-btn" onclick="window.tamyizApp.toggleMobileMenu()">
+            <button class="tamyiz-header-menu-btn" data-action="toggle-mobile-menu">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
                 <line x1="3" y1="8" x2="21" y2="8"></line>
                 <line x1="3" y1="16" x2="21" y2="16"></line>
@@ -395,7 +597,7 @@ class TamyizUnifiedApp {
             </button>
 
             <!-- Desktop Left Brand -->
-            <a href="/" class="tamyiz-header-brand tamyiz-header-brand-desktop" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/')">
+            <a href="/" class="tamyiz-header-brand tamyiz-header-brand-desktop" data-nav="/">
               <img class="tmz-brand-dome" src="/assets/brand/tamyiz-dome-sm.webp" alt="" width="68" height="20" />
               <img class="tmz-brand-word" src="/assets/brand/tamyiz-wordmark.svg" alt="TAMYIZ home" width="96" height="16" />
             </a>
@@ -403,16 +605,16 @@ class TamyizUnifiedApp {
 
           <!-- Desktop Centered Navigation with Active States -->
           <nav class="tamyiz-header-nav" id="desktop-nav" aria-label="Primary Navigation">
-            <a href="/" class="tamyiz-header-nav-link" id="nav-link-home" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/')">Home</a>
-            <a href="/editions" class="tamyiz-header-nav-link" id="nav-link-editions" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')">E-books</a>
-            <a href="/films" class="tamyiz-header-nav-link" id="nav-link-films" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/films')">Films</a>
-            <a href="/#philosophy" class="tamyiz-header-nav-link" id="nav-link-philosophy" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#philosophy')">How we write</a>
-            <a href="/atelier" class="tamyiz-header-nav-link" id="nav-link-atelier" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/atelier')">About us</a>
-            <a href="/#format-guide" class="tamyiz-header-nav-link" id="nav-link-formats" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#format-guide')">Read anywhere</a>
+            <a href="/" class="tamyiz-header-nav-link" id="nav-link-home" data-nav="/">Home</a>
+            <a href="/editions" class="tamyiz-header-nav-link" id="nav-link-editions" data-nav="/editions">E-books</a>
+            <a href="/films" class="tamyiz-header-nav-link" id="nav-link-films" data-nav="/films">Films</a>
+            <a href="/#philosophy" class="tamyiz-header-nav-link" id="nav-link-philosophy" data-nav="/#philosophy">How we write</a>
+            <a href="/atelier" class="tamyiz-header-nav-link" id="nav-link-atelier" data-nav="/atelier">About us</a>
+            <a href="/#format-guide" class="tamyiz-header-nav-link" id="nav-link-formats" data-nav="/#format-guide">Read anywhere</a>
           </nav>
 
           <div class="tamyiz-header-right">
-            ${anyAvailable() ? `<button class="tamyiz-cart-btn" onclick="window.tamyizApp.openCart()">
+            ${anyAvailable() ? `<button class="tamyiz-cart-btn" data-action="open-cart">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                 <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -426,30 +628,30 @@ class TamyizUnifiedApp {
       </header>
 
       <!-- MOBILE NAVIGATION DRAWER -->
-      <div class="tamyiz-mobile-drawer-backdrop" id="mobile-drawer-backdrop" onclick="window.tamyizApp.closeMobileMenu()"></div>
+      <div class="tamyiz-mobile-drawer-backdrop" id="mobile-drawer-backdrop" data-action="close-mobile-menu"></div>
       <aside class="tamyiz-mobile-drawer" id="mobile-drawer" aria-label="Mobile Navigation">
         <div class="tamyiz-mobile-drawer-head">
           <span class="tmz-drawer-brand"><img src="/assets/brand/tamyiz-dome-sm.webp" alt="" width="48" height="14" /><img src="/assets/brand/tamyiz-wordmark.svg" alt="TAMYIZ" width="84" height="14" /></span>
-          <button style="font-size: 1.25rem; background: none; border: none; cursor: pointer; padding: 0.25rem;" onclick="window.tamyizApp.closeMobileMenu()" aria-label="Close menu">✕</button>
+          <button style="font-size: 1.25rem; background: none; border: none; cursor: pointer; padding: 0.25rem;" data-action="close-mobile-menu" aria-label="Close menu">✕</button>
         </div>
         <div class="tamyiz-mobile-drawer-body">
           <div>
             <div class="tamyiz-mobile-nav-group-title">Menu</div>
             <ul class="tamyiz-mobile-nav-list">
-              <li><a href="/" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/')">Home <span>→</span></a></li>
-              <li><a href="/editions" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/editions')">All e-books <span>→</span></a></li>
-              <li><a href="/films" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/films')">Films <span>→</span></a></li>
-              <li><a href="/#philosophy" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/#philosophy')">How we write <span>→</span></a></li>
-              <li><a href="/atelier" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/atelier')">About us <span>→</span></a></li>
-              <li><a href="/#format-guide" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.scrollToFormatGuide()">How to read our e-books <span>→</span></a></li>
-              <li>${anyAvailable() ? `<a href="#cart" class="tamyiz-mobile-nav-link" onclick="event.preventDefault(); window.tamyizApp.handleInstantCheckoutNav()" style="color: var(--color-red-on-dark); font-weight: 700;">Checkout <span>→</span></a>` : `<a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tamyiz-mobile-nav-link" style="color: var(--color-red-on-dark); font-weight: 700;">Pre-order on WhatsApp <span>↗</span></a>`}</li>
+              <li><a href="/" class="tamyiz-mobile-nav-link" data-nav="/" data-close-menu>Home <span>→</span></a></li>
+              <li><a href="/editions" class="tamyiz-mobile-nav-link" data-nav="/editions" data-close-menu>All e-books <span>→</span></a></li>
+              <li><a href="/films" class="tamyiz-mobile-nav-link" data-nav="/films" data-close-menu>Films <span>→</span></a></li>
+              <li><a href="/#philosophy" class="tamyiz-mobile-nav-link" data-nav="/#philosophy" data-close-menu>How we write <span>→</span></a></li>
+              <li><a href="/atelier" class="tamyiz-mobile-nav-link" data-nav="/atelier" data-close-menu>About us <span>→</span></a></li>
+              <li><a href="/#format-guide" class="tamyiz-mobile-nav-link" data-action="scroll-format-guide" data-close-menu>How to read our e-books <span>→</span></a></li>
+              <li>${anyAvailable() ? `<a href="#cart" class="tamyiz-mobile-nav-link" data-action="instant-checkout-nav" style="color: var(--color-red-on-dark); font-weight: 700;">Checkout <span>→</span></a>` : `<a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tamyiz-mobile-nav-link" style="color: var(--color-red-on-dark); font-weight: 700;">Pre-order on WhatsApp <span>↗</span></a>`}</li>
             </ul>
           </div>
 
           <div>
             <div class="tamyiz-mobile-nav-group-title">Shop</div>
             <div class="tamyiz-mobile-cat-grid">
-              <a href="/editions" class="tamyiz-mobile-cat-btn" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/editions')">
+              <a href="/editions" class="tamyiz-mobile-cat-btn" data-nav="/editions" data-close-menu>
                 <span>All e-books${products.length ? ` (${products.length})` : ''}</span> <span>→</span>
               </a>
             </div>
@@ -458,25 +660,25 @@ class TamyizUnifiedApp {
           <div>
             <div class="tamyiz-mobile-nav-group-title">Help and policies</div>
             <ul class="tamyiz-footer-links">
-              <li><a href="/#format-guide" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.scrollToFormatGuide()">How to read our e-books</a></li>
-              <li><a href="/legal/delivery-protocol" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.openLegalModal('delivery-protocol')">Shipping &amp; Delivery Policy</a></li>
-              <li><a href="/legal/license" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.openLegalModal('license')">Refund &amp; Cancellation Policy</a></li>
-              <li><a href="/legal/privacy" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.openLegalModal('privacy')">Privacy &amp; Data Security</a></li>
-              <li><a href="/legal/terms" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.openLegalModal('terms')">Terms of Service</a></li>
-              <li><a href="/legal/contact" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.openLegalModal('contact')">Contact Us</a></li>
+              <li><a href="/#format-guide" class="tamyiz-footer-link" data-action="scroll-format-guide" data-close-menu>How to read our e-books</a></li>
+              <li><a href="/legal/delivery-protocol" class="tamyiz-footer-link" data-action="open-legal-modal" data-arg="delivery-protocol" data-close-menu>Shipping &amp; Delivery Policy</a></li>
+              <li><a href="/legal/license" class="tamyiz-footer-link" data-action="open-legal-modal" data-arg="license" data-close-menu>Refund &amp; Cancellation Policy</a></li>
+              <li><a href="/legal/privacy" class="tamyiz-footer-link" data-action="open-legal-modal" data-arg="privacy" data-close-menu>Privacy &amp; Data Security</a></li>
+              <li><a href="/legal/terms" class="tamyiz-footer-link" data-action="open-legal-modal" data-arg="terms" data-close-menu>Terms of Service</a></li>
+              <li><a href="/legal/contact" class="tamyiz-footer-link" data-action="open-legal-modal" data-arg="contact" data-close-menu>Contact Us</a></li>
               <li><a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E7B2E; font-weight: 700;">WhatsApp us (<span style="white-space: nowrap;">${siteConfig.phone}</span>) ↗</a></li>
-              <li><a href="/admin" class="tamyiz-footer-link" onclick="event.preventDefault(); window.tamyizApp.closeMobileMenu(); window.tamyizApp.navigateTo('/admin')" style="font-size: 0.85em;">Admin Portal ↗</a></li>
+              <li><a href="/admin" class="tamyiz-footer-link" data-nav="/admin" data-close-menu style="font-size: 0.85em;">Admin Portal ↗</a></li>
             </ul>
           </div>
         </div>
       </aside>
 
       <!-- PERSISTENT SLIDE-OUT CART (BAG) DRAWER -->
-      <div class="tamyiz-drawer-backdrop" id="cart-backdrop" onclick="window.tamyizApp.closeCart()"></div>
+      <div class="tamyiz-drawer-backdrop" id="cart-backdrop" data-action="close-cart"></div>
       <aside class="tamyiz-drawer" id="cart-drawer" aria-label="Your bag">
         <div class="tamyiz-drawer-head">
           <div class="tamyiz-drawer-title">Your bag <span id="cart-count-label"></span></div>
-          <button style="font-size: 1.25rem; background: none; border: none; cursor: pointer; padding: 0.25rem;" onclick="window.tamyizApp.closeCart()" aria-label="Close bag">✕</button>
+          <button style="font-size: 1.25rem; background: none; border: none; cursor: pointer; padding: 0.25rem;" data-action="close-cart" aria-label="Close bag">✕</button>
         </div>
 
         <!-- Free digital shipping tracker -->
@@ -517,7 +719,7 @@ class TamyizUnifiedApp {
             <span id="cart-discount-label">Discount</span>
             <div style="display: flex; align-items: center; gap: 0.4rem;">
               <strong id="cart-discount-val">-₹0</strong>
-              <button onclick="window.tamyizApp.removeCoupon()" style="background: none; border: none; color: #888; font-size: 0.72rem; cursor: pointer;" title="Remove coupon">✕</button>
+              <button data-action="remove-coupon" style="background: none; border: none; color: #888; font-size: 0.72rem; cursor: pointer;" title="Remove coupon">✕</button>
             </div>
           </div>
 
@@ -531,10 +733,10 @@ class TamyizUnifiedApp {
             <span id="cart-total">₹0</span>
           </div>
 
-          <!-- Promo code row (only when a promo code exists: see VALID_COUPONS in server/payments.js) -->
+          <!-- Promo code row (checked against coupons created on /admin) -->
           <div style="display: ${hasCoupons() ? 'flex' : 'none'}; gap: 0.4rem; margin-bottom: 0.4rem;">
-            <input type="text" id="coupon-input" placeholder="PROMO CODE" style="flex-grow: 1; padding: 0.55rem 0.75rem; border: 1px solid var(--color-border); border-radius: 0; text-transform: uppercase; font-family: monospace; font-size: 14px;" onkeydown="if(event.key==='Enter') window.tamyizApp.applyCoupon();" />
-            <button id="btn-apply-drawer-coupon" style="background: var(--color-black); color: #FFF; padding: 0 0.95rem; border-radius: 0; font-family: monospace; font-size: 0.72rem; font-weight: 800; cursor: pointer; letter-spacing: 0.05em; text-transform: uppercase;" onclick="window.tamyizApp.applyCoupon()">Apply</button>
+            <input type="text" id="coupon-input" placeholder="PROMO CODE" style="flex-grow: 1; padding: 0.55rem 0.75rem; border: 1px solid var(--color-border); border-radius: 0; text-transform: uppercase; font-family: monospace; font-size: 14px;" data-enter-action="apply-coupon" />
+            <button id="btn-apply-drawer-coupon" style="background: var(--color-black); color: #FFF; padding: 0 0.95rem; border-radius: 0; font-family: monospace; font-size: 0.72rem; font-weight: 800; cursor: pointer; letter-spacing: 0.05em; text-transform: uppercase;" data-action="apply-coupon">Apply</button>
           </div>
           <div id="drawer-coupon-feedback" style="display: none; font-size: 0.72rem; font-family: monospace; margin-bottom: 0.6rem; font-weight: 600;"></div>
 
@@ -547,13 +749,13 @@ class TamyizUnifiedApp {
             
             <div class="tamyiz-dispatch-input-row" style="margin-bottom: 0.6rem;">
               <label class="tamyiz-form-label-mono" for="bag-dispatch-email">EMAIL ADDRESS *</label>
-              <input type="email" id="bag-dispatch-email" class="tamyiz-dispatch-input" placeholder="yourname@gmail.com" autocomplete="email" required oninput="window.tamyizApp.validateDispatchField('email')" />
+              <input type="email" id="bag-dispatch-email" class="tamyiz-dispatch-input" placeholder="yourname@gmail.com" autocomplete="email" required data-input-action="validate-dispatch" data-arg="email" />
               <div id="bag-email-error" class="tamyiz-input-error-msg" style="display: none;">Please enter a valid email address</div>
             </div>
 
             <div class="tamyiz-dispatch-input-row" style="margin-bottom: 0.6rem;">
               <label class="tamyiz-form-label-mono" for="bag-dispatch-phone">MOBILE NUMBER (+91) *</label>
-              <input type="tel" id="bag-dispatch-phone" class="tamyiz-dispatch-input" placeholder="10-digit mobile number" autocomplete="tel" required oninput="window.tamyizApp.validateDispatchField('phone')" />
+              <input type="tel" id="bag-dispatch-phone" class="tamyiz-dispatch-input" placeholder="10-digit mobile number" autocomplete="tel" required data-input-action="validate-dispatch" data-arg="phone" />
               <div id="bag-phone-error" class="tamyiz-input-error-msg" style="display: none;">Valid 10-digit mobile or international number required</div>
             </div>
 
@@ -562,7 +764,7 @@ class TamyizUnifiedApp {
             </div>
 
             <!-- Primary Checkout CTA -->
-            <button id="btn-bag-checkout" class="tamyiz-btn-checkout-primary" onclick="window.tamyizApp.handleBagCheckout()">
+            <button id="btn-bag-checkout" class="tamyiz-btn-checkout-primary" data-action="bag-checkout">
               <span id="btn-checkout-label">PROCEED TO UPI / CARD CHECKOUT • ₹0 →</span>
             </button>
           </div>
@@ -603,34 +805,34 @@ class TamyizUnifiedApp {
             <div class="tamyiz-footer-col">
               <h3>Pages</h3>
               <ul class="tamyiz-footer-links">
-                <li><a href="/" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/')">Home</a></li>
-                <li><a href="/editions" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')">All e-books</a></li>
-                <li><a href="/films" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/films')">Films</a></li>
-                <li><a href="/#philosophy" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/#philosophy')">How we write</a></li>
-                <li><a href="/atelier" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/atelier')">About us</a></li>
-                <li>${anyAvailable() ? `<a href="#cart" onclick="event.preventDefault(); window.tamyizApp.handleInstantCheckoutNav()" style="color: var(--color-red-on-dark); font-weight: 700;">Checkout →</a>` : `<a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--color-red-on-dark); font-weight: 700;">Pre-order on WhatsApp ↗</a>`}</li>
+                <li><a href="/" data-nav="/">Home</a></li>
+                <li><a href="/editions" data-nav="/editions">All e-books</a></li>
+                <li><a href="/films" data-nav="/films">Films</a></li>
+                <li><a href="/#philosophy" data-nav="/#philosophy">How we write</a></li>
+                <li><a href="/atelier" data-nav="/atelier">About us</a></li>
+                <li>${anyAvailable() ? `<a href="#cart" data-action="instant-checkout-nav" style="color: var(--color-red-on-dark); font-weight: 700;">Checkout →</a>` : `<a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--color-red-on-dark); font-weight: 700;">Pre-order on WhatsApp ↗</a>`}</li>
               </ul>
             </div>
 
             <div class="tamyiz-footer-col">
               <h3>Shop</h3>
               <ul class="tamyiz-footer-links">
-                <li><a href="/editions" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')">All e-books${products.length ? ` (${products.length})` : ''}</a></li>
-                <li><a href="/downloads" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/downloads')">Download Recovery</a></li>
+                <li><a href="/editions" data-nav="/editions">All e-books${products.length ? ` (${products.length})` : ''}</a></li>
+                <li><a href="/downloads" data-nav="/downloads">Download Recovery</a></li>
               </ul>
             </div>
 
             <div class="tamyiz-footer-col tamyiz-footer-col-full-mobile">
               <h3>Help and policies</h3>
               <ul class="tamyiz-footer-links">
-                <li><a href="/#format-guide" onclick="event.preventDefault(); window.tamyizApp.scrollToFormatGuide()">How to read our e-books</a></li>
-                <li><a href="/legal/delivery-protocol" onclick="event.preventDefault(); window.tamyizApp.openLegalModal('delivery-protocol')">Shipping &amp; Delivery Policy</a></li>
-                <li><a href="/legal/license" onclick="event.preventDefault(); window.tamyizApp.openLegalModal('license')">Refund &amp; Cancellation Policy</a></li>
-                <li><a href="/legal/privacy" onclick="event.preventDefault(); window.tamyizApp.openLegalModal('privacy')">Privacy &amp; Data Security</a></li>
-                <li><a href="/legal/terms" onclick="event.preventDefault(); window.tamyizApp.openLegalModal('terms')">Terms of Service</a></li>
-                <li><a href="/legal/contact" onclick="event.preventDefault(); window.tamyizApp.openLegalModal('contact')">Contact Us</a></li>
+                <li><a href="/#format-guide" data-action="scroll-format-guide">How to read our e-books</a></li>
+                <li><a href="/legal/delivery-protocol" data-action="open-legal-modal" data-arg="delivery-protocol">Shipping &amp; Delivery Policy</a></li>
+                <li><a href="/legal/license" data-action="open-legal-modal" data-arg="license">Refund &amp; Cancellation Policy</a></li>
+                <li><a href="/legal/privacy" data-action="open-legal-modal" data-arg="privacy">Privacy &amp; Data Security</a></li>
+                <li><a href="/legal/terms" data-action="open-legal-modal" data-arg="terms">Terms of Service</a></li>
+                <li><a href="/legal/contact" data-action="open-legal-modal" data-arg="contact">Contact Us</a></li>
                 <li><a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="color: #FFFFFF; font-weight: 700;">WhatsApp us ↗</a></li>
-                <li><a href="/admin" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/admin')" style="font-size: 0.85em;">Admin Portal ↗</a></li>
+                <li><a href="/admin" data-nav="/admin" style="font-size: 0.85em;">Admin Portal ↗</a></li>
               </ul>
             </div>
           </div>
@@ -646,12 +848,12 @@ class TamyizUnifiedApp {
       </footer>
 
       <!-- 4. CHECKOUT / WAITLIST & POLICY MODAL OVERLAY -->
-      <div class="tamyiz-modal" id="tamyiz-modal" onclick="if(event.target === this) window.tamyizApp.closeModal();">
+      <div class="tamyiz-modal" id="tamyiz-modal" data-action="close-modal" data-self-only>
         <div class="tamyiz-modal-box" id="tamyiz-modal-content"></div>
       </div>
 
       <!-- 4B. LOOK INSIDE / PRODUCT PREVIEW MODAL OVERLAY (Task 3) -->
-      <div class="tamyiz-modal-backdrop" id="preview-modal-backdrop" onclick="if(event.target === this) window.tamyizApp.closeProductPreview();">
+      <div class="tamyiz-modal-backdrop" id="preview-modal-backdrop" data-action="close-preview-modal" data-self-only>
         <div class="tamyiz-preview-modal" id="preview-modal-container" role="dialog" aria-modal="true"></div>
       </div>
 
@@ -845,7 +1047,7 @@ class TamyizUnifiedApp {
     const hasFilter = this.searchQuery || this.activeCategory !== 'all' || this.sortBy !== 'featured';
 
     const clearButton = hasFilter
-      ? `<button onclick="window.tamyizApp.resetAllFilters()" style="background:none; border:none; color: var(--color-red-ink); font-family:var(--font-sub); font-size:0.75rem; font-weight:800; cursor:pointer; text-decoration:underline;">Reset All Filters</button>`
+      ? `<button data-action="reset-filters" style="background:none; border:none; color: var(--color-red-ink); font-family:var(--font-sub); font-size:0.75rem; font-weight:800; cursor:pointer; text-decoration:underline;">Reset All Filters</button>`
       : '';
 
     return `
@@ -1164,7 +1366,7 @@ class TamyizUnifiedApp {
           <p class="tamyiz-cart-empty-desc">
             Add an e-book from the shop and it will appear here.
           </p>
-          <button class="tamyiz-btn-explore-artifacts" onclick="window.tamyizApp.closeCart(); window.tamyizApp.scrollToEditions()">
+          <button class="tamyiz-btn-explore-artifacts" data-action="explore-editions-from-cart">
             Browse the e-books →
           </button>
         </div>
@@ -1187,7 +1389,7 @@ class TamyizUnifiedApp {
             ${item.originalPrice ? `<span style="font-size: 0.8rem; color: #888; text-decoration: line-through; margin-left: 0.4rem;">₹${item.originalPrice.toLocaleString('en-IN')}</span>` : ''}
           </div>
         </div>
-        <button class="tamyiz-cart-del" onclick="window.tamyizApp.removeFromBag('${item.cartItemId}')" title="Remove item from bag">✕</button>
+        <button class="tamyiz-cart-del" data-action="remove-from-bag" data-arg="${item.cartItemId}" title="Remove item from bag">✕</button>
       </div>
     `).join('');
 
@@ -1501,17 +1703,17 @@ class TamyizUnifiedApp {
           <span class="tamyiz-modal-meta-tag">LOOK INSIDE</span>
           <h3 class="tamyiz-modal-title">${product.name}</h3>
         </div>
-        <button class="tamyiz-modal-close-btn" onclick="window.tamyizApp.closeProductPreview()" aria-label="Close Preview Modal">✕</button>
+        <button class="tamyiz-modal-close-btn" data-action="close-preview-modal" aria-label="Close Preview Modal">✕</button>
       </div>
 
       <div class="tamyiz-modal-tabs">
-        <button class="tamyiz-modal-tab-btn ${currentTab === 0 ? 'active' : ''}" onclick="window.tamyizApp.setPreviewTab(0)">
+        <button class="tamyiz-modal-tab-btn ${currentTab === 0 ? 'active' : ''}" data-action="set-preview-tab" data-arg="0">
           01 Samples &amp; Plates
         </button>
-        <button class="tamyiz-modal-tab-btn ${currentTab === 1 ? 'active' : ''}" onclick="window.tamyizApp.setPreviewTab(1)">
+        <button class="tamyiz-modal-tab-btn ${currentTab === 1 ? 'active' : ''}" data-action="set-preview-tab" data-arg="1">
           02 Chapters &amp; Modules
         </button>
-        <button class="tamyiz-modal-tab-btn ${currentTab === 2 ? 'active' : ''}" onclick="window.tamyizApp.setPreviewTab(2)">
+        <button class="tamyiz-modal-tab-btn ${currentTab === 2 ? 'active' : ''}" data-action="set-preview-tab" data-arg="2">
           03 Technical Specs
         </button>
       </div>
@@ -1525,7 +1727,7 @@ class TamyizUnifiedApp {
           ${hasVariants ? `
             <span style="font-size: 0.75rem; font-weight: 800; font-family: var(--font-sub); text-transform: uppercase; color: #555;">${product.variants.type || 'Format'}:</span>
             ${product.variants.options.map(opt => `
-              <button class="tamyiz-size-pill-btn ${opt === selectedVariant ? 'active' : ''}" onclick="window.tamyizApp.selectModalFormat('${product.id}', '${opt}')">
+              <button class="tamyiz-size-pill-btn ${opt === selectedVariant ? 'active' : ''}" data-action="select-modal-format" data-id="${product.id}" data-variant="${opt}">
                 ${opt}
               </button>
             `).join('')}
@@ -1539,7 +1741,7 @@ class TamyizUnifiedApp {
             <span style="font-size: 1.25rem; font-weight: 800; font-family: var(--font-display); color: #000;" id="modal-price-${product.id}">₹${price.toLocaleString('en-IN')}</span>
             ${origPrice ? `<span style="font-size: 0.88rem; color: #999; text-decoration: line-through; margin-left: 0.35rem;">₹${origPrice.toLocaleString('en-IN')}</span>` : ''}
           </div>
-          <button class="tamyiz-btn-quick-add" id="modal-buy-btn-${product.id}" style="background: var(--color-red); font-size: 0.84rem; padding: 0.85rem 1.4rem; border: none; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;" onclick="window.tamyizApp.quickBuyFromModal('${product.id}')">
+          <button class="tamyiz-btn-quick-add" id="modal-buy-btn-${product.id}" style="background: var(--color-red); font-size: 0.84rem; padding: 0.85rem 1.4rem; border: none; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;" data-action="quick-buy-modal" data-id="${product.id}">
             ${buyLabel(product, price, 'modal')}
           </button>
         </div>
@@ -1657,7 +1859,7 @@ class TamyizUnifiedApp {
           </p>
         </div>
 
-        <form id="tmz-sample-form" onsubmit="window.tamyizApp.submitSampleLead(event, '${product.id}')" style="display: flex; flex-direction: column; gap: 0.85rem;">
+        <form id="tmz-sample-form" data-submit-action="sample-lead" data-id="${product.id}" style="display: flex; flex-direction: column; gap: 0.85rem;">
           <div>
             <label for="sample-lead-email" style="display: block; font-family: var(--font-head); font-size: 0.8rem; font-weight: 600; margin-bottom: 0.35rem; color: #0B0B0B;">
               Email Address *
@@ -1665,11 +1867,10 @@ class TamyizUnifiedApp {
             <input
               type="email"
               id="sample-lead-email"
+              class="tmz-focus-border"
               required
               placeholder="name@domain.com"
               style="width: 100%; box-sizing: border-box; padding: 0.75rem 0.9rem; font-size: 0.92rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF; outline: none; transition: border-color 0.2s;"
-              onfocus="this.style.borderColor='#0B0B0B'"
-              onblur="this.style.borderColor='rgba(11,11,11,0.2)'"
             />
           </div>
 
@@ -1680,10 +1881,9 @@ class TamyizUnifiedApp {
             <input
               type="tel"
               id="sample-lead-phone"
+              class="tmz-focus-border"
               placeholder="+91 98765 43210"
               style="width: 100%; box-sizing: border-box; padding: 0.75rem 0.9rem; font-size: 0.92rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 8px; background: #FFF; outline: none; transition: border-color 0.2s;"
-              onfocus="this.style.borderColor='#0B0B0B'"
-              onblur="this.style.borderColor='rgba(11,11,11,0.2)'"
             />
           </div>
 
@@ -1692,9 +1892,8 @@ class TamyizUnifiedApp {
           <button
             type="submit"
             id="sample-submit-btn"
+            class="tmz-hover-dark"
             style="width: 100%; padding: 0.85rem 1.25rem; font-family: var(--font-head); font-weight: 700; font-size: 0.9rem; letter-spacing: 0.04em; text-transform: uppercase; background: #0B0B0B; color: #FFF; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: background 0.2s;"
-            onmouseover="this.style.background='#222'"
-            onmouseout="this.style.background='#0B0B0B'"
           >
             <span>Unlock &amp; Read Chapter 1</span>
             <span>→</span>
@@ -1796,7 +1995,7 @@ class TamyizUnifiedApp {
             </p>
           </div>
           <button
-            onclick="window.tamyizApp.closeModal()"
+            data-action="close-modal"
             style="background: transparent; border: 1.5px solid rgba(11,11,11,0.15); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: #0B0B0B; flex-shrink: 0;"
             aria-label="Close reader"
           >
@@ -1847,10 +2046,10 @@ class TamyizUnifiedApp {
             </div>
           </div>
           <button
-            onclick="window.tamyizApp.quickAddToCart('${product.id}'); window.tamyizApp.closeModal(); window.tamyizApp.openCart();"
+            class="tmz-hover-fade"
+            data-action="sample-buy-full"
+            data-id="${product.id}"
             style="background: #FFFFFF; color: #0B0B0B; font-family: var(--font-head); font-weight: 700; font-size: 0.88rem; padding: 0.75rem 1.4rem; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; transition: opacity 0.2s;"
-            onmouseover="this.style.opacity='0.9'"
-            onmouseout="this.style.opacity='1'"
           >
             Buy Full Edition →
           </button>
@@ -1944,7 +2143,7 @@ class TamyizUnifiedApp {
         listEl.innerHTML = `
           <div style="background: #FAF9F6; border: 1px dashed rgba(11,11,11,0.15); border-radius: 8px; padding: 1rem; text-align: center;">
             <p style="font-size: 0.84rem; color: #666; margin: 0 0 0.4rem;">Have you read this e-book?</p>
-            <button onclick="window.tamyizApp.openReviewModal('${productId}')" style="background: none; border: none; font-size: 0.8rem; font-weight: 700; color: #0B0B0B; text-decoration: underline; cursor: pointer;">
+            <button data-action="open-review-modal" data-id="${productId}" style="background: none; border: none; font-size: 0.8rem; font-weight: 700; color: #0B0B0B; text-decoration: underline; cursor: pointer;">
               Be the first reader to share your review →
             </button>
           </div>
@@ -1992,7 +2191,7 @@ class TamyizUnifiedApp {
           Share your candid takeaways with other prospective readers. Verified purchases receive a priority badge.
         </p>
 
-        <form onsubmit="window.tamyizApp.submitProductReview(event, '${product.id}')" style="display: flex; flex-direction: column; gap: 0.85rem;">
+        <form data-submit-action="product-review" data-id="${product.id}" style="display: flex; flex-direction: column; gap: 0.85rem;">
           <div>
             <label style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">Your Rating *</label>
             <select id="rev-input-rating" style="width: 100%; padding: 0.65rem 0.8rem; font-size: 0.9rem; border: 1.5px solid rgba(11,11,11,0.2); border-radius: 6px; background: #FFF;">
@@ -2025,9 +2224,8 @@ class TamyizUnifiedApp {
           <button
             type="submit"
             id="rev-submit-btn"
+            class="tmz-hover-dark"
             style="width: 100%; padding: 0.85rem; background: #0B0B0B; color: #FFF; font-family: var(--font-head); font-weight: 700; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.05em; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s;"
-            onmouseover="this.style.background='#222'"
-            onmouseout="this.style.background='#0B0B0B'"
           >
             Submit Review →
           </button>
@@ -2279,8 +2477,8 @@ class TamyizUnifiedApp {
 </head>
 <body>
   <div class="toolbar no-print">
-    <button type="button" onclick="window.print()">Save as PDF / Print</button>
-    <button type="button" class="ghost" onclick="window.close()">Close</button>
+    <button type="button" id="tmz-rcpt-print">Save as PDF / Print</button>
+    <button type="button" class="ghost" id="tmz-rcpt-close">Close</button>
   </div>
   <p class="hint no-print">To save it: tap "Save as PDF / Print", then choose "Save as PDF".</p>
   <div class="header">
@@ -2369,6 +2567,8 @@ class TamyizUnifiedApp {
       win.document.open();
       win.document.write(invoiceDoc);
       win.document.close();
+      win.document.getElementById('tmz-rcpt-print')?.addEventListener('click', () => win.print());
+      win.document.getElementById('tmz-rcpt-close')?.addEventListener('click', () => win.close());
       return;
     }
     // Pop-up blocked: fall back to saving the receipt as a file.
@@ -2778,7 +2978,7 @@ class TamyizUnifiedApp {
             <span class="tamyiz-sandbox-dot"></span>
             <span>TAMYIZ™ UPI / CARD INSTANT VERIFICATION</span>
           </div>
-          <button style="background:none; border:none; font-size:1.25rem; cursor:pointer; padding: 0.2rem;" onclick="window.tamyizApp.closeSandboxModal()" aria-label="Close modal">✕</button>
+          <button style="background:none; border:none; font-size:1.25rem; cursor:pointer; padding: 0.2rem;" data-action="close-sandbox-modal" aria-label="Close modal">✕</button>
         </div>
 
         <div class="tamyiz-sandbox-meta">
@@ -2809,12 +3009,12 @@ class TamyizUnifiedApp {
           </label>
         </div>
 
-        <button id="btn-sandbox-approve" class="tamyiz-btn-checkout-primary" style="background: #1E7B2E; border-color: #1E7B2E;" data-order-id="${escapeText(orderId)}" data-email="${escapeText(email)}" data-phone="${escapeText(phone)}" onclick="window.tamyizApp.confirmSandboxPayment(this.dataset.orderId, this.dataset.email, this.dataset.phone)">
+        <button id="btn-sandbox-approve" class="tamyiz-btn-checkout-primary" style="background: #1E7B2E; border-color: #1E7B2E;" data-order-id="${escapeText(orderId)}" data-email="${escapeText(email)}" data-phone="${escapeText(phone)}" data-action="confirm-sandbox">
           SIMULATE 1-CLICK UPI CLEARANCE (₹${totalINR.toLocaleString('en-IN')}) →
         </button>
 
         <div style="text-align: center; margin-top: 0.75rem;">
-          <button style="background:none; border:none; color:#777; font-family:monospace; font-size:0.72rem; text-decoration:underline; cursor:pointer;" onclick="window.tamyizApp.closeSandboxModal()">
+          <button style="background:none; border:none; color:#777; font-family:monospace; font-size:0.72rem; text-decoration:underline; cursor:pointer;" data-action="close-sandbox-modal">
             Cancel and Return to Bag
           </button>
         </div>
@@ -2932,7 +3132,7 @@ class TamyizUnifiedApp {
             <span style="color: #1E7B2E; font-size: 1.1rem; line-height: 1;">●</span>
             <span>PAYMENT RECEIVED</span>
           </div>
-          <button style="background:none; border:none; font-size:1.25rem; cursor:pointer; padding: 0.2rem;" onclick="window.tamyizApp.closeModal()" aria-label="Close modal">✕</button>
+          <button style="background:none; border:none; font-size:1.25rem; cursor:pointer; padding: 0.2rem;" data-action="close-modal" aria-label="Close modal">✕</button>
         </div>
 
         <div class="tamyiz-unlock-meta-box">
@@ -2978,13 +3178,13 @@ class TamyizUnifiedApp {
             <span>SEND MY ORDER DETAILS TO TAMYIZ ON WHATSAPP ↗</span>
           </a>
 
-          <button class="tamyiz-btn-checkout-primary" style="background: #FFFFFF; color: #000000; border: 1px solid #000000;" onclick="window.tamyizApp.downloadTaxInvoiceFromPayment('${paymentId}')">
+          <button class="tamyiz-btn-checkout-primary" style="background: #FFFFFF; color: #000000; border: 1px solid #000000;" data-action="download-receipt-from-payment" data-arg="${paymentId}">
             <span>PRINT / SAVE RECEIPT ↗</span>
           </button>
         </div>
 
         <div style="text-align: center;">
-          <button style="background:none; border:none; font-family:monospace; font-size:0.74rem; font-weight:700; text-transform:uppercase; text-decoration:underline; cursor:pointer;" onclick="window.tamyizApp.closeModal(); window.tamyizApp.navigateTo('/editions');">
+          <button style="background:none; border:none; font-family:monospace; font-size:0.74rem; font-weight:700; text-transform:uppercase; text-decoration:underline; cursor:pointer;" data-nav="/editions" data-close-modal>
             Back to the e-books →
           </button>
         </div>
@@ -3049,13 +3249,13 @@ class TamyizUnifiedApp {
             <h3 class="tamyiz-legal-modal-title">${doc.title}</h3>
             <p class="tamyiz-legal-modal-sub">${doc.subtitle}</p>
           </div>
-          <button type="button" class="tmz-modal-close-inline" onclick="window.tamyizApp.closeModal()" aria-label="Close">✕</button>
+          <button type="button" class="tmz-modal-close-inline" data-action="close-modal" aria-label="Close">✕</button>
         </div>
 
         <div class="tamyiz-legal-modal-scroll">
           <div class="tamyiz-legal-tabs-row" role="tablist" aria-label="Policy sections">
             ${tabs.map(t => `
-              <button type="button" class="tamyiz-legal-tab-btn ${t.key === activeKey ? 'active' : ''}" aria-pressed="${t.key === activeKey ? 'true' : 'false'}" onclick="window.tamyizApp.switchLegalModalTab('${t.key}')">
+              <button type="button" class="tamyiz-legal-tab-btn ${t.key === activeKey ? 'active' : ''}" aria-pressed="${t.key === activeKey ? 'true' : 'false'}" data-action="switch-legal-tab" data-arg="${t.key}">
                 <span class="tamyiz-legal-tab-code">${t.code}</span>
                 <span>${t.label}</span>
               </button>
@@ -3088,10 +3288,10 @@ class TamyizUnifiedApp {
           </div>
 
           <div class="tamyiz-legal-modal-foot">
-            <a href="/legal/${doc.slug}" class="tamyiz-legal-page-link" onclick="event.preventDefault(); window.tamyizApp.closeModal(); window.tamyizApp.navigateTo('/legal/${doc.slug}')">
+            <a href="/legal/${doc.slug}" class="tamyiz-legal-page-link" data-nav="/legal/${doc.slug}" data-close-modal>
               Open full policy page ↗
             </a>
-            <button type="button" class="tamyiz-legal-close-btn" onclick="window.tamyizApp.closeModal()">
+            <button type="button" class="tamyiz-legal-close-btn" data-action="close-modal">
               Close
             </button>
           </div>
@@ -3129,7 +3329,7 @@ class TamyizUnifiedApp {
         <div style="font-size: 0.92rem; color: #444; line-height: 1.7; white-space: pre-line; margin-bottom: 2rem;">
           ${policy.content}
         </div>
-        <button class="tamyiz-hero-btn-primary" style="padding: 0.75rem 1.75rem; font-size: 0.8rem;" onclick="window.tamyizApp.closeModal()">
+        <button class="tamyiz-hero-btn-primary" style="padding: 0.75rem 1.75rem; font-size: 0.8rem;" data-action="close-modal">
           <span>Understood</span>
         </button>
       </div>
@@ -3141,11 +3341,11 @@ class TamyizUnifiedApp {
     const content = document.getElementById('tamyiz-modal-content');
     if (modal && content) {
       // One close button only: pop-ups that draw their own ✕ (policies, payment received) don't get a second one.
-      const hasOwnClose = html.includes('window.tamyizApp.closeModal()" aria-label=');
+      const hasOwnClose = html.includes('data-action="close-modal" aria-label=');
       const isLegal = html.includes('tamyiz-legal-modal-box');
       content.classList.toggle('is-legal', isLegal);
       content.innerHTML = `
-        ${hasOwnClose ? '' : '<button class="tmz-modal-close" onclick="window.tamyizApp.closeModal()" aria-label="Close">✕</button>'}
+        ${hasOwnClose ? '' : '<button class="tmz-modal-close" data-action="close-modal" aria-label="Close">✕</button>'}
         ${html}
       `;
       content.scrollTop = 0;

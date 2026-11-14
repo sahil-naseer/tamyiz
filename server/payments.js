@@ -18,11 +18,8 @@ import { markCartRecovered } from './abandoned.js';
  * - Downloads are signed links (/api/download/...), valid for a year, given only after verification.
  */
 
-// Verified Coupon Codes
-// Standard welcome discounts and special promotion codes
-export const VALID_COUPONS = {
-  SAMPLE10: { type: 'percent', value: 10, label: '10% sample reader gift' },
-};
+// Built-in hard-coded promo codes (empty in production; create promotions dynamically on /admin).
+export const VALID_COUPONS = {};
 
 /**
  * Validates cart items and computes strict server-side price in INR & paise.
@@ -167,6 +164,19 @@ export async function handleDownload(request, env, productId) {
     } catch (e) {
       console.warn('Could not read download counter from KV:', e);
     }
+  }
+
+  // Block downloads if this payment was fully refunded via Razorpay webhook
+  if (paymentId && env.TAMYIZ_STORE.get) {
+    try {
+      const fulfilledRaw = await env.TAMYIZ_STORE.get(`order-fulfilled:${paymentId}`);
+      if (fulfilledRaw) {
+        const ord = JSON.parse(fulfilledRaw);
+        if (ord && ord.status === 'refunded') {
+          return json({ error: 'This order was refunded, so the download link is no longer active.' }, 403);
+        }
+      }
+    } catch {}
   }
 
   const product = findById(await loadCatalog(env), productId);
@@ -690,6 +700,9 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
   try { event = JSON.parse(rawBody); } catch { return json({ error: 'Invalid JSON payload.' }, 400); }
 
   const eventName = event.event;
+  if (eventName === 'refund.processed') {
+    return handleRefundWebhook(event, env);
+  }
   if (eventName !== 'payment.captured' && eventName !== 'order.paid') {
     return json({ status: 'ignored', event: eventName }, 200);
   }
@@ -832,4 +845,91 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
   }
 
   return json({ status: 'fulfilled', paymentId, receiptEmailed: Boolean(receiptEmailed) }, 200);
+}
+
+/**
+ * Records Razorpay refund.processed webhooks against fulfilled orders idempotently.
+ * Full refunds mark status = 'refunded' and revoke download & recovery access.
+ */
+async function handleRefundWebhook(event, env) {
+  const refundEntity = event.payload?.refund?.entity || {};
+  const pEntity = event.payload?.payment?.entity || {};
+  const refundId = refundEntity.id;
+  const paymentId = refundEntity.payment_id || pEntity.id;
+  const orderId = pEntity.order_id || '';
+
+  if (!refundId || !paymentId) {
+    return json({ error: 'Missing refund or payment entity in webhook.' }, 400);
+  }
+
+  const kv = env && env.TAMYIZ_STORE;
+  if (!kv || !kv.get || !kv.put) {
+    return json({ status: 'refund_recorded', paymentId, refundId, refundStatus: 'unknown' }, 200);
+  }
+
+  const fulfilledKey = `order-fulfilled:${paymentId}`;
+  let orderData = null;
+  try {
+    const raw = await kv.get(fulfilledKey);
+    if (raw) orderData = JSON.parse(raw);
+  } catch {}
+  if (!orderData && orderId) {
+    try {
+      const ordRaw = await kv.get(`order:${orderId}`);
+      if (ordRaw) orderData = JSON.parse(ordRaw);
+    } catch {}
+  }
+
+  if (!orderData) {
+    const singleAmount = Number(refundEntity.amount) || 0;
+    const refundedPaise = Number(pEntity.amount_refunded) || singleAmount;
+    const isFull = pEntity.refund_status === 'full' || !pEntity.refund_status;
+    const fallbackRecord = {
+      orderId: orderId || paymentId,
+      paymentId,
+      amountPaise: Number(pEntity.amount) || refundedPaise,
+      refundedAmountPaise: refundedPaise,
+      refundedINR: Math.round(refundedPaise / 100),
+      refundStatus: isFull ? 'full' : 'partial',
+      status: isFull ? 'refunded' : 'paid',
+      lastRefundId: refundId,
+      refundedAt: new Date().toISOString(),
+      refunds: [{ refundId, amountPaise: singleAmount, processedAt: new Date().toISOString() }],
+    };
+    await kv.put(fulfilledKey, JSON.stringify(fallbackRecord), { expirationTtl: 365 * 86400 }).catch(() => {});
+    return json({ status: 'refund_recorded', paymentId, refundId, refundStatus: fallbackRecord.refundStatus }, 200);
+  }
+
+  const existingRefunds = Array.isArray(orderData.refunds) ? [...orderData.refunds] : [];
+  if (existingRefunds.some((r) => r && r.refundId === refundId)) {
+    return json({ status: 'already_processed', paymentId, refundId, refundStatus: orderData.refundStatus || 'full' }, 200);
+  }
+
+  const thisRefundPaise = Number(refundEntity.amount) || 0;
+  const accumulatedPaise = Number(pEntity.amount_refunded) > 0
+    ? Number(pEntity.amount_refunded)
+    : (Number(orderData.refundedAmountPaise || 0) + thisRefundPaise);
+  const totalPaise = Number(orderData.amountPaise) || (Number(orderData.totalINR || 0) * 100);
+  const isFull = pEntity.refund_status === 'full'
+    || (totalPaise > 0 && accumulatedPaise >= totalPaise)
+    || (!totalPaise && accumulatedPaise > 0);
+
+  existingRefunds.push({ refundId, amountPaise: thisRefundPaise, processedAt: new Date().toISOString() });
+  const updated = {
+    ...orderData,
+    refundedAmountPaise: accumulatedPaise,
+    refundedINR: Math.round(accumulatedPaise / 100),
+    refundStatus: isFull ? 'full' : 'partial',
+    status: isFull ? 'refunded' : (orderData.status || 'paid'),
+    lastRefundId: refundId,
+    refundedAt: new Date().toISOString(),
+    refunds: existingRefunds,
+  };
+
+  await kv.put(fulfilledKey, JSON.stringify(updated), { expirationTtl: 365 * 86400 }).catch(() => {});
+  if (updated.orderId) {
+    await kv.put(`order:${updated.orderId}`, JSON.stringify(updated)).catch(() => {});
+  }
+
+  return json({ status: 'refund_recorded', paymentId, refundId, refundStatus: updated.refundStatus }, 200);
 }

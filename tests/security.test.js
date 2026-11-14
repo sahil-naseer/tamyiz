@@ -127,7 +127,7 @@ test('coupons: coupons made on /admin are accepted by GET /api/coupon (the bag u
   const ok = await (await call(e, '/api/coupon?code=DIWALI25')).json();
   assert.equal(ok.valid, true);
   assert.equal(ok.coupon.value, 25);
-  assert.equal((await call(e, '/api/coupon?code=SAMPLE10')).status, 200);
+  assert.equal((await call(e, '/api/coupon?code=SAMPLE10')).status, 404);
   assert.equal((await call(e, '/api/coupon?code=NOPE')).status, 404);
 });
 
@@ -141,7 +141,11 @@ test('SEO: no made-up aggregateRating in the book structured data', () => {
 test('headers: Functions responses get the security headers (_headers does not cover them)', async () => {
   const html = withSecurityHeaders(new Response('<p>x</p>', { headers: { 'Content-Type': 'text/html' } }));
   assert.equal(html.headers.get('X-Frame-Options'), 'DENY');
-  assert.match(html.headers.get('Content-Security-Policy'), /frame-ancestors 'none'/);
+  const csp = html.headers.get('Content-Security-Policy');
+  assert.match(csp, /frame-ancestors 'none'/);
+  const scriptSrc = (csp.match(/script-src[^;]+/) || [''])[0];
+  assert.ok(scriptSrc.includes("'self'"));
+  assert.ok(!scriptSrc.includes("'unsafe-inline'"), 'script-src must not allow unsafe-inline');
   const api = withSecurityHeaders(new Response('{}', { headers: { 'Content-Type': 'application/json' } }));
   assert.equal(api.headers.get('X-Content-Type-Options'), 'nosniff');
 });
@@ -397,4 +401,122 @@ test('admin login: uses 0 KV writes on wrong passwords and supports stateless 6-
   assert.equal(step2.status, 200);
   assert.ok(step2.headers.get('Set-Cookie')?.includes('tmz_admin='));
   assert.equal(kvWrites, 0);
+});
+
+test('webhook: refund.processed handles partial/full refunds idempotently, adjusts overview revenue, and revokes downloads/recovery', async () => {
+  const webhookSecret = 'hook-refund-secret';
+  let recoveryEmails = 0;
+  const mockFetch = async (url) => {
+    if (String(url).includes('api.brevo.com')) {
+      recoveryEmails++;
+      return new Response('{"messageId":"sent"}', { status: 201 });
+    }
+    return new Response('{}', { status: 404 });
+  };
+
+  const e = env({
+    TAMYIZ_SANDBOX: 'true',
+    RAZORPAY_WEBHOOK_SECRET: webhookSecret,
+    BREVO_API_KEY: 'test_brevo_key',
+  });
+  await e.TAMYIZ_STORE.put('file:eb-onsale', new Uint8Array([37, 80, 68, 70, 45]));
+
+  // Complete a sandbox purchase so we have an order, download token, and buyer index
+  const verifiedRes = await post(e, '/api/verify-payment', {
+    items: [{ productId: 'eb-onsale', variant: 'PDF' }],
+    email: 'refund-buyer@gmail.com',
+    phone: '+919876543210',
+  }, {}, mockFetch);
+  assert.equal(verifiedRes.status, 200);
+  const verified = await verifiedRes.json();
+  const dlPath = new URL(verified.downloads[0].downloadUrl).pathname + new URL(verified.downloads[0].downloadUrl).search;
+  assert.equal((await call(e, dlPath)).status, 200);
+
+  const sendRefund = async (refundId, amountPaise, amountRefundedPaise, refundStatus) => {
+    const bodyText = JSON.stringify({
+      event: 'refund.processed',
+      payload: {
+        refund: { entity: { id: refundId, payment_id: verified.paymentId, amount: amountPaise } },
+        payment: {
+          entity: {
+            id: verified.paymentId,
+            order_id: verified.orderId,
+            amount: 29900,
+            amount_refunded: amountRefundedPaise,
+            refund_status: refundStatus,
+          },
+        },
+      },
+    });
+    const sig = await hmacSha256Hex(webhookSecret, bodyText);
+    return call(e, '/api/webhook/razorpay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-razorpay-signature': sig },
+      body: bodyText,
+    });
+  };
+
+  // 1. Partial refund (INR 100 of 299)
+  const partialRes = await sendRefund('rfnd_part_1', 10000, 10000, 'partial');
+  assert.equal(partialRes.status, 200);
+  const partialData = await partialRes.json();
+  assert.equal(partialData.status, 'refund_recorded');
+  assert.equal(partialData.refundStatus, 'partial');
+
+  // 2. Duplicate partial refund webhook is idempotent
+  const dupRes = await sendRefund('rfnd_part_1', 10000, 10000, 'partial');
+  assert.equal(dupRes.status, 200);
+  assert.equal((await dupRes.json()).status, 'already_processed');
+
+  // 3. Admin overview nets out the partial refund and still allows download
+  const cookie = await login(e);
+  const ov1 = await (await call(e, '/api/admin/overview', { headers: { Cookie: cookie } })).json();
+  assert.equal(ov1.kpis.totalOrders, 1);
+  assert.equal(ov1.kpis.totalRevenueINR, 199);
+  assert.equal((await call(e, dlPath)).status, 200);
+
+  // 4. Full refund revokes downloads, recovery email, and zeroes overview revenue/order count
+  const fullRes = await sendRefund('rfnd_full_2', 19900, 29900, 'full');
+  assert.equal(fullRes.status, 200);
+  const fullData = await fullRes.json();
+  assert.equal(fullData.status, 'refund_recorded');
+  assert.equal(fullData.refundStatus, 'full');
+
+  assert.equal((await call(e, dlPath)).status, 403);
+
+  const emailsBeforeRecovery = recoveryEmails;
+  const recRes = await post(e, '/api/recover-downloads', { email: 'refund-buyer@gmail.com' }, {}, mockFetch);
+  assert.equal(recRes.status, 200);
+  assert.equal(recoveryEmails, emailsBeforeRecovery);
+
+  const ov2 = await (await call(e, '/api/admin/overview', { headers: { Cookie: cookie } })).json();
+  assert.equal(ov2.kpis.totalRevenueINR, 0);
+  assert.equal(ov2.kpis.totalCustomers, 0);
+  assert.equal(ov2.bestSellers.find((b) => b.id === 'eb-onsale').sales, 0);
+});
+
+test('frontend: zero inline event handlers and public/_headers matches hardened CSP without unsafe-inline script-src', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const files = ['index.html', 'admin.html'];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith('.js')) files.push(full);
+    }
+  };
+  walk('src');
+
+  const inlineHandlerRe = /\bon(?:click|change|submit|keydown|keyup|input|error|load|focus|blur|mousedown|mouseup|mouseover|mouseout)=/i;
+  for (const file of files) {
+    const text = fs.readFileSync(file, 'utf8');
+    assert.ok(!inlineHandlerRe.test(text), `Unexpected inline HTML event handler in ${file}`);
+  }
+
+  const headersFile = fs.readFileSync('public/_headers', 'utf8');
+  const cspLine = headersFile.split('\n').find((l) => l.includes('Content-Security-Policy:')) || '';
+  const scriptSrc = (cspLine.match(/script-src[^;]+/) || [''])[0];
+  assert.ok(scriptSrc.includes("'self'"));
+  assert.ok(!scriptSrc.includes("'unsafe-inline'"), 'public/_headers script-src must not allow unsafe-inline');
 });

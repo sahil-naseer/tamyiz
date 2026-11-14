@@ -45,8 +45,8 @@ export function renderFilmCard(video, isFeatured = false) {
         role="button"
         tabindex="0"
         aria-label="Play ${escapeText(video.title)}"
-        onclick="window.playFilmById('${escapeText(video.id)}')"
-        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); window.playFilmById('${escapeText(video.id)}');}"
+        data-action="play-film"
+        data-arg="${escapeText(video.id)}"
       >
         <img
           src="${escapeText(thumbnail)}"
@@ -71,7 +71,8 @@ export function renderFilmCard(video, isFeatured = false) {
         <h3 class="tmz-film-card-title">
           <a
             href="#"
-            onclick="event.preventDefault(); window.playFilmById('${escapeText(video.id)}')"
+            data-action="play-film"
+            data-arg="${escapeText(video.id)}"
           >
             ${escapeText(video.title)}
           </a>
@@ -82,7 +83,7 @@ export function renderFilmCard(video, isFeatured = false) {
           <a
             href="/edition/${escapeText(video.book.slug)}"
             class="tmz-film-book-link"
-            onclick="event.preventDefault(); window.tamyizApp.navigateTo('/edition/${escapeText(video.book.slug)}')"
+            data-nav="/edition/${escapeText(video.book.slug)}"
             title="Read ${escapeText(video.book.name)}"
           >
             ${bookPill}
@@ -141,7 +142,7 @@ export function renderFilmsPage(appInstance) {
           <h2>Films in Production</h2>
           <p>We are crafting our first cinematic trailers, motion graphics, and visual essays. Check back soon or browse our full collection of written e-books.</p>
           <div style="margin-top: 1.5rem;">
-            <a href="/editions" class="tmz-btn tmz-btn-solid" onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')">Browse All E-Books →</a>
+            <a href="/editions" class="tmz-btn tmz-btn-solid" data-nav="/editions">Browse All E-Books →</a>
           </div>
         </div>
       `;
@@ -168,8 +169,8 @@ export function renderFilmsPage(appInstance) {
               role="button"
               tabindex="0"
               aria-label="Play featured film: ${escapeText(featuredFilm.title)}"
-              onclick="window.playFilmById('${escapeText(featuredFilm.id)}')"
-              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); window.playFilmById('${escapeText(featuredFilm.id)}');}"
+              data-action="play-film"
+              data-arg="${escapeText(featuredFilm.id)}"
             >
               <img
                 src="${escapeText(featuredFilm.thumbnailUrl || (featuredFilm.provider === 'youtube' && featuredFilm.videoId ? `https://img.youtube.com/vi/${featuredFilm.videoId}/maxresdefault.jpg` : '/og/tamyiz.jpg'))}"
@@ -199,7 +200,8 @@ export function renderFilmsPage(appInstance) {
                 <button
                   type="button"
                   class="tmz-btn tmz-btn-solid tmz-btn-watch"
-                  onclick="window.playFilmById('${escapeText(featuredFilm.id)}')"
+                  data-action="play-film"
+                  data-arg="${escapeText(featuredFilm.id)}"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
@@ -211,7 +213,7 @@ export function renderFilmsPage(appInstance) {
                   <a
                     href="/edition/${escapeText(featuredFilm.book.slug)}"
                     class="tmz-btn tmz-btn-line tmz-btn-read"
-                    onclick="event.preventDefault(); window.tamyizApp.navigateTo('/edition/${escapeText(featuredFilm.book.slug)}')"
+                    data-nav="/edition/${escapeText(featuredFilm.book.slug)}"
                   >
                     <span>Read ${escapeText(featuredFilm.book.name)}</span>
                     <span aria-hidden="true">→</span>
@@ -231,7 +233,8 @@ export function renderFilmsPage(appInstance) {
               type="button"
               class="tmz-cat-pill ${activeCategory.toLowerCase() === c.toLowerCase() ? 'is-active' : ''}"
               data-cat="${escapeText(c)}"
-              onclick="window.filterFilmsCategory('${escapeText(c)}')"
+              data-action="filter-films"
+              data-arg="${escapeText(c)}"
             >
               ${c === 'all' ? 'All Films' : escapeText(c)}
             </button>
@@ -241,6 +244,7 @@ export function renderFilmsPage(appInstance) {
 
       <!-- Video Grid -->
       <section class="tmz-films-grid" aria-label="All films">
+        <h2 class="sr-only">All films</h2>
         ${films.map((f) => renderFilmCard(f, Boolean(featuredFilm && f.id === featuredFilm.id))).join('')}
       </section>
 
@@ -253,7 +257,7 @@ export function renderFilmsPage(appInstance) {
           <a
             href="/editions"
             class="tmz-btn tmz-btn-solid"
-            onclick="event.preventDefault(); window.tamyizApp.navigateTo('/editions')"
+            data-nav="/editions"
           >
             Explore Complete E-Books Catalog <span aria-hidden="true">→</span>
           </a>

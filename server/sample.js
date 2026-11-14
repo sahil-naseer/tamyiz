@@ -120,12 +120,12 @@ export async function handleSampleLead(request, env) {
   });
 }
 
-/** Sends a welcome email with a 10% coupon code to prospective readers */
+/** Sends an email with a link back to the sampled book */
 export async function sendSampleWelcomeEmail(env, to, product, fetchImpl = fetch) {
   if (!env || (!env.BREVO_API_KEY && !env.RESEND_API_KEY)) return false;
   const fromEmail = String(env.RECEIPT_FROM || 'tamyiz.co@gmail.com').replace(/^.*<|>.*$/g, '').trim();
   const plainName = String(product.name || '').replace(/&(amp|lt|gt|quot|#39);/g, (m, c) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" })[c]);
-  const subject = `Your sample of "${plainName}" + a welcome gift from TAMYIZ`;
+  const subject = `Your sample of "${plainName}" from TAMYIZ`;
   const bookUrl = `https://tamyiz.pages.dev/edition/${product.slug || product.id}`;
   const text = [
     `TAMYIZ`,
@@ -133,11 +133,6 @@ export async function sendSampleWelcomeEmail(env, to, product, fetchImpl = fetch
     `Thank you for requesting a sample of "${plainName}".`,
     `You can read the sample again, or see what is inside the full e-book, here:`,
     `${bookUrl}`,
-    ``,
-    `----------------------------------------------------`,
-    `WELCOME GIFT: 10% OFF THE FULL E-BOOK`,
-    `Use Coupon Code: SAMPLE10 at checkout`,
-    `----------------------------------------------------`,
     ``,
     `TAMYIZ e-books are DRM-free PDFs with an instant download after payment.`,
     ``,
@@ -163,17 +158,6 @@ export async function sendSampleWelcomeEmail(env, to, product, fetchImpl = fetch
             <p style="font-size: 15px; line-height: 1.6; color: #444; margin: 0 0 20px;">
               Thank you for reading the sample. You can come back to it anytime, or see what is inside the full e-book.
             </p>
-            <div style="background: #FAF9F6; border: 1.5px dashed #0B0B0B; border-radius: 10px; padding: 20px; text-align: center; margin: 24px 0;">
-              <span style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #C00; display: block; margin-bottom: 6px;">
-                Welcome Reader Gift
-              </span>
-              <div style="font-size: 24px; font-family: monospace; font-weight: 800; color: #0B0B0B; letter-spacing: 2px; margin-bottom: 6px;">
-                SAMPLE10
-              </div>
-              <p style="font-size: 13px; color: #555; margin: 0;">
-                Get <strong>10% off</strong> the full edition at checkout.
-              </p>
-            </div>
             <div style="text-align: center; margin: 28px 0 20px;">
               <a href="${bookUrl}" style="display: inline-block; background: #0B0B0B; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 28px; border-radius: 999px; letter-spacing: 0.5px;">
                 See the full e-book →

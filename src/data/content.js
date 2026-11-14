@@ -22,8 +22,8 @@ export const foundersData = {
       speciality: "Security & Research",
       tagline: "Security & Research",
       image: "/assets/images/founders/basit.webp",
-      bio: "Basit is the security and research mind behind TAMYIZ. A student at Prince Sattam bin Abdulaziz University, he is focused on cybersecurity and ethical hacking, studying how systems are attacked so they can be built to withstand it. He backs that technical work with disciplined research, reading, and writing, and he keeps learning as emerging technology changes the field. His principle is simple: knowledge carries responsibility, and he applies his toward a safer digital world.",
-      quote: "Knowledge carries responsibility, and we apply ours toward building resilient systems and a safer digital world.",
+      bio: "Basit is the security and research mind behind TAMYIZ. A student at Prince Sattam bin Abdulaziz University, he is focused on cybersecurity and ethical hacking, studying how systems are attacked so they can be built to withstand it. He backs that technical work with disciplined research, reading, and writing, and he keeps learning as emerging technology changes the field. His principle is simple: knowledge carries responsibility, and he applies his toward building resilient systems.",
+      quote: "Knowledge carries responsibility, and we apply ours toward building systems that are clear and resilient.",
       socials: {
         instagram: "https://www.instagram.com/abbasitlone?exln=bjNrbjFjeHhvbXVi",
         linkedin: "https://www.linkedin.com/in/basit-najadi-93944a445",

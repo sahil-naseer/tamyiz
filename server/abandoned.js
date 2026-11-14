@@ -191,10 +191,10 @@ export async function sendAbandonedCartRecoveryEmail(request, env, fetchImpl = f
   const targetEmail = rec.email;
   const items = rec.items || [];
   const resumeParam = encodeURIComponent(items.map((i) => i.productId).join(','));
-  const resumeUrl = `https://tamyiz.pages.dev/checkout?resume=${resumeParam}&coupon=SAMPLE10`;
+  const resumeUrl = `https://tamyiz.pages.dev/checkout?resume=${resumeParam}`;
 
   const fromEmail = String(env.RECEIPT_FROM || 'tamyiz.co@gmail.com').replace(/^.*<|>.*$/g, '').trim();
-  const subject = 'Your TAMYIZ bag is saved (+ 10% off with SAMPLE10)';
+  const subject = 'Your TAMYIZ bag is saved';
 
   const text = [
     `TAMYIZ`,
@@ -202,10 +202,8 @@ export async function sendAbandonedCartRecoveryEmail(request, env, fetchImpl = f
     `You left items in your reading bag:`,
     ...items.map((i) => `• ${i.name} (₹${Number(i.price) || 0})`),
     ``,
-    `Your bag is saved. Use code SAMPLE10 for 10% off:`,
+    `Your bag is saved. Complete your checkout here:`,
     `Open your bag: ${resumeUrl}`,
-    ``,
-    `Coupon code: SAMPLE10`,
     ``,
     `TAMYIZ e-books are DRM-free PDFs with an instant download after payment.`,
     ``,
@@ -227,7 +225,7 @@ export async function sendAbandonedCartRecoveryEmail(request, env, fetchImpl = f
               Your E-Books Are Waiting In Your Bag
             </h1>
             <p style="font-size: 15px; line-height: 1.6; color: #444; margin: 0 0 20px;">
-              You didn't finish checking out. Your bag is saved, and code SAMPLE10 gives you <strong>10% off</strong>.
+              You didn't finish checking out. Your reading bag is saved whenever you're ready to download.
             </p>
             <div style="background: #FAF9F6; border: 1px solid rgba(11,11,11,0.1); border-radius: 8px; padding: 18px; margin-bottom: 24px;">
               <div style="font-size: 11px; font-family: monospace; text-transform: uppercase; letter-spacing: 1px; color: #767670; margin-bottom: 8px;">In your bag:</div>
@@ -240,12 +238,9 @@ export async function sendAbandonedCartRecoveryEmail(request, env, fetchImpl = f
             </div>
             <div style="text-align: center; margin: 24px 0;">
               <a href="${escapeHtml(resumeUrl)}" style="display: inline-block; background: #0B0B0B; color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 600; padding: 14px 32px; border-radius: 999px; letter-spacing: 0.5px;">
-                Resume My Bag With 10% Off →
+                Resume My Bag →
               </a>
             </div>
-            <p style="font-size: 12px; text-align: center; color: #767670; margin: 0;">
-              Or enter coupon <strong>SAMPLE10</strong> at checkout.
-            </p>
           </td>
         </tr>
       </table>

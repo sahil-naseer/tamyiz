@@ -226,7 +226,7 @@ export function renderLegalPage(activeSlug = 'delivery-protocol', appInstance) {
                 type="button"
                 class="tamyiz-legal-tab-btn ${tab.slug === validSlug ? 'active' : ''}"
                 aria-current="${tab.slug === validSlug ? 'page' : 'false'}"
-                onclick="window.tamyizApp.navigateTo('/legal/${tab.slug}')"
+                data-nav="/legal/${tab.slug}"
               >
                 <span class="tamyiz-legal-tab-code">${tab.code}</span>
                 <span>${tab.label}</span>
@@ -279,7 +279,7 @@ export function renderLegalPage(activeSlug = 'delivery-protocol', appInstance) {
               <button
                 type="button"
                 class="tamyiz-btn-nav-outline"
-                onclick="window.tamyizApp.navigateTo('/editions')"
+                data-nav="/editions"
               >
                 <span>See the e-books</span>
                 <span>→</span>

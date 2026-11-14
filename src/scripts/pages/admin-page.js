@@ -1462,11 +1462,14 @@ export class AdminController {
                       </td>
                       <td style="font-family: var(--font-head); font-weight: 700;">
                         ₹${o.totalINR || Math.round((o.amountPaise || 0) / 100)}
+                        ${o.status === 'refunded'
+                          ? `<div style="margin-top: 4px;"><span class="tmz-admin-status tmz-admin-status--danger">Refunded</span></div>`
+                          : (o.refundStatus === 'partial' ? `<div style="margin-top: 4px;"><span class="tmz-admin-status tmz-admin-status--muted">Partial refund (₹${o.refundedINR || 0})</span></div>` : '')}
                       </td>
                       <td style="text-align: right; white-space: nowrap;">
-                        <button type="button" class="tmz-resend-btn tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm" data-id="${o.orderId}">
-                          Re-send Email ✉
-                        </button>
+                        ${o.status === 'refunded'
+                          ? `<span style="font-size: 12px; color: var(--tmz-graphite, #55554F);">Download disabled</span>`
+                          : `<button type="button" class="tmz-resend-btn tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm" data-id="${o.orderId}">Re-send Email ✉</button>`}
                       </td>
                     </tr>
                   `).join('')}
@@ -1519,8 +1522,9 @@ export class AdminController {
       resBox.style.color = '#1E7B2E';
       resBox.innerHTML = `
         Gift order created! Download URL:
-        <input type="text" readonly class="tmz-admin-input" value="${res.data.downloadUrl}" style="padding: 8px 10px; font-size: 12px; font-family: monospace; margin-top: 6px;" onclick="this.select()" />
+        <input type="text" readonly id="tmz-gift-dl-url" class="tmz-admin-input" value="${res.data.downloadUrl}" style="padding: 8px 10px; font-size: 12px; font-family: monospace; margin-top: 6px;" />
       `;
+      document.getElementById('tmz-gift-dl-url')?.addEventListener('click', (ev) => ev.currentTarget.select());
       setTimeout(() => this.renderOrdersTab(mount), 2000);
     });
 
@@ -1622,7 +1626,7 @@ export class AdminController {
                   ${list.map(c => {
                     const dateStr = c.lastSeenAt ? new Date(c.lastSeenAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
                     const cleanPhone = (c.phone || '').replace(/[^0-9+]/g, '');
-                    const waText = encodeURIComponent(`Hi! We noticed you left ${(c.items || []).map(i => i.name).join(', ')} in your TAMYIZ reading bag. Here is a 10% discount to complete your order: https://tamyiz.pages.dev/checkout?resume=${(c.items || []).map(i => i.productId).join(',')}&coupon=SAMPLE10`);
+                    const waText = encodeURIComponent(`Hi! We noticed you left ${(c.items || []).map(i => i.name).join(', ')} in your TAMYIZ reading bag. Resume your checkout anytime: https://tamyiz.pages.dev/checkout?resume=${(c.items || []).map(i => i.productId).join(',')}`);
                     const waUrl = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}?text=${waText}` : null;
                     const isRecovered = c.status === 'recovered';
 
@@ -2189,7 +2193,7 @@ export class AdminController {
 
           <div class="tmz-admin-field">
             <label for="tmz-ann-text" class="tmz-admin-field-label">Banner Text *</label>
-            <input type="text" id="tmz-ann-text" class="tmz-admin-input" maxlength="200" value="${escapeText(ann.text || '')}" placeholder="e.g. Ramadhan Special: 20% off all AI Playbooks with code EID20" />
+            <input type="text" id="tmz-ann-text" class="tmz-admin-input" maxlength="200" value="${escapeText(ann.text || '')}" placeholder="e.g. Eid Special: 20% off all E-Books with code EID20" />
           </div>
 
           <div class="tmz-admin-form-grid-2" style="margin-bottom: 20px;">

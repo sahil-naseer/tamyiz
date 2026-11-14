@@ -36,7 +36,7 @@ export function renderPhilosophyPage(appInstance) {
           <div class="tamyiz-faq-accordion-stack max-w-3xl mx-auto">
             ${faqs.map((faq, i) => `
               <div class="tamyiz-faq-item ${i === 0 ? 'open' : ''}" id="faq-${i}">
-                <button class="tamyiz-faq-trigger" aria-expanded="${i === 0 ? 'true' : 'false'}" onclick="window.tamyizApp.toggleFaq('faq-${i}')">
+                <button class="tamyiz-faq-trigger" aria-expanded="${i === 0 ? 'true' : 'false'}" data-action="toggle-faq" data-arg="faq-${i}">
                   <span class="tamyiz-faq-question">${faq.q}</span>
                   <span class="tamyiz-faq-icon" aria-hidden="true">${i === 0 ? '−' : '+'}</span>
                 </button>

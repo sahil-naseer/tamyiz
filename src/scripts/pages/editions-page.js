@@ -47,20 +47,20 @@ export function renderEditionsPage(appInstance) {
                 class="tamyiz-search-input w-full pl-10 pr-9 py-2.5 bg-white border border-gray-300 rounded-full text-sm text-black placeholder-gray-400 transition-all focus:ring-2 focus:ring-black focus:outline-none focus:border-transparent"
                 placeholder="Search e-books"
                 value="${String(appInstance.searchQuery).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}"
-                oninput="window.tamyizApp.handleSearch(this.value)"
+                data-input-action="search"
                 aria-label="Search e-books"
               />
               <button
                 id="artifact-search-clear"
                 class="tamyiz-search-clear ${appInstance.searchQuery ? 'visible' : ''}"
-                onclick="window.tamyizApp.clearSearch()"
+                data-action="clear-search"
                 aria-label="Clear search"
               >✕</button>
             </div>
 
             <div class="tamyiz-sort-box">
               <label for="artifact-sort-select" class="tamyiz-sort-label">Sort:</label>
-              <select id="artifact-sort-select" class="tamyiz-sort-select" onchange="window.tamyizApp.handleSort(this.value)">
+              <select id="artifact-sort-select" class="tamyiz-sort-select" data-change-action="sort">
                 <option value="featured" ${appInstance.sortBy === 'featured' ? 'selected' : ''}>Newest first</option>
                 <option value="price-asc" ${appInstance.sortBy === 'price-asc' ? 'selected' : ''}>Price: Low to High</option>
                 <option value="price-desc" ${appInstance.sortBy === 'price-desc' ? 'selected' : ''}>Price: High to Low</option>
@@ -84,7 +84,7 @@ export function renderEditionsPage(appInstance) {
                 <p style="color: var(--color-grey); font-size: 0.88rem; margin-bottom: 1.5rem;">
                   Try a different word, or see every e-book.
                 </p>
-                <button class="tamyiz-btn-nav-outline" onclick="window.tamyizApp.resetAllFilters()">
+                <button class="tamyiz-btn-nav-outline" data-action="reset-filters">
                   Show all e-books
                 </button>
               </div>

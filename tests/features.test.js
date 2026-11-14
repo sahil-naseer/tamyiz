@@ -64,8 +64,13 @@ test('bundle discounts: 2 books get 20% off, 3 books get 25% off', async () => {
   assert.equal(trio.bundleDiscount, 750);
   assert.equal(trio.total, 2250);
 
-  // Welcome coupon SAMPLE10 stacks 10% on remaining
-  const withCoupon = calculateOrderTotal([{ productId: 'b1' }, { productId: 'b2' }], 'SAMPLE10', catalog);
+  // Dynamic coupon PROMO10 stacks 10% on remaining
+  const withCoupon = calculateOrderTotal(
+    [{ productId: 'b1' }, { productId: 'b2' }],
+    'PROMO10',
+    catalog,
+    { PROMO10: { type: 'percent', value: 10, active: true } }
+  );
   assert.equal(withCoupon.bundleDiscount, 400);
   assert.equal(withCoupon.couponDiscount, 160); // 10% of 1600
   assert.equal(withCoupon.total, 1440);

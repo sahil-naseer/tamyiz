@@ -6895,7 +6895,6 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
 .tmz-shop-empty { grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; background: #FFFFFF; border-radius: 22px; }
 .tmz-shop-empty h3 { margin: 0 0 0.5rem; font-family: var(--font-sub); font-size: 1.4rem; font-weight: 600; text-transform: none; }
 .tmz-shop-empty p { margin: 0 auto 1.5rem; max-width: 30rem; color: var(--tmz-graphite); font-size: 0.98rem; line-height: 1.55; }
-.tmz-footer-wordmark { display: block; width: 150px; height: auto; filter: invert(1); margin-bottom: 1rem; }
 [hidden] { display: none !important; } /* the hidden attribute must win over utility classes like .flex */
 
 /* ---------- Smoothness pass (24 Oct 2026): no full-screen blur, no blur on cards ---------- */
@@ -9295,3 +9294,9 @@ html.is-scrolled .tamyiz-header { background: #FAFAF8; box-shadow: 0 10px 30px -
     width: 100%;
   }
 }
+
+/* Declarative focus & hover states (replacing inline onfocus/onmouseover handlers for strict CSP) */
+.tmz-focus-border:focus { border-color: #0B0B0B !important; }
+.tmz-hover-dark:hover { background: #222222 !important; }
+.tmz-hover-fade:hover { opacity: 0.9 !important; }
+.tmz-hover-invert:hover { background: #0B0B0B !important; color: #FFFFFF !important; }

@@ -14,7 +14,7 @@ const STORAGE_KEYS = {
   COUPON: 'tamyiz_coupon_v1'
 };
 
-// Promo codes are checked by the server (GET /api/coupon): SAMPLE10 plus any coupon made on /admin.
+// Promo codes are checked by the server (GET /api/coupon) against coupons managed on /admin.
 export const hasCoupons = () => true;
 
 class Store {

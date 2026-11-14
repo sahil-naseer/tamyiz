@@ -86,7 +86,7 @@ export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
       const raw = await kv.get(`order:${id}`);
       if (!raw) continue;
       const ord = JSON.parse(raw);
-      const isPaid = ord.status === 'paid' || ord.status === 'gift' || Boolean(ord.paymentId);
+      const isPaid = ord.status !== 'refunded' && (ord.status === 'paid' || ord.status === 'gift' || Boolean(ord.paymentId));
       if (!isPaid) continue;
 
       const orderEmail = String(ord.email || '').trim().toLowerCase();
