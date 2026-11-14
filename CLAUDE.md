@@ -315,8 +315,9 @@ Security (tests in `tests/security.test.js`; `npm test` 91 of 91, `npm audit` 0)
 - Unused `@fontsource-variable/syne` dependency removed.
 - Rate limits: all `/api/*` and `/api/admin/*` limiters (`api-burst`, `coupon-rate`, `sample-rate`, `recover-rate`,
   `recover-email`, `review-rate`, `abandoned-rate`, `order-rate`, `login`/`otp`) now run in-memory (`checkRateLimit` /
-  `securityBuckets`) with 0 KV writes. Still optional once a custom domain zone exists: cross-isolate Cloudflare WAF
-  rate-limit rules and an automated KV backup.
+  `securityBuckets`) with 0 KV writes. KV backup snapshot saved locally in `.backups/tamyiz-kv-backup-2026-11-14.json`
+  (plus `.backups/blobs/`, git-ignored; 15 JSON/text keys + 27 binary blobs). Still optional once a custom domain
+  zone exists: cross-isolate Cloudflare WAF rate-limit rules and scheduled automated KV backups.
 
 Design and motion (all in the "POLISH 14 Nov 2026 (second pass)" block at the end of tamyiz-unified.css):
 - Book page: cover sits in a light 2:3 frame (no black bars), the E-BOOK tag is a yellow square tag top-left (it was
