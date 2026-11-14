@@ -141,11 +141,14 @@ class TamyizUnifiedApp {
     const banner = document.getElementById('tmz-announcement-banner');
     if (!banner || !ann || !ann.enabled || !ann.text) return;
 
+    const safeLink = /^(https:\/\/|http:\/\/|\/(?!\/))/i.test(String(ann.link || '').trim())
+      ? String(ann.link).trim()
+      : '';
     banner.style.display = 'block';
     banner.innerHTML = `
       <span>${escapeText(ann.text)}</span>
-      ${ann.link ? `
-        <a href="${escapeText(ann.link)}" style="color: #FFFFFF; font-weight: 700; text-decoration: underline; margin-left: 8px;">
+      ${safeLink ? `
+        <a href="${escapeText(safeLink)}" style="color: #FFFFFF; font-weight: 700; text-decoration: underline; margin-left: 8px;">
           ${escapeText(ann.linkText || 'Learn more ↗')}
         </a>
       ` : ''}
@@ -2225,7 +2228,7 @@ class TamyizUnifiedApp {
         listEl.innerHTML = `
           <div style="background: #FAF9F6; border: 1px dashed rgba(11,11,11,0.15); border-radius: 8px; padding: 1rem; text-align: center;">
             <p style="font-size: 0.84rem; color: #666; margin: 0 0 0.4rem;">Have you read this e-book?</p>
-            <button data-action="open-review-modal" data-id="${productId}" style="background: none; border: none; font-size: 0.8rem; font-weight: 700; color: #0B0B0B; text-decoration: underline; cursor: pointer;">
+            <button data-action="open-review-modal" data-id="${escapeText(resolvedId)}" style="background: none; border: none; font-size: 0.8rem; font-weight: 700; color: #0B0B0B; text-decoration: underline; cursor: pointer;">
               Be the first reader to share your review →
             </button>
           </div>

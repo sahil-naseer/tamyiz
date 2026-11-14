@@ -638,3 +638,106 @@ test('downloads: links signed with RAZORPAY_KEY_SECRET keep working after DOWNLO
   assert.equal(await checkDownload({ RAZORPAY_KEY_SECRET: 'rzp-secret' }, 'eb-onsale', n.get('p'), n.get('e'), n.get('s')), false);
   assert.equal(await checkDownload(newEnv, 'eb-pricey', q.get('p'), q.get('e'), q.get('s')), false);
 });
+
+test('admin 2FA: OTP challenge is single-use and OTP requests are rate limited per IP', async () => {
+  let capturedOtp = '';
+  let emailsSent = 0;
+  const mockFetch = async (url, opts) => {
+    if (String(url).includes('api.brevo.com')) {
+      emailsSent++;
+      const m = JSON.parse(opts.body).subject.match(/^(\d{6})/);
+      if (m) capturedOtp = m[1];
+      return new Response('{"messageId":"ok"}', { status: 201 });
+    }
+    return new Response('{}', { status: 404 });
+  };
+
+  const e = {
+    TAMYIZ_STORE: devKV(),
+    TAMYIZ_ADMIN_PASSWORD: 'super-secret-password-2026',
+    ADMIN_OTP_EMAIL: 'owner@example.com',
+    BREVO_API_KEY: 'test_brevo_key',
+    ADMIN_SESSION_SECRET: 'long-random-session-secret-key',
+  };
+  const ip = { 'CF-Connecting-IP': '10.22.33.44' };
+
+  const c1 = await (await post(e, '/api/admin/login', { password: e.TAMYIZ_ADMIN_PASSWORD }, ip, mockFetch)).json();
+  const code1 = capturedOtp;
+  // First valid use succeeds
+  const ok1 = await post(e, '/api/admin/login', { password: e.TAMYIZ_ADMIN_PASSWORD, otp: code1, challenge: c1.challenge }, ip, mockFetch);
+  assert.equal(ok1.status, 200);
+  // Replay of same challenge + OTP is refused
+  const replay = await post(e, '/api/admin/login', { password: e.TAMYIZ_ADMIN_PASSWORD, otp: code1, challenge: c1.challenge }, ip, mockFetch);
+  assert.equal(replay.status, 401);
+
+  // Max 4 OTP sends per IP (already sent 1; send 3 more, 5th returns 429)
+  for (let i = 0; i < 3; i++) {
+    const r = await post(e, '/api/admin/login', { password: e.TAMYIZ_ADMIN_PASSWORD }, ip, mockFetch);
+    assert.equal(r.status, 200);
+  }
+  const throttled = await post(e, '/api/admin/login', { password: e.TAMYIZ_ADMIN_PASSWORD }, ip, mockFetch);
+  assert.equal(throttled.status, 429);
+  assert.equal(emailsSent, 4);
+});
+
+test('KV exhaustion defense: GET /api/coupon uses 0 KV writes and invalid public POST payloads spend 0 KV writes', async () => {
+  let kvWrites = 0;
+  const baseKv = devKV();
+  const countingKv = {
+    get: (...args) => baseKv.get(...args),
+    put: (...args) => { kvWrites++; return baseKv.put(...args); },
+    delete: (...args) => baseKv.delete(...args),
+    getWithMetadata: (...args) => baseKv.getWithMetadata(...args),
+  };
+  const e = { TAMYIZ_STORE: countingKv };
+
+  // Malformed / prototype coupon probes return 404 with 0 writes
+  for (const badCode of ['', 'x', '__proto__', 'constructor', 'toString']) {
+    const res = await call(e, `/api/coupon?code=${encodeURIComponent(badCode)}`, { headers: { 'CF-Connecting-IP': '198.51.100.7' } });
+    assert.equal(res.status, 404);
+  }
+  // Brute-force coupon checks throttle at 429 using in-memory limiter (still 0 KV writes)
+  for (let i = 0; i < 30; i++) {
+    const r = await call(e, `/api/coupon?code=GUESS${i}`, { headers: { 'CF-Connecting-IP': '198.51.100.8' } });
+    assert.equal(r.status, 404);
+  }
+  const couponThrottled = await call(e, '/api/coupon?code=GUESS99', { headers: { 'CF-Connecting-IP': '198.51.100.8' } });
+  assert.equal(couponThrottled.status, 429);
+
+  // Invalid POST payloads on sample, reviews, abandoned-cart, and recover-downloads fail with 400 & 0 KV writes
+  const badIp = { 'CF-Connecting-IP': '198.51.100.9' };
+  assert.equal((await post(e, '/api/sample', { email: 'not-an-email', productId: 'eb-1' }, badIp)).status, 400);
+  assert.equal((await post(e, '/api/reviews', { email: 'bad', name: 'X', rating: 5, comment: 'short' }, badIp)).status, 400);
+  assert.equal((await post(e, '/api/abandoned-cart', { email: 'bad', items: [] }, badIp)).status, 400);
+  assert.equal((await post(e, '/api/recover-downloads', { email: 'bad email@x.com' }, badIp)).status, 400);
+  assert.equal(kvWrites, 0);
+});
+
+test('payment currency & refund lock: non-INR Razorpay payment is refused and refunded order ID blocks download', async () => {
+  const e = env({ RAZORPAY_KEY_ID: 'rzp_live_x', RAZORPAY_KEY_SECRET: 'rzp-secret', DOWNLOAD_SECRET: 'dl-sec' });
+  const sig = await hmacSha256Hex('rzp-secret', 'order_usd_1|pay_usd_1');
+  const mockFetch = async (url) => {
+    if (String(url).includes('/payments/')) {
+      return new Response(JSON.stringify({ id: 'pay_usd_1', order_id: 'order_usd_1', amount: 29900, currency: 'USD', status: 'captured' }), { status: 200 });
+    }
+    return new Response(JSON.stringify({
+      id: 'order_usd_1',
+      amount: 29900,
+      currency: 'USD',
+      notes: { ...itemsToNotes([{ productId: 'eb-onsale', variant: 'PDF' }]), email: 'u@example.com', phone: '+919876543210' }
+    }), { status: 200 });
+  };
+  const badCur = await post(e, '/api/verify-payment', {
+    razorpay_order_id: 'order_usd_1',
+    razorpay_payment_id: 'pay_usd_1',
+    razorpay_signature: sig,
+  }, {}, mockFetch);
+  assert.equal(badCur.status, 400);
+
+  // Order marked refunded in order:<id> (without order-fulfilled:<id>) also blocks signed download links referencing that ID
+  const { signDownload } = await import('../server/payments.js');
+  await e.TAMYIZ_STORE.put('file:eb-onsale', new Uint8Array([37, 80, 68, 70, 45]));
+  await e.TAMYIZ_STORE.put('order:gift_refunded_1', JSON.stringify({ orderId: 'gift_refunded_1', status: 'refunded' }));
+  const dlLink = await signDownload(e, 'eb-onsale', 'gift_refunded_1');
+  assert.equal((await call(e, dlLink)).status, 403);
+});

@@ -1,4 +1,4 @@
-import { json, signDownload, escapeHtml } from './payments.js';
+import { json, signDownload, escapeHtml, requestOrigin, STRICT_EMAIL_RE } from './payments.js';
 
 export function maskEmail(email) {
   if (!email || !email.includes('@')) return '***';
@@ -10,23 +10,6 @@ export function maskEmail(email) {
 export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
   if (request.method !== 'POST') {
     return json({ error: 'Method Not Allowed. Use POST.' }, 405);
-  }
-
-  // Rate limiting per IP to prevent automated library scanning
-  const ip = request.headers.get('CF-Connecting-IP') || 'local';
-  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
-    try {
-      const rateKey = `recover-rate:${ip}`;
-      const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
-      if (recent >= 8) {
-        return json({ error: 'Too many recovery attempts. Please wait 15 minutes before trying again or message us on WhatsApp.' }, 429);
-      }
-      if (env.TAMYIZ_STORE.put) {
-        await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 }).catch(() => {});
-      }
-    } catch (e) {
-      console.warn('Recovery rate limit KV check failed:', e);
-    }
   }
 
   let body;
@@ -44,8 +27,25 @@ export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
     return json({ error: 'Please enter your purchase email address or mobile number.' }, 400);
   }
 
-  if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cleanEmail)) {
+  if (cleanEmail && (cleanEmail.length > 254 || !STRICT_EMAIL_RE.test(cleanEmail))) {
     return json({ error: 'Please enter a valid email address.' }, 400);
+  }
+
+  // Rate limiting per IP after validation so invalid requests use 0 KV writes
+  const ip = request.headers.get('CF-Connecting-IP') || 'local';
+  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
+    try {
+      const rateKey = `recover-rate:${ip}`;
+      const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
+      if (recent >= 8) {
+        return json({ error: 'Too many recovery attempts. Please wait 15 minutes before trying again or message us on WhatsApp.' }, 429);
+      }
+      if (env.TAMYIZ_STORE.put) {
+        await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 }).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Recovery rate limit KV check failed:', e);
+    }
   }
 
   if (!env || !env.TAMYIZ_STORE) {
@@ -72,10 +72,14 @@ export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
         try { orderIds = JSON.parse(phoneRaw); } catch {}
       }
     }
-    // Fall back to scanning orders:index if direct index isn't populated
+    // Fall back to bounded scan of recent orders:index if direct buyer index isn't populated
+    // (limits non-buyer requests to 50 KV reads max to prevent Worker subrequest DoS)
     if (!Array.isArray(orderIds) || orderIds.length === 0) {
       const raw = await kv.get('orders:index');
-      if (raw) orderIds = JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) orderIds = parsed.slice(0, 50);
+      }
     }
   } catch {}
   if (!Array.isArray(orderIds)) orderIds = [];
@@ -103,7 +107,7 @@ export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
   // Security (7 Nov 2026): links are NEVER shown on screen and the answer is the same whether or not a purchase
   // was found. They go only to the email address saved on the order, so knowing someone's email or phone
   // number is not enough to download their books or to learn what they bought.
-  const origin = new URL(request.url).origin;
+  const origin = requestOrigin(request, env);
   const byEmail = new Map();
   for (const ord of matchingOrders) {
     const to = String(ord.email).trim().toLowerCase();

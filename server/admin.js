@@ -6,7 +6,7 @@
  * Ten wrong passwords from one address lock logins from it for 15 minutes.
  * Every change also needs the header X-Tamyiz-Admin: 1 (pages on other sites can't send it).
  */
-import { json, hmacSha256Hex, timingSafeEqual, signDownload, sendReceiptEmail } from './payments.js';
+import { json, hmacSha256Hex, timingSafeEqual, signDownload, sendReceiptEmail, requestOrigin, STRICT_EMAIL_RE } from './payments.js';
 import {
   loadCatalog, saveCatalog, store, findById, readFields, sniff, newId, uniqueSlug,
   MAX_PDF_BYTES, MAX_COVER_BYTES, StoreMissing,
@@ -81,30 +81,39 @@ export async function isAdmin(request, env) {
 
 const clientIp = (request) => request.headers.get('CF-Connecting-IP') || 'local';
 
-// Zero-KV-write in-memory rate tracking per environment/store instance (prevents password brute-forcing from exhausting KV write quota)
-const loginFailBuckets = new WeakMap();
-const fallbackBucket = new Map();
-function getFailMap(env) {
-  if (env && typeof env.TAMYIZ_STORE === 'object' && env.TAMYIZ_STORE !== null) {
-    if (!loginFailBuckets.has(env.TAMYIZ_STORE)) loginFailBuckets.set(env.TAMYIZ_STORE, new Map());
-    return loginFailBuckets.get(env.TAMYIZ_STORE);
-  }
-  return fallbackBucket;
+// Zero-KV-write in-memory rate/replay tracking per environment/store instance
+// (prevents password brute-forcing, OTP replay, and email quota bombing without spending KV writes)
+const securityBuckets = new WeakMap();
+const fallbackState = createSecurityState();
+function createSecurityState() {
+  return { fails: new Map(), otpSends: new Map(), usedOtp: new Map(), otpFails: new Map() };
 }
-function getLoginFails(env, ip) {
-  const map = getFailMap(env);
-  const rec = map.get(ip);
+function getSecurityState(env) {
+  if (env && typeof env.TAMYIZ_STORE === 'object' && env.TAMYIZ_STORE !== null) {
+    if (!securityBuckets.has(env.TAMYIZ_STORE)) securityBuckets.set(env.TAMYIZ_STORE, createSecurityState());
+    return securityBuckets.get(env.TAMYIZ_STORE);
+  }
+  return fallbackState;
+}
+function getCounter(map, key) {
+  const rec = map.get(key);
   if (!rec) return 0;
-  if (Date.now() > rec.expiresAt) { map.delete(ip); return 0; }
+  if (Date.now() > rec.expiresAt) { map.delete(key); return 0; }
   return rec.count;
 }
-function recordLoginFail(env, ip) {
-  const map = getFailMap(env);
-  const prev = getLoginFails(env, ip);
-  map.set(ip, { count: prev + 1, expiresAt: Date.now() + 15 * 60 * 1000 });
+function bumpCounter(map, key, ttlMs) {
+  const prev = getCounter(map, key);
+  map.set(key, { count: prev + 1, expiresAt: Date.now() + ttlMs });
+  return prev + 1;
 }
-function clearLoginFails(env, ip) {
-  getFailMap(env).delete(ip);
+const getLoginFails = (env, ip) => getCounter(getSecurityState(env).fails, ip);
+const recordLoginFail = (env, ip) => bumpCounter(getSecurityState(env).fails, ip, 15 * 60 * 1000);
+const clearLoginFails = (env, ip) => getSecurityState(env).fails.delete(ip);
+function pruneUsedOtp(usedOtp, nowSec) {
+  if (usedOtp.size < 64) return;
+  for (const [k, exp] of usedOtp.entries()) {
+    if (exp < nowSec) usedOtp.delete(k);
+  }
 }
 
 async function sendAdminOtpEmail(env, toEmails, otpCode, ip, fetchImpl = fetch) {
@@ -160,13 +169,20 @@ async function login(request, env, fetchImpl = fetch) {
     .filter((s) => s.includes('@'));
 
   if (otpEmails.length > 0 && env.BREVO_API_KEY) {
+    const state = getSecurityState(env);
+    const nowSec = Math.floor(Date.now() / 1000);
+    pruneUsedOtp(state.usedOtp, nowSec);
     const submittedOtp = String(body.otp || '').trim();
     const challenge = String(body.challenge || '').trim();
     if (!submittedOtp || !challenge) {
+      if (getCounter(state.otpSends, ip) >= 4) {
+        return json({ error: 'Too many verification codes requested. Wait a few minutes before trying again.' }, 429);
+      }
+      bumpCounter(state.otpSends, ip, 10 * 60 * 1000);
       const rand = new Uint32Array(1);
       crypto.getRandomValues(rand);
       const otpCode = String(100000 + (rand[0] % 900000));
-      const otpExp = Math.floor(Date.now() / 1000) + 600; // 10 minutes
+      const otpExp = nowSec + 600; // 10 minutes
       const otpSig = await hmacSha256Hex(await signingKey(env), `admin-otp|${otpExp}|${ip}|${otpCode}`);
       const sent = await sendAdminOtpEmail(env, otpEmails, otpCode, ip, fetchImpl).catch(() => false);
       if (!sent) {
@@ -185,15 +201,27 @@ async function login(request, env, fetchImpl = fetch) {
 
     const [otpExpStr, otpSig] = challenge.split('.');
     const otpExp = Number(otpExpStr);
-    if (!otpExp || !otpSig || otpExp < Math.floor(Date.now() / 1000)) {
+    if (!otpExp || !otpSig || otpExp < nowSec) {
       return json({ error: 'Verification code expired. Please sign in again.' }, 401);
     }
-    const expectedOtpSig = await hmacSha256Hex(await signingKey(env), `admin-otp|${otpExp}|${ip}|${submittedOtp}`);
-    if (!timingSafeEqual(expectedOtpSig, otpSig)) {
-      recordLoginFail(env, ip);
-      await new Promise((r) => setTimeout(r, 400));
-      return json({ error: 'Invalid 6-digit verification code.' }, 401);
+    if (state.usedOtp.has(otpSig)) {
+      return json({ error: 'This verification code has already been used or locked. Please sign in again.' }, 401);
     }
+    const expectedOtpSig = await hmacSha256Hex(await signingKey(env), `admin-otp|${otpExp}|${ip}|${submittedOtp}`);
+    if (!/^\d{6}$/.test(submittedOtp) || !timingSafeEqual(expectedOtpSig, otpSig)) {
+      recordLoginFail(env, ip);
+      const cFails = (state.otpFails.get(otpSig) || 0) + 1;
+      state.otpFails.set(otpSig, cFails);
+      if (cFails >= 5) {
+        state.usedOtp.set(otpSig, otpExp);
+        state.otpFails.delete(otpSig);
+      }
+      await new Promise((r) => setTimeout(r, 400));
+      return json({ error: cFails >= 5 ? 'Too many wrong verification codes for this challenge. Request a new code.' : 'Invalid 6-digit verification code.' }, 401);
+    }
+    // Single-use OTP: invalidate challenge immediately so it cannot be replayed
+    state.usedOtp.set(otpSig, otpExp);
+    state.otpFails.delete(otpSig);
   }
 
   clearLoginFails(env, ip);
@@ -441,7 +469,7 @@ async function resendOrder(request, env) {
   if (!raw) return json({ error: 'Order not found.' }, 404);
   const ord = JSON.parse(raw);
 
-  const origin = new URL(request.url).origin;
+  const origin = requestOrigin(request, env);
   const downloads = await Promise.all((ord.items || []).map(async (i) => ({
     productId: i.productId || i.id,
     name: i.name,
@@ -476,6 +504,9 @@ async function createComplimentaryOrder(request, env) {
   if (!email && !phone) return json({ error: 'Customer email or phone required.' }, 400);
   if (!productId) return json({ error: 'E-book product required.' }, 400);
 
+  if (email && !STRICT_EMAIL_RE.test(String(email).trim().toLowerCase())) {
+    return json({ error: 'Please enter a valid customer email address.' }, 400);
+  }
   const catalog = await loadCatalog(env);
   const book = findById(catalog, productId);
   if (!book) return json({ error: 'Selected e-book not found.' }, 404);
@@ -485,7 +516,7 @@ async function createComplimentaryOrder(request, env) {
   const referenceId = `TAMYIZ-GIFT-${Date.now().toString(36).toUpperCase()}`;
   const nowIso = new Date().toISOString();
 
-  const origin = new URL(request.url).origin;
+  const origin = requestOrigin(request, env);
   const downloadUrl = origin + (await signDownload(env, book.id, paymentId));
   const downloads = [{
     productId: book.id,

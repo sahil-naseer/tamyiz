@@ -3,6 +3,29 @@
  * the local Vite server runs it through vite.config.js, so both behave the same.
  */
 import { json, handleCreateOrder, handleVerifyPayment, handleDownload, handleRazorpayWebhook, findCoupon } from './payments.js';
+
+const COUPON_RATE_WINDOW_MS = 5 * 60 * 1000;
+const COUPON_RATE_MAX = 30;
+const couponRateBuckets = new WeakMap();
+const fallbackCouponMap = new Map();
+function allowCouponLookup(env, ip) {
+  const storeRef = env && typeof env.TAMYIZ_STORE === 'object' && env.TAMYIZ_STORE !== null ? env.TAMYIZ_STORE : null;
+  let map = fallbackCouponMap;
+  if (storeRef) {
+    if (!couponRateBuckets.has(storeRef)) couponRateBuckets.set(storeRef, new Map());
+    map = couponRateBuckets.get(storeRef);
+  }
+  const now = Date.now();
+  const rec = map.get(ip);
+  if (!rec || now > rec.expiresAt) {
+    if (map.size > 512) map.clear();
+    map.set(ip, { count: 1, expiresAt: now + COUPON_RATE_WINDOW_MS });
+    return true;
+  }
+  if (rec.count >= COUPON_RATE_MAX) return false;
+  rec.count += 1;
+  return true;
+}
 import { handleAdmin } from './admin.js';
 import { publicCatalog } from './catalog.js';
 import { handleSampleLead } from './sample.js';
@@ -57,16 +80,15 @@ export async function route(request, env, fetchImpl = fetch) {
     }
     return json({ announcement });
   }
-  // Is a coupon code valid? (the bag asks before showing a discount; the server re-checks at payment anyway)
+  // Is a coupon code valid? (uses in-memory limiter so coupon scans never burn Cloudflare KV daily write quota)
   if (rest === 'coupon' && method === 'GET') {
-    if (env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && env.TAMYIZ_STORE.put) {
-      const ip = request.headers.get('cf-connecting-ip') || 'local';
-      const rateKey = `coupon-rate:${ip}`;
-      const hits = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
-      if (hits >= 20) return json({ valid: false, error: 'Too many coupon attempts. Please wait a few minutes.' }, 429);
-      try { await env.TAMYIZ_STORE.put(rateKey, String(hits + 1), { expirationTtl: 300 }); } catch {}
+    const rawCode = String(new URL(request.url).searchParams.get('code') || '').trim();
+    if (!/^[A-Za-z0-9_-]{3,30}$/.test(rawCode)) return json({ valid: false }, 404);
+    const ip = request.headers.get('cf-connecting-ip') || 'local';
+    if (!allowCouponLookup(env, ip)) {
+      return json({ valid: false, error: 'Too many coupon attempts. Please wait a few minutes.' }, 429);
     }
-    const c = await findCoupon(env, new URL(request.url).searchParams.get('code'));
+    const c = await findCoupon(env, rawCode);
     return c ? json({ valid: true, coupon: c }) : json({ valid: false }, 404);
   }
 

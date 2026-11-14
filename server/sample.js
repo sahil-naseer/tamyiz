@@ -1,4 +1,4 @@
-import { json } from './payments.js';
+import { json, STRICT_EMAIL_RE } from './payments.js';
 import { loadCatalog, findById, findBySlug, publicProduct } from './catalog.js';
 import { getSiteUrl } from './site.js';
 
@@ -7,7 +7,25 @@ export async function handleSampleLead(request, env) {
     return json({ error: 'Method Not Allowed. Use POST.' }, 405);
   }
 
-  // Rate limiting per IP to prevent email quota exhaustion
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid JSON request body.' }, 400);
+  }
+
+  const { productId, email, phone, name } = body || {};
+
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  if (!cleanEmail || cleanEmail.length > 254 || !STRICT_EMAIL_RE.test(cleanEmail)) {
+    return json({ error: 'Please enter a valid email address.' }, 400);
+  }
+
+  if (!productId || typeof productId !== 'string' || productId.length > 80) {
+    return json({ error: 'Product ID is required.' }, 400);
+  }
+
+  // Rate limiting per IP after input validation so invalid payloads use 0 KV writes
   const ip = request.headers.get('CF-Connecting-IP') || 'local';
   if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
     try {
@@ -22,25 +40,6 @@ export async function handleSampleLead(request, env) {
     } catch (e) {
       console.warn('Sample rate limit KV check failed:', e);
     }
-  }
-
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: 'Invalid JSON request body.' }, 400);
-  }
-
-  const { productId, email, phone, name } = body || {};
-
-  const cleanEmail = String(email || '').trim().toLowerCase();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  if (!cleanEmail || !emailRegex.test(cleanEmail)) {
-    return json({ error: 'Please enter a valid email address.' }, 400);
-  }
-
-  if (!productId || typeof productId !== 'string' || productId.length > 80) {
-    return json({ error: 'Product ID is required.' }, 400);
   }
 
   const list = await loadCatalog(env);

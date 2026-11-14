@@ -1,6 +1,12 @@
 import { loadCatalog, findById } from './catalog.js';
 import { markCartRecovered } from './abandoned.js';
-import { getSiteHost } from './site.js';
+import { getSiteHost, getSiteUrl } from './site.js';
+
+export const STRICT_EMAIL_RE = /^[^\s@<>()[\]\\,;:"']+@[^\s@<>()[\]\\,;:"']+\.[^\s@<>()[\]\\,;:"']{2,}$/;
+
+export function requestOrigin(request, env = {}) {
+  return env && env.SITE_URL ? getSiteUrl(env) : new URL(request.url).origin;
+}
 
 /**
  * TAMYIZ™ payments: prices, coupons, Razorpay orders and verification, download links, receipt email.
@@ -60,9 +66,9 @@ export function calculateOrderTotal(items, couponCode = null, catalog = [], dyna
   let couponDiscount = 0;
   if (couponCode) {
     const cleanCode = String(couponCode).toUpperCase().trim();
-    let c = VALID_COUPONS[cleanCode];
+    let c = Object.hasOwn(VALID_COUPONS, cleanCode) ? VALID_COUPONS[cleanCode] : null;
 
-    if (!c && dynamicCoupons && dynamicCoupons[cleanCode] && dynamicCoupons[cleanCode].active !== false) {
+    if (!c && dynamicCoupons && Object.hasOwn(dynamicCoupons, cleanCode) && dynamicCoupons[cleanCode] && dynamicCoupons[cleanCode].active !== false) {
       c = dynamicCoupons[cleanCode];
     }
 
@@ -104,11 +110,11 @@ export async function getDynamicCoupons(env) {
 /** A valid coupon's public details (hard-coded or made on /admin), or null. */
 export async function findCoupon(env, code) {
   const clean = String(code || '').toUpperCase().trim().slice(0, 30);
-  if (!clean) return null;
-  let c = VALID_COUPONS[clean];
+  if (!/^[A-Z0-9_-]{3,30}$/.test(clean)) return null;
+  let c = Object.hasOwn(VALID_COUPONS, clean) ? VALID_COUPONS[clean] : null;
   if (!c) {
     const dyn = await getDynamicCoupons(env);
-    if (dyn[clean] && dyn[clean].active !== false) c = dyn[clean];
+    if (dyn && Object.hasOwn(dyn, clean) && dyn[clean] && dyn[clean].active !== false) c = dyn[clean];
   }
   if (!c) return null;
   return { code: clean, type: c.type === 'flat' ? 'flat' : 'percent', value: Number(c.value) || 0, label: String(c.label || ''), minOrder: Number(c.minOrder) || 0 };
@@ -178,12 +184,13 @@ export async function handleDownload(request, env, productId) {
     }
   }
 
-  // Block downloads if this payment was fully refunded via Razorpay webhook
+  // Block downloads if this payment/order was fully refunded via Razorpay webhook
   if (paymentId && env.TAMYIZ_STORE.get) {
     try {
       const fulfilledRaw = await env.TAMYIZ_STORE.get(`order-fulfilled:${paymentId}`);
-      if (fulfilledRaw) {
-        const ord = JSON.parse(fulfilledRaw);
+      const ordRaw = fulfilledRaw || await env.TAMYIZ_STORE.get(`order:${paymentId}`);
+      if (ordRaw) {
+        const ord = JSON.parse(ordRaw);
         if (ord && ord.status === 'refunded') {
           return json({ error: 'This order was refunded, so the download link is no longer active.' }, 403);
         }
@@ -382,7 +389,7 @@ export function notesToItems(notes = {}) {
 function cleanContact(email, phone) {
   const e = String(email || '').trim().toLowerCase();
   const p = String(phone || '').replace(/[^0-9+]/g, '');
-  if (!e || !e.includes('@') || !e.includes('.') || e.length > 254) return { error: 'A valid email address is required for digital dispatch.' };
+  if (!e || e.length > 254 || !STRICT_EMAIL_RE.test(e)) return { error: 'A valid email address is required for digital dispatch.' };
   if (!p || p.length < 10 || p.length > 16) return { error: 'A valid WhatsApp phone number (minimum 10 digits) is required.' };
   return { email: e, phone: p };
 }
@@ -493,7 +500,7 @@ async function alreadyFulfilled(request, env, paymentId) {
     const existingRaw = await env.TAMYIZ_STORE.get(`order-fulfilled:${paymentId}`);
     if (!existingRaw) return null;
     const existing = JSON.parse(existingRaw);
-    const origin = new URL(request.url).origin;
+    const origin = requestOrigin(request, env);
     const downloads = await Promise.all((existing.items || []).map(async (i) => ({
       productId: i.productId || i.id,
       name: i.name,
@@ -560,7 +567,8 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
     const payment = await payRes.json();
     rzpOrder = await ordRes.json();
     const okStatus = payment.status === 'captured' || payment.status === 'authorized';
-    if (payment.order_id !== razorpay_order_id || !okStatus || Number(payment.amount) !== Number(rzpOrder.amount)) {
+    const okCurrency = (payment.currency || 'INR') === 'INR' && (rzpOrder.currency || 'INR') === 'INR';
+    if (payment.order_id !== razorpay_order_id || !okStatus || !okCurrency || Number(payment.amount) !== Number(rzpOrder.amount)) {
       return json({ error: 'Payment not completed for this order.' }, 400);
     }
     // 3. What was paid for comes from the order Razorpay stored, not from the browser.
@@ -597,7 +605,7 @@ export async function handleVerifyPayment(request, env, fetchImpl = fetch) {
   if (mode === 'atelier_sandbox' && notOnSale(priced.items).length) return json({ error: NOT_RELEASED }, 409);
   const amountPaise = mode === 'razorpay' ? Number(paidOrderAmount) : priced.amountPaise;
   const totalINR = Math.round(amountPaise / 100);
-  const origin = new URL(request.url).origin;
+  const origin = requestOrigin(request, env);
   const downloads = await Promise.all(priced.items.map(async (i) => ({
     productId: i.productId,
     name: i.name,
@@ -749,9 +757,15 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
   }
   const rzpOrder = await ordRes.json();
 
-  // Validate that payment belongs to this order and amount equals order amount
+  // Validate that payment belongs to this order, currency is INR, status is valid, and amount equals order amount
   if (pEntity.order_id && pEntity.order_id !== rzpOrder.id) {
     return json({ error: 'Payment does not belong to this order.' }, 400);
+  }
+  if (eventName === 'payment.captured' && pEntity.status && pEntity.status !== 'captured' && pEntity.status !== 'authorized') {
+    return json({ error: 'Payment not captured.' }, 400);
+  }
+  if ((pEntity.currency && pEntity.currency !== 'INR') || (rzpOrder.currency && rzpOrder.currency !== 'INR')) {
+    return json({ error: 'Unsupported payment currency.' }, 400);
   }
   if (Number(pEntity.amount) !== Number(rzpOrder.amount)) {
     return json({ error: 'Payment amount does not match order amount.' }, 400);
@@ -779,7 +793,7 @@ export async function handleRazorpayWebhook(request, env, fetchImpl = fetch) {
   const totalINR = Math.round(Number(rzpOrder.amount) / 100);
   const refSuffix = String(orderId || paymentId).replace(/^order_(sandbox_)?/i, '').replace(/^pay_(sandbox_)?/i, '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(-10);
   const referenceId = 'TAMYIZ-ORD-' + (refSuffix || Date.now().toString(36).toUpperCase());
-  const origin = new URL(request.url).origin;
+  const origin = requestOrigin(request, env);
 
   const downloads = await Promise.all(priced.items.map(async (i) => ({
     productId: i.productId,

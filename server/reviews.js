@@ -1,4 +1,4 @@
-import { json, escapeHtml } from './payments.js';
+import { json, escapeHtml, STRICT_EMAIL_RE } from './payments.js';
 import { loadCatalog, findById, findBySlug } from './catalog.js';
 
 export async function handleReviews(request, env) {
@@ -53,23 +53,6 @@ async function getApprovedReviews(env, productId) {
 }
 
 async function submitReview(request, env) {
-  // Rate limiting per IP to prevent review spamming
-  const ip = request.headers.get('CF-Connecting-IP') || 'local';
-  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
-    try {
-      const rateKey = `review-rate:${ip}`;
-      const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
-      if (recent >= 5) {
-        return json({ error: 'Too many review submissions. Please wait a while before submitting another review.' }, 429);
-      }
-      if (env.TAMYIZ_STORE.put) {
-        await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 }).catch(() => {});
-      }
-    } catch (e) {
-      console.warn('Review rate limit KV check failed:', e);
-    }
-  }
-
   let body;
   try {
     body = await request.json();
@@ -87,11 +70,28 @@ async function submitReview(request, env) {
 
   if (!productId || typeof productId !== 'string' || productId.length > 80) return json({ error: 'Product ID is required.' }, 400);
   if (cleanName.length < 2) return json({ error: 'Please enter your name.' }, 400);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cleanEmail)) {
+  if (!STRICT_EMAIL_RE.test(cleanEmail)) {
     return json({ error: 'Please enter a valid email address.' }, 400);
   }
   if (cleanComment.length < 10) {
     return json({ error: 'Please write at least a sentence or two (10+ characters).' }, 400);
+  }
+
+  // Rate limiting per IP after input validation so invalid payloads spend 0 KV writes
+  const ip = request.headers.get('CF-Connecting-IP') || 'local';
+  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
+    try {
+      const rateKey = `review-rate:${ip}`;
+      const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
+      if (recent >= 5) {
+        return json({ error: 'Too many review submissions. Please wait a while before submitting another review.' }, 429);
+      }
+      if (env.TAMYIZ_STORE.put) {
+        await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 }).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Review rate limit KV check failed:', e);
+    }
   }
 
   // Check if book exists

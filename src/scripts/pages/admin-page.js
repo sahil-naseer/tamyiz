@@ -1561,7 +1561,7 @@ export class AdminController {
               <div>
                 <label for="tmz-gift-product" class="tmz-admin-field-label">E-Book Edition *</label>
                 <select id="tmz-gift-product" class="tmz-admin-input" required>
-                  ${this.products.map((p) => `<option value="${p.id}">${escapeText(p.name)} (₹${p.price})</option>`).join('')}
+                  ${this.products.map((p) => `<option value="${escapeText(p.id)}">${escapeText(p.name)} (₹${p.price})</option>`).join('')}
                 </select>
               </div>
             </div>
@@ -1611,7 +1611,7 @@ export class AdminController {
                       <td style="text-align: right; white-space: nowrap;">
                         ${o.status === 'refunded'
                           ? `<span style="font-size: 12px; color: var(--tmz-graphite, #55554F);">Download disabled</span>`
-                          : `<button type="button" class="tmz-resend-btn tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm" data-id="${o.orderId}">Re-send Email ✉</button>`}
+                          : `<button type="button" class="tmz-resend-btn tmz-admin-btn tmz-admin-btn-secondary tmz-admin-btn-sm" data-id="${escapeText(o.orderId)}">Re-send Email ✉</button>`}
                       </td>
                     </tr>
                   `).join('')}
@@ -1664,7 +1664,7 @@ export class AdminController {
       resBox.style.color = '#1E7B2E';
       resBox.innerHTML = `
         Gift order created! Download URL:
-        <input type="text" readonly id="tmz-gift-dl-url" class="tmz-admin-input" value="${res.data.downloadUrl}" style="padding: 8px 10px; font-size: 12px; font-family: monospace; margin-top: 6px;" />
+        <input type="text" readonly id="tmz-gift-dl-url" class="tmz-admin-input" value="${escapeText(res.data.downloadUrl)}" style="padding: 8px 10px; font-size: 12px; font-family: monospace; margin-top: 6px;" />
       `;
       document.getElementById('tmz-gift-dl-url')?.addEventListener('click', (ev) => ev.currentTarget.select());
       setTimeout(() => this.renderOrdersTab(mount), 2000);
@@ -1801,11 +1801,11 @@ export class AdminController {
                         <td style="text-align: right; white-space: nowrap;">
                           <div class="tmz-admin-actions-row" style="justify-content: flex-end;">
                             ${!isRecovered ? `
-                              <button type="button" class="tmz-send-abandoned-btn tmz-admin-btn tmz-admin-btn-primary tmz-admin-btn-sm" data-id="${c.id}">
+                              <button type="button" class="tmz-send-abandoned-btn tmz-admin-btn tmz-admin-btn-primary tmz-admin-btn-sm" data-id="${escapeText(c.id)}">
                                 ${c.emailSent ? 'Re-send Email' : 'Send Recovery Email'}
                               </button>
                             ` : ''}
-                            <button type="button" class="tmz-del-abandoned-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${c.id}">
+                            <button type="button" class="tmz-del-abandoned-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${escapeText(c.id)}">
                               Remove
                             </button>
                           </div>
@@ -2108,7 +2108,7 @@ export class AdminController {
                           ${escapeText(l.productName || l.productId || 'E-Book')}
                         </td>
                         <td style="text-align: right;">
-                          <button type="button" class="tmz-del-lead-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${l.id}">
+                          <button type="button" class="tmz-del-lead-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${escapeText(l.id)}">
                             Remove
                           </button>
                         </td>
@@ -2228,10 +2228,10 @@ export class AdminController {
                       <span style="font-size: 13px; color: var(--tmz-graphite, #55554F); margin-left: 6px;">(${escapeText(r.email)})</span>
                     </div>
                     <div class="tmz-admin-actions-row">
-                      <button type="button" class="tmz-approve-rev-btn tmz-admin-btn tmz-admin-btn-primary tmz-admin-btn-sm" data-id="${r.id}">
+                      <button type="button" class="tmz-approve-rev-btn tmz-admin-btn tmz-admin-btn-primary tmz-admin-btn-sm" data-id="${escapeText(r.id)}">
                         Approve &amp; Publish ✓
                       </button>
-                      <button type="button" class="tmz-delete-rev-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${r.id}">
+                      <button type="button" class="tmz-delete-rev-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${escapeText(r.id)}">
                         Reject / Delete
                       </button>
                     </div>
@@ -2285,7 +2285,7 @@ export class AdminController {
                           "${escapeText(r.comment)}"
                         </td>
                         <td style="text-align: right;">
-                          <button type="button" class="tmz-delete-rev-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${r.id}">
+                          <button type="button" class="tmz-delete-rev-btn tmz-admin-btn tmz-admin-btn-danger tmz-admin-btn-sm" data-id="${escapeText(r.id)}">
                             Remove
                           </button>
                         </td>

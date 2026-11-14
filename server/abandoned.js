@@ -1,4 +1,4 @@
-import { json, escapeHtml } from './payments.js';
+import { json, escapeHtml, STRICT_EMAIL_RE } from './payments.js';
 import { loadCatalog, findById } from './catalog.js';
 import { getSiteUrl } from './site.js';
 
@@ -15,7 +15,26 @@ export async function handleTrackAbandonedCart(request, env) {
     return json({ error: 'Method Not Allowed. Use POST.' }, 405);
   }
 
-  // Rate limiting per IP to prevent spamming cart records
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid JSON request.' }, 400);
+  }
+
+  const { email, phone, items, total, coupon } = body || {};
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  const cleanPhone = String(phone || '').trim();
+
+  if (!cleanEmail || cleanEmail.length > 254 || !STRICT_EMAIL_RE.test(cleanEmail)) {
+    return json({ error: 'Valid email required' }, 400);
+  }
+
+  if (!Array.isArray(items) || items.length === 0 || items.length > 30) {
+    return json({ error: 'No items in cart' }, 400);
+  }
+
+  // Rate limiting per IP after input validation so invalid payloads spend 0 KV writes
   const ip = request.headers.get('CF-Connecting-IP') || 'local';
   if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
     try {
@@ -30,25 +49,6 @@ export async function handleTrackAbandonedCart(request, env) {
     } catch (e) {
       console.warn('Abandoned cart rate limit KV check failed:', e);
     }
-  }
-
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: 'Invalid JSON request.' }, 400);
-  }
-
-  const { email, phone, items, total, coupon } = body || {};
-  const cleanEmail = String(email || '').trim().toLowerCase();
-  const cleanPhone = String(phone || '').trim();
-
-  if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cleanEmail)) {
-    return json({ error: 'Valid email required' }, 400);
-  }
-
-  if (!Array.isArray(items) || items.length === 0 || items.length > 30) {
-    return json({ error: 'No items in cart' }, 400);
   }
 
   if (!env || !env.TAMYIZ_STORE) {
