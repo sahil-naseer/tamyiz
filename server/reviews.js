@@ -1,4 +1,4 @@
-import { json, escapeHtml, STRICT_EMAIL_RE } from './payments.js';
+import { json, escapeHtml, STRICT_EMAIL_RE, checkRateLimit, clientIp } from './payments.js';
 import { loadCatalog, findById, findBySlug } from './catalog.js';
 
 export async function handleReviews(request, env) {
@@ -77,21 +77,10 @@ async function submitReview(request, env) {
     return json({ error: 'Please write at least a sentence or two (10+ characters).' }, 400);
   }
 
-  // Rate limiting per IP after input validation so invalid payloads spend 0 KV writes
-  const ip = request.headers.get('CF-Connecting-IP') || 'local';
-  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
-    try {
-      const rateKey = `review-rate:${ip}`;
-      const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
-      if (recent >= 5) {
-        return json({ error: 'Too many review submissions. Please wait a while before submitting another review.' }, 429);
-      }
-      if (env.TAMYIZ_STORE.put) {
-        await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 }).catch(() => {});
-      }
-    } catch (e) {
-      console.warn('Review rate limit KV check failed:', e);
-    }
+  // Rate limiting per IP in-memory so review rate checks spend 0 KV writes
+  const ip = clientIp(request);
+  if (ip !== 'local' && !checkRateLimit(env, `review-rate:${ip}`, 5, 15 * 60 * 1000)) {
+    return json({ error: 'Too many review submissions. Please wait a while before submitting another review.' }, 429);
   }
 
   // Check if book exists

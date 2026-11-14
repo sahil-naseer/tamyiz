@@ -398,6 +398,38 @@ export const clientIp = (request) => request.headers.get('CF-Connecting-IP') || 
 const ORDER_RATE_LIMIT = 20; // max 20 order creations per 10 mins per IP
 const ORDER_RATE_TTL = 10 * 60;
 
+const rateLimitBuckets = new WeakMap();
+const fallbackRateLimitMap = new Map();
+
+/**
+ * In-memory per-isolate rate limiter scoped by `env.TAMYIZ_STORE` (0 KV writes).
+ * Prevents floods on public `/api/*` routes from exhausting the daily Cloudflare KV write quota.
+ */
+export function checkRateLimit(env, key, maxCount, windowMs = 15 * 60 * 1000) {
+  let map = fallbackRateLimitMap;
+  if (env && typeof env.TAMYIZ_STORE === 'object' && env.TAMYIZ_STORE !== null) {
+    map = rateLimitBuckets.get(env.TAMYIZ_STORE);
+    if (!map) {
+      map = new Map();
+      rateLimitBuckets.set(env.TAMYIZ_STORE, map);
+    }
+  }
+  const now = Date.now();
+  const entry = map.get(key);
+  if (!entry || entry.resetAt <= now) {
+    if (map.size > 4000) {
+      for (const [k, v] of map.entries()) {
+        if (v.resetAt <= now) map.delete(k);
+      }
+    }
+    map.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  if (entry.count >= maxCount) return false;
+  entry.count += 1;
+  return true;
+}
+
 // ---------------------------------------------------------------------------
 // POST /api/create-order
 // ---------------------------------------------------------------------------
@@ -411,21 +443,10 @@ export async function handleCreateOrder(request, env, fetchImpl = fetch) {
   const contact = cleanContact(email, phone);
   if (contact.error) return json({ error: contact.error }, 400);
 
-  // Rate limiting per IP to prevent Razorpay order flooding
+  // Rate limiting per IP in-memory (0 KV writes) to prevent Razorpay order flooding
   const ip = clientIp(request);
-  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
-    try {
-      const rateKey = `order-rate:${ip}`;
-      const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
-      if (recent >= ORDER_RATE_LIMIT) {
-        return json({ error: 'Too many checkout attempts. Please wait a few minutes before trying again or message us on WhatsApp.' }, 429);
-      }
-      if (env.TAMYIZ_STORE.put) {
-        await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: ORDER_RATE_TTL }).catch(() => {});
-      }
-    } catch (e) {
-      console.warn('Rate limit KV check failed:', e);
-    }
+  if (ip !== 'local' && !checkRateLimit(env, `order-rate:${ip}`, ORDER_RATE_LIMIT, ORDER_RATE_TTL * 1000)) {
+    return json({ error: 'Too many checkout attempts. Please wait a few minutes before trying again or message us on WhatsApp.' }, 429);
   }
 
   const catalog = await loadCatalog(env);

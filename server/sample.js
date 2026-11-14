@@ -1,4 +1,4 @@
-import { json, STRICT_EMAIL_RE } from './payments.js';
+import { json, STRICT_EMAIL_RE, checkRateLimit, clientIp } from './payments.js';
 import { loadCatalog, findById, findBySlug, publicProduct } from './catalog.js';
 import { getSiteUrl } from './site.js';
 
@@ -25,21 +25,10 @@ export async function handleSampleLead(request, env) {
     return json({ error: 'Product ID is required.' }, 400);
   }
 
-  // Rate limiting per IP after input validation so invalid payloads use 0 KV writes
-  const ip = request.headers.get('CF-Connecting-IP') || 'local';
-  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
-    try {
-      const rateKey = `sample-rate:${ip}`;
-      const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
-      if (recent >= 10) {
-        return json({ error: 'Too many sample requests. Please wait a few minutes before trying again.' }, 429);
-      }
-      if (env.TAMYIZ_STORE.put) {
-        await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 }).catch(() => {});
-      }
-    } catch (e) {
-      console.warn('Sample rate limit KV check failed:', e);
-    }
+  // Rate limiting per IP in-memory so requests spend 0 KV writes on rate counters
+  const ip = clientIp(request);
+  if (ip !== 'local' && !checkRateLimit(env, `sample-rate:${ip}`, 10, 15 * 60 * 1000)) {
+    return json({ error: 'Too many sample requests. Please wait a few minutes before trying again.' }, 429);
   }
 
   const list = await loadCatalog(env);

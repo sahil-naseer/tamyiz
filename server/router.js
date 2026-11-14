@@ -2,30 +2,7 @@
  * Every /api/* address in one place. Cloudflare runs it through functions/api/[[path]].js;
  * the local Vite server runs it through vite.config.js, so both behave the same.
  */
-import { json, handleCreateOrder, handleVerifyPayment, handleDownload, handleRazorpayWebhook, findCoupon } from './payments.js';
-
-const COUPON_RATE_WINDOW_MS = 5 * 60 * 1000;
-const COUPON_RATE_MAX = 30;
-const couponRateBuckets = new WeakMap();
-const fallbackCouponMap = new Map();
-function allowCouponLookup(env, ip) {
-  const storeRef = env && typeof env.TAMYIZ_STORE === 'object' && env.TAMYIZ_STORE !== null ? env.TAMYIZ_STORE : null;
-  let map = fallbackCouponMap;
-  if (storeRef) {
-    if (!couponRateBuckets.has(storeRef)) couponRateBuckets.set(storeRef, new Map());
-    map = couponRateBuckets.get(storeRef);
-  }
-  const now = Date.now();
-  const rec = map.get(ip);
-  if (!rec || now > rec.expiresAt) {
-    if (map.size > 512) map.clear();
-    map.set(ip, { count: 1, expiresAt: now + COUPON_RATE_WINDOW_MS });
-    return true;
-  }
-  if (rec.count >= COUPON_RATE_MAX) return false;
-  rec.count += 1;
-  return true;
-}
+import { json, handleCreateOrder, handleVerifyPayment, handleDownload, handleRazorpayWebhook, findCoupon, checkRateLimit, clientIp } from './payments.js';
 import { handleAdmin } from './admin.js';
 import { publicCatalog } from './catalog.js';
 import { handleSampleLead } from './sample.js';
@@ -33,6 +10,11 @@ import { handleRecoverDownloads } from './recovery.js';
 import { handleReviews } from './reviews.js';
 import { handleTrackAbandonedCart } from './abandoned.js';
 import { handlePublicFilms, handleFeaturedFilm, handleSingleFilm } from './films.js';
+
+const API_BURST_LIMIT = 180;
+const API_BURST_WINDOW_MS = 60 * 1000;
+const COUPON_RATE_LIMIT = 30;
+const COUPON_RATE_WINDOW_MS = 10 * 60 * 1000;
 
 async function cover(env, id, request) {
   if (!env.TAMYIZ_STORE) return new Response('Not found', { status: 404 });
@@ -57,6 +39,13 @@ export async function route(request, env, fetchImpl = fetch) {
   const path = new URL(request.url).pathname.replace(/\/+$/, '');
   const method = request.method;
   const rest = path.replace(/^\/api\/?/, '');
+  const ip = clientIp(request);
+  const isWebhook = rest === 'webhook/razorpay' || rest === 'razorpay-webhook' || rest.startsWith('webhook/');
+
+  // Global in-memory burst limiter across /api/* (0 KV writes; excludes Razorpay webhooks)
+  if (!isWebhook && ip !== 'local' && !checkRateLimit(env, `api-burst:${ip}`, API_BURST_LIMIT, API_BURST_WINDOW_MS)) {
+    return json({ error: 'Too many requests. Please slow down and try again in a minute.' }, 429);
+  }
 
   if (rest.startsWith('admin/')) return handleAdmin(request, env, rest.slice(6), fetchImpl);
 
@@ -84,8 +73,7 @@ export async function route(request, env, fetchImpl = fetch) {
   if (rest === 'coupon' && method === 'GET') {
     const rawCode = String(new URL(request.url).searchParams.get('code') || '').trim();
     if (!/^[A-Za-z0-9_-]{3,30}$/.test(rawCode)) return json({ valid: false }, 404);
-    const ip = request.headers.get('cf-connecting-ip') || 'local';
-    if (!allowCouponLookup(env, ip)) {
+    if (ip !== 'local' && !checkRateLimit(env, `coupon-rate:${ip}`, COUPON_RATE_LIMIT, COUPON_RATE_WINDOW_MS)) {
       return json({ valid: false, error: 'Too many coupon attempts. Please wait a few minutes.' }, 429);
     }
     const c = await findCoupon(env, rawCode);

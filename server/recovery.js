@@ -1,4 +1,4 @@
-import { json, signDownload, escapeHtml, requestOrigin, STRICT_EMAIL_RE } from './payments.js';
+import { json, signDownload, escapeHtml, requestOrigin, STRICT_EMAIL_RE, checkRateLimit, clientIp } from './payments.js';
 
 export function maskEmail(email) {
   if (!email || !email.includes('@')) return '***';
@@ -31,21 +31,10 @@ export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
     return json({ error: 'Please enter a valid email address.' }, 400);
   }
 
-  // Rate limiting per IP after validation so invalid requests use 0 KV writes
-  const ip = request.headers.get('CF-Connecting-IP') || 'local';
-  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
-    try {
-      const rateKey = `recover-rate:${ip}`;
-      const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
-      if (recent >= 8) {
-        return json({ error: 'Too many recovery attempts. Please wait 15 minutes before trying again or message us on WhatsApp.' }, 429);
-      }
-      if (env.TAMYIZ_STORE.put) {
-        await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 }).catch(() => {});
-      }
-    } catch (e) {
-      console.warn('Recovery rate limit KV check failed:', e);
-    }
+  // Rate limiting per IP in-memory so recovery attempts spend 0 KV writes
+  const ip = clientIp(request);
+  if (ip !== 'local' && !checkRateLimit(env, `recover-rate:${ip}`, 8, 15 * 60 * 1000)) {
+    return json({ error: 'Too many recovery attempts. Please wait 15 minutes before trying again or message us on WhatsApp.' }, 429);
   }
 
   if (!env || !env.TAMYIZ_STORE) {
@@ -125,14 +114,7 @@ export async function handleRecoverDownloads(request, env, fetchImpl = fetch) {
   }
   for (const [to, { books }] of byEmail) {
     if (books.length) {
-      if (kv && kv.get) {
-        try {
-          const emailRateKey = `recover-email:${to}`;
-          const count = Number(await kv.get(emailRateKey)) || 0;
-          if (count >= 3) continue; // Rate limited per recipient address (max 3 per hour to protect email quota)
-          if (kv.put) await kv.put(emailRateKey, String(count + 1), { expirationTtl: 3600 }).catch(() => {});
-        } catch {}
-      }
+      if (!checkRateLimit(env, `recover-email:${to}`, 3, 60 * 60 * 1000)) continue; // Rate limited per recipient address (0 KV writes)
       await sendRecoveryEmail(env, to, books, fetchImpl).catch(() => false);
     }
   }

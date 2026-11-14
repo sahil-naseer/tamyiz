@@ -78,9 +78,10 @@ About ten commits landed on 2 Nov. Everything below is in `server/` (routes in `
 - Security headers: `public/_headers` and `server/security-headers.js` set X-Frame-Options DENY, nosniff,
   Referrer-Policy, Permissions-Policy and a Content-Security-Policy (`script-src 'self' https://checkout.razorpay.com`,
   without `'unsafe-inline'`). Dev dependencies were patched ("0 vulnerabilities"); re-run `npm audit` after any install.
-- Rate limits are counters stored in KV. KV's free plan allows only 1,000 writes per day (see Storage), and each
-  counted request is a write, so a flood of requests could use up the day's writes and break orders and uploads.
-  Prefer Cloudflare's own rate limiting rules in front of /api for anything public.
+- Rate limits use in-memory per-isolate `WeakMap` buckets (`checkRateLimit()` in `server/payments.js` and
+  `securityBuckets` in `server/admin.js`, plus a global 180 req/min `/api/*` burst guard in `server/router.js`) and
+  spend 0 KV writes, so floods cannot exhaust KV's 1,000-writes/day free-plan cap or break orders/uploads.
+  (Zone-level Cloudflare WAF rate limiting requires moving to a custom domain zone rather than `tamyiz.pages.dev`.)
 
 ## Selling
 
@@ -241,7 +242,9 @@ tamyiz-unified.css). Don't ship below this.
 
 2 Nov 2026 to-dos (status):
 - ~~Tighten the CSP (drop `'unsafe-inline'` for scripts)~~ (Done 14 Nov 2026: inline event handlers removed, `'unsafe-inline'` dropped from `script-src`).
-- Add Cloudflare dashboard WAF rate limiting rules for `/api/*` and `/api/admin/*` so abuse doesn't spend KV writes.
+- ~~Protect `/api/*` and `/api/admin/*` rate limits so abuse doesn't spend KV writes.~~ (Done 14 Nov 2026: all `/api/*`
+  and `/api/admin/*` rate limiters moved to in-memory `checkRateLimit` / `securityBuckets` + global `/api/*` burst
+  guard, spending `0` KV writes; optional custom-domain zone WAF rules remain for when a custom domain is added.)
 - ~~Decide whether the hard-coded `SAMPLE10` stays~~ (Removed 14 Nov 2026: `VALID_COUPONS = {}`).
 - Checked 2 Nov 2026 on commit a9939a8: `npm test` 52 of 52 pass, `npm audit` 0 vulnerabilities. Re-run both after every change.
 
@@ -292,25 +295,28 @@ Hardened 14 Nov 2026:
 - Added `<h2 class="sr-only">All films</h2>` to `.tmz-films-grid` on `/films`, removed unused `.tmz-footer-wordmark`
   CSS and legacy placeholder/copy leftovers.
 
-Still open (optional future improvements): own email domain (SPF/DKIM/DMARC — user plans to add when buying a custom domain),
-and Cloudflare dashboard WAF rate-limiting rules for `/api/*` and `/api/admin/*`.
+Still open (optional future improvements when moving to a custom domain): own email domain (SPF/DKIM/DMARC),
+and Cloudflare zone WAF rate-limiting rules for `/api/*` across isolates (in-isolate `/api/*` burst + endpoint
+limiters are active with 0 KV writes).
 
 ## Audit and polish, second pass (14 Nov 2026, afternoon)
 
-Security (tests in `tests/security.test.js`; `npm test` 86 of 86, `npm audit` 0):
+Security (tests in `tests/security.test.js`; `npm test` 91 of 91, `npm audit` 0):
 - Admin 2FA could be bypassed by anyone who knew the password: the session cookie and the OTP challenge were both
   signed with the password itself, so the emailed code could be worked out offline (about 20 seconds) and a cookie
   could be forged without logging in. Both are now signed with a key derived from a server-only secret plus the
-  password (`signingKey()` in `server/admin.js`). Set `ADMIN_SESSION_SECRET` (long random text, Secret) in Cloudflare;
-  until it is set the first of `DOWNLOAD_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_KEY_SECRET`, `BREVO_API_KEY` is
-  used. Adding or changing it logs every admin out once. Never sign with the password alone again.
-- Download links: new links are signed with `DOWNLOAD_SECRET` when set; links signed earlier with
-  `RAZORPAY_KEY_SECRET` are still accepted (`downloadSecrets()` in `server/payments.js`), so setting it breaks nothing.
+  password (`signingKey()` in `server/admin.js`). `ADMIN_SESSION_SECRET` is configured in Cloudflare Pages (`tamyiz`,
+  production). Adding or changing it logs every admin out once. Never sign with the password alone again.
+- Download links: `DOWNLOAD_SECRET` is configured in Cloudflare Pages (`tamyiz`, production); new links are signed with
+  `DOWNLOAD_SECRET`, while links signed earlier with `RAZORPAY_KEY_SECRET` are still accepted (`downloadSecrets()` in
+  `server/payments.js`), so existing buyer links keep working.
 - CSP: `images.unsplash.com` removed (unused), `form-action 'self'` added (both places).
 - /admin overview says "Latest 500 orders only" once `orders:index` is full (totals only cover those 500).
 - Unused `@fontsource-variable/syne` dependency removed.
-- Still open, dashboard work only: Cloudflare WAF rate-limit rules for `/api/admin/login` and `/api/*` (the login
-  lockout is per Cloudflare instance, so it slows guessing but does not stop a spread-out attack), and a KV backup.
+- Rate limits: all `/api/*` and `/api/admin/*` limiters (`api-burst`, `coupon-rate`, `sample-rate`, `recover-rate`,
+  `recover-email`, `review-rate`, `abandoned-rate`, `order-rate`, `login`/`otp`) now run in-memory (`checkRateLimit` /
+  `securityBuckets`) with 0 KV writes. Still optional once a custom domain zone exists: cross-isolate Cloudflare WAF
+  rate-limit rules and an automated KV backup.
 
 Design and motion (all in the "POLISH 14 Nov 2026 (second pass)" block at the end of tamyiz-unified.css):
 - Book page: cover sits in a light 2:3 frame (no black bars), the E-BOOK tag is a yellow square tag top-left (it was

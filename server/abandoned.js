@@ -1,4 +1,4 @@
-import { json, escapeHtml, STRICT_EMAIL_RE } from './payments.js';
+import { json, escapeHtml, STRICT_EMAIL_RE, checkRateLimit, clientIp } from './payments.js';
 import { loadCatalog, findById } from './catalog.js';
 import { getSiteUrl } from './site.js';
 
@@ -34,21 +34,10 @@ export async function handleTrackAbandonedCart(request, env) {
     return json({ error: 'No items in cart' }, 400);
   }
 
-  // Rate limiting per IP after input validation so invalid payloads spend 0 KV writes
-  const ip = request.headers.get('CF-Connecting-IP') || 'local';
-  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get && ip !== 'local') {
-    try {
-      const rateKey = `abandoned-rate:${ip}`;
-      const recent = Number(await env.TAMYIZ_STORE.get(rateKey)) || 0;
-      if (recent >= 20) {
-        return json({ ok: true, rateLimited: true });
-      }
-      if (env.TAMYIZ_STORE.put) {
-        await env.TAMYIZ_STORE.put(rateKey, String(recent + 1), { expirationTtl: 15 * 60 }).catch(() => {});
-      }
-    } catch (e) {
-      console.warn('Abandoned cart rate limit KV check failed:', e);
-    }
+  // Rate limiting per IP in-memory so abandoned-cart rate checks spend 0 KV writes
+  const ip = clientIp(request);
+  if (ip !== 'local' && !checkRateLimit(env, `abandoned-rate:${ip}`, 20, 15 * 60 * 1000)) {
+    return json({ ok: true, rateLimited: true });
   }
 
   if (!env || !env.TAMYIZ_STORE) {

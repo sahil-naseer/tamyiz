@@ -741,3 +741,81 @@ test('payment currency & refund lock: non-INR Razorpay payment is refused and re
   const dlLink = await signDownload(e, 'eb-onsale', 'gift_refunded_1');
   assert.equal((await call(e, dlLink)).status, 403);
 });
+
+test('in-memory rate limiting: all /api/* public limits and global burst guard enforce 429 with 0 rate-limit KV writes', async () => {
+  const writtenKeys = [];
+  const base = env({
+    BREVO_API_KEY: 'brevo-test',
+    RAZORPAY_KEY_ID: 'rzp_live_test',
+    RAZORPAY_KEY_SECRET: 'rzp_secret_test',
+    RAZORPAY_WEBHOOK_SECRET: 'rzp_wh_test',
+  });
+  const baseKv = base.TAMYIZ_STORE;
+  const trackingKv = {
+    get: (...args) => baseKv.get(...args),
+    put: (k, ...rest) => { writtenKeys.push(k); return baseKv.put(k, ...rest); },
+    delete: (...args) => baseKv.delete(...args),
+    getWithMetadata: (...args) => baseKv.getWithMetadata(...args),
+  };
+  const e = { ...base, TAMYIZ_STORE: trackingKv };
+  const mockFetch = async (url) => {
+    if (String(url).includes('api.razorpay.com')) {
+      return new Response(JSON.stringify({ id: 'order_rate_1', amount: 29900, currency: 'INR' }), { status: 200 });
+    }
+    return new Response('{}', { status: 201 });
+  };
+
+  // 1. /api/sample: 10 allowed, 11th -> 429
+  for (let i = 0; i < 10; i++) {
+    const r = await post(e, '/api/sample', { productId: 'eb-onsale', email: 'sample@example.com' }, { 'CF-Connecting-IP': '198.51.100.11' }, mockFetch);
+    assert.equal(r.status, 200);
+  }
+  assert.equal((await post(e, '/api/sample', { productId: 'eb-onsale', email: 'sample@example.com' }, { 'CF-Connecting-IP': '198.51.100.11' }, mockFetch)).status, 429);
+
+  // 2. /api/recover-downloads: 8 allowed, 9th -> 429
+  for (let i = 0; i < 8; i++) {
+    const r = await post(e, '/api/recover-downloads', { email: 'buyer@example.com' }, { 'CF-Connecting-IP': '198.51.100.12' }, mockFetch);
+    assert.equal(r.status, 200);
+  }
+  assert.equal((await post(e, '/api/recover-downloads', { email: 'buyer@example.com' }, { 'CF-Connecting-IP': '198.51.100.12' }, mockFetch)).status, 429);
+
+  // 3. /api/reviews: 5 allowed, 6th -> 429
+  for (let i = 0; i < 5; i++) {
+    const r = await post(e, '/api/reviews', { productId: 'eb-onsale', name: 'Reader', email: 'r@example.com', rating: 5, comment: 'Clear and thoughtful.' }, { 'CF-Connecting-IP': '198.51.100.13' }, mockFetch);
+    assert.equal(r.status, 200);
+  }
+  assert.equal((await post(e, '/api/reviews', { productId: 'eb-onsale', name: 'Reader', email: 'r@example.com', rating: 5, comment: 'Clear and thoughtful.' }, { 'CF-Connecting-IP': '198.51.100.13' }, mockFetch)).status, 429);
+
+  // 4. /api/abandoned-cart: 20 allowed, 21st -> { ok: true, rateLimited: true }
+  for (let i = 0; i < 20; i++) {
+    const r = await post(e, '/api/abandoned-cart', { email: 'ab@example.com', items: [{ productId: 'eb-onsale', variant: 'PDF' }] }, { 'CF-Connecting-IP': '198.51.100.14' }, mockFetch);
+    assert.equal(r.status, 200);
+  }
+  const abLimited = await (await post(e, '/api/abandoned-cart', { email: 'ab@example.com', items: [{ productId: 'eb-onsale', variant: 'PDF' }] }, { 'CF-Connecting-IP': '198.51.100.14' }, mockFetch)).json();
+  assert.equal(abLimited.rateLimited, true);
+
+  // 5. /api/create-order: 20 allowed, 21st -> 429
+  const orderBody = { items: [{ productId: 'eb-onsale', variant: 'PDF' }], email: 'buyer@example.com', phone: '+919876543210' };
+  for (let i = 0; i < 20; i++) {
+    const r = await post(e, '/api/create-order', orderBody, { 'CF-Connecting-IP': '198.51.100.15' }, mockFetch);
+    assert.equal(r.status, 200);
+  }
+  assert.equal((await post(e, '/api/create-order', orderBody, { 'CF-Connecting-IP': '198.51.100.15' }, mockFetch)).status, 429);
+
+  // 6. Global /api/* burst limiter: 180 req/min allowed, 181st -> 429 (webhooks excluded)
+  const writesBeforeBurst = writtenKeys.length;
+  for (let i = 0; i < 180; i++) {
+    const r = await call(e, '/api/announcement', { headers: { 'CF-Connecting-IP': '198.51.100.250' } });
+    assert.equal(r.status, 200);
+  }
+  assert.equal((await call(e, '/api/announcement', { headers: { 'CF-Connecting-IP': '198.51.100.250' } })).status, 429);
+  const wh = await post(e, '/api/webhook/razorpay', { event: 'payment.captured' }, { 'CF-Connecting-IP': '198.51.100.250' });
+  assert.notEqual(wh.status, 429);
+  assert.equal(writtenKeys.length, writesBeforeBurst);
+
+  // Zero rate-limit counters written to KV across all endpoints
+  assert.deepEqual(
+    writtenKeys.filter((k) => k.includes('-rate:') || k.startsWith('recover-email:')),
+    []
+  );
+});
