@@ -352,6 +352,11 @@ sheet.replaceSync(`
     text-overflow: ellipsis;
   }
 
+  /* Name only in the header; the status line still appears when offline */
+  :host([hide-tagline]:not([data-offline])) .tagline {
+    display: none;
+  }
+
   .tagline {
     display: flex;
     align-items: center;
@@ -1567,7 +1572,7 @@ class KhalaSupportWidget extends HTMLElement {
       if (this._config.accentColor) {
         this.style.setProperty('--khala-accent', this._config.accentColor);
       }
-      this._els.agentName.textContent = this._config.agentName || 'Support AI';
+      this._els.agentName.textContent = this.getAttribute('agent-name') || this._config.agentName || 'Support AI';
       this._syncOnlineStatus();
       const label = `Chat with ${this._config.businessName || 'us'}`;
       this._els.launcher.setAttribute('aria-label', label);
@@ -1575,7 +1580,7 @@ class KhalaSupportWidget extends HTMLElement {
       this._els.input.placeholder = this._config.placeholder || 'Type your question...';
       this.resetConversation();
     } catch {
-      this._els.agentName.textContent = 'Support AI';
+      this._els.agentName.textContent = this.getAttribute('agent-name') || 'Support AI';
       this._syncOnlineStatus();
       this.resetConversation('Hi! How can I help you today?');
     }
@@ -1817,6 +1822,9 @@ if (!customElements.get('khala-support-widget')) {
     const apiBase = current.getAttribute('data-api-base') || new URL(current.src).origin;
     el.setAttribute('client', client);
     el.setAttribute('api-base', apiBase);
+    const agentName = current.getAttribute('data-agent-name');
+    if (agentName) el.setAttribute('agent-name', agentName);
+    if (current.hasAttribute('data-hide-tagline')) el.setAttribute('hide-tagline', '');
     document.body.append(el);
   };
 
