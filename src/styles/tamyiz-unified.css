@@ -11084,6 +11084,7 @@ body[data-page="admin"] #tmz-announcement-banner,
 body[data-page="admin"] .tamyiz-header,
 body[data-page="admin"] .tamyiz-footer,
 body[data-page="admin"] .tamyiz-whatsapp-fab,
+body[data-page="admin"] khala-support-widget,
 body[data-page="admin"] .tmz-progress {
   display: none !important;
 }
