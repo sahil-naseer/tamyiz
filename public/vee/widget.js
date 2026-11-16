@@ -433,48 +433,6 @@ sheet.replaceSync(`
     .tour-ring, .tour-bubble, .vee-book, .vee-hearts { transition: none; }
   }
 
-  /* Sparkling hands: colour cycles with hue-rotate (a GPU filter) and sparkles twinkle with
-     opacity/transform only, so the loop never forces layout or repaints the page. */
-  .vee-hand {
-    position: absolute;
-    left: 50%;
-    bottom: -1em;
-    width: 2.8em;
-    height: 2.8em;
-    margin-left: -1.4em;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #FFFFFF 0 14%, #FFE45C 30%, #FFB000 62%, #FF7A00 100%);
-    box-shadow: 0 0 0.9em 0.25em rgba(255, 196, 0, 0.75);
-    animation: vee-hue 5s linear infinite;
-    will-change: filter;
-  }
-
-  .vee-hand i {
-    position: absolute;
-    width: 1.3em;
-    height: 1.3em;
-    background: #FFFFFF;
-    clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
-    opacity: 0;
-    animation: vee-twinkle 1.8s ease-in-out infinite;
-  }
-
-  .vee-hand i:first-child { left: -0.9em; top: -0.6em; }
-  .vee-hand i:last-child { right: -0.9em; bottom: -0.5em; animation-delay: 0.9s; }
-  .vee-arm-r .vee-hand { animation-delay: -2.5s; }
-  .vee-arm-r .vee-hand i:first-child { animation-delay: 0.45s; }
-  .vee-arm-r .vee-hand i:last-child { animation-delay: 1.35s; }
-
-  @keyframes vee-hue {
-    from { filter: hue-rotate(0deg) saturate(1.4); }
-    to { filter: hue-rotate(360deg) saturate(1.4); }
-  }
-
-  @keyframes vee-twinkle {
-    0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
-    50% { opacity: 1; transform: scale(1) rotate(45deg); }
-  }
-
   .launcher:focus-visible,
   .icon-btn:focus-visible,
   .chip:focus-visible,
@@ -1173,8 +1131,8 @@ template.innerHTML = `
       <div class="header-brand">
         <div class="avatar" aria-hidden="true">
           <span class="vee" data-el="vee-avatar" aria-hidden="true">
-      <span class="vee-arm vee-arm-l"><span class="vee-hand"><i></i><i></i></span></span>
-      <span class="vee-arm vee-arm-r"><span class="vee-hand"><i></i><i></i></span></span>
+      <span class="vee-arm vee-arm-l"></span>
+      <span class="vee-arm vee-arm-r"></span>
       <span class="vee-body"></span>
       <span class="vee-book"></span>
       <span class="vee-screen">
@@ -1236,8 +1194,8 @@ template.innerHTML = `
     </div>
   </div>
   <span class="guide-vee" data-el="guide" aria-hidden="true"><span class="guide-flip"><span class="vee" data-el="vee-guide">
-      <span class="vee-arm vee-arm-l"><span class="vee-hand"><i></i><i></i></span></span>
-      <span class="vee-arm vee-arm-r"><span class="vee-hand"><i></i><i></i></span></span>
+      <span class="vee-arm vee-arm-l"></span>
+      <span class="vee-arm vee-arm-r"></span>
       <span class="vee-body"></span>
       <span class="vee-book"></span>
       <span class="vee-screen">
@@ -1248,8 +1206,8 @@ template.innerHTML = `
     </span></span></span>
   <button type="button" class="launcher" data-el="launcher" aria-expanded="false" aria-label="Chat with AI Support" title="Chat with AI Support">
     <span class="vee" data-el="vee-launcher" aria-hidden="true">
-      <span class="vee-arm vee-arm-l"><span class="vee-hand"><i></i><i></i></span></span>
-      <span class="vee-arm vee-arm-r"><span class="vee-hand"><i></i><i></i></span></span>
+      <span class="vee-arm vee-arm-l"></span>
+      <span class="vee-arm vee-arm-r"></span>
       <span class="vee-body"></span>
       <span class="vee-book"></span>
       <span class="vee-screen">

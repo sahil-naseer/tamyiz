@@ -346,6 +346,3 @@ Design and motion (all in the "POLISH 14 Nov 2026 (second pass)" block at the en
   target is hidden are skipped. Offered once per browser (localStorage `khala-tour-seen`), from the chat chip "Give me a
   tour", or by typing "tour"; on other pages it opens `/?tour=1`. Keep the words true (honesty rules): if prices,
   discounts or the sample change, update the tour text too.
-- Vee's hands glow and cycle colours forever (Sahil's call, 16 Nov 2026): a deliberate exception to "nothing loops
-  forever". It uses only `filter: hue-rotate` plus opacity/transform sparkles (GPU); measured 60 fps scrolling with the
-  CPU slowed 4x, same as without. Reduced motion turns it off.
