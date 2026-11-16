@@ -330,3 +330,14 @@ Design and motion (all in the "POLISH 14 Nov 2026 (second pass)" block at the en
   unsupported or with "reduce motion"); the bag count bumps when something is added; a drawing on 404 (`lostArt`)
   and after payment (`stepArt[2]`). Measured with the processor slowed 4x: 60 frames a second scrolling home and a
   book page.
+
+## AI chat assistant "Vee" (16 Nov 2026)
+
+- The chat widget's source lives in the separate repo `sahil-naseer/khala-ai-agents` (`public/widget.js`), which also
+  runs the chat API (`https://khala-ai-agents.pages.dev/api/*`, Gemini). Cloudflare stopped deploying that repo's pushes
+  (16 Nov 2026), so Tamyiz serves its own COPY of the widget at `public/vee/widget.js`, loaded in index.html with
+  `data-api-base="https://khala-ai-agents.pages.dev"`. After changing the widget in khala-ai-agents, copy it here and bump
+  `?v=` in index.html. CSP: `connect-src` must keep `https://khala-ai-agents.pages.dev` (both places).
+- Vee: black oval with a screen face, two eyes, two small arms; launcher and chat-header avatar. One-shot gestures
+  (wave, think, happy hop, point, shrug), eyes close after 30 s idle. When an answer links a page of the site and that
+  link is visible, a second Vee glides to it, highlights it yellow and points, then returns. Reduced motion: no movement.
