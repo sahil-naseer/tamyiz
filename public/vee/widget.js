@@ -268,8 +268,9 @@ sheet.replaceSync(`
   }
 
   .tour-ring { z-index: 1; }
-  .guide-vee { z-index: 2; }
-  .tour-bubble { z-index: 3; }
+  .tour-bubble { z-index: 2; }
+  /* Vee always stands in front of the bubble, never behind it */
+  .guide-vee { z-index: 3; }
 
 
   /* ---- More gestures: read a book, heart eyes, wave goodbye, nod ---- */
@@ -1959,6 +1960,16 @@ class KhalaSupportWidget extends HTMLElement {
         window.scrollTo({ top: Math.max(0, y), behavior: this._reduced() ? 'auto' : 'smooth' });
         await this._waitForScroll();
         if (!this._tour || token !== this._tour.token) return;
+        // The page can shift while it scrolls (sections revealing, sticky parts); nudge the stop
+        // back below the sticky header if it ended up under it.
+        for (let k = 0; k < 2; k++) {
+          const again = el.getBoundingClientRect();
+          const want = phone ? 80 : Math.max(90, window.innerHeight * 0.22);
+          if (again.top >= 70 && again.top <= want + 40) break;
+          window.scrollTo({ top: Math.max(0, window.scrollY + again.top - want), behavior: 'auto' });
+          await this._waitForScroll();
+          if (!this._tour || token !== this._tour.token) return;
+        }
       }
     }
 
