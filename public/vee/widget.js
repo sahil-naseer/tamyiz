@@ -1966,7 +1966,7 @@ class KhalaSupportWidget extends HTMLElement {
           const again = el.getBoundingClientRect();
           const want = phone ? 80 : Math.max(90, window.innerHeight * 0.22);
           if (again.top >= 70 && again.top <= want + 40) break;
-          window.scrollTo({ top: Math.max(0, window.scrollY + again.top - want), behavior: 'auto' });
+          window.scrollTo({ top: Math.max(0, window.scrollY + again.top - want), behavior: 'instant' });
           await this._waitForScroll();
           if (!this._tour || token !== this._tour.token) return;
         }
