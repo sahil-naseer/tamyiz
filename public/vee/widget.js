@@ -430,12 +430,11 @@ sheet.replaceSync(`
       width: min(250px, calc(100vw - 28px));
     }
     .tour-bubble {
-      left: 12px !important;
-      right: 12px;
-      top: auto !important;
-      bottom: max(12px, env(safe-area-inset-bottom));
-      width: auto;
-      transform: none !important;
+      padding: 12px 12px 10px;
+      gap: 8px;
+    }
+    .tour-text {
+      font-size: 14px;
     }
   }
 
@@ -1855,18 +1854,50 @@ class KhalaSupportWidget extends HTMLElement {
       ring.style.height = `${Math.round(r.height)}px`;
     }
 
+    if (phone) bubble.style.width = `${vw - 24}px`;
     const bh = bubble.offsetHeight || 150;
     let vx;
     let vy;
     let flip = false;
+
+    if (phone) {
+      // Phones: the bubble spans the screen just under (or above) the stop, and Vee sits on its
+      // top-right corner pointing back up at the highlighted part.
+      const bw = vw - 24;
+      const bx = 12;
+      bubble.style.width = `${bw}px`;
+      let by;
+      if (el === this._els.launcher) {
+        by = r.top - bh - 14;
+        vx = r.left;
+        vy = r.top;
+      } else {
+        const gap = 46;
+        if (r.bottom + gap + bh <= vh - 10) by = r.bottom + gap;
+        else if (r.top - bh - 14 >= 70) by = r.top - bh - 14;
+        else by = vh - bh - 12;
+        vx = bx + bw - W - 16;
+        vy = by - 44;
+        flip = true;
+        if (by < r.top) {
+          // Bubble is above the stop: Vee stands under the bubble instead, still pointing up.
+          vy = by + bh - 10;
+          if (vy + H > vh - 8) vy = vh - H - 8;
+        }
+      }
+      by = Math.min(Math.max(by, 8), vh - bh - 8);
+      bubble.style.transform = `translate(${bx}px, ${Math.round(by)}px)`;
+      vx = Math.min(Math.max(vx, 8), vw - W - 8);
+      vy = Math.min(Math.max(vy, 8), vh - H - 8);
+      this._els.guide.classList.toggle('is-flipped', flip);
+      this._moveVee(vx, vy, animate);
+      return;
+    }
+
+    bubble.style.width = '';
     if (el === this._els.launcher) {
       vx = r.left;
       vy = r.top;
-    } else if (phone) {
-      // On phones the bubble sits at the bottom of the screen; Vee peeks over its top edge.
-      const bubbleTop = bubble.getBoundingClientRect().top || (vh - bh - 12);
-      vx = vw - W - 24;
-      vy = bubbleTop - H + 10;
     } else if (r.height > 140 && vw - r.right > W + 340) {
       // Tall stop (a card): stand to its right, mirrored so the arm points back at it.
       vx = r.right + 10;
@@ -1886,17 +1917,15 @@ class KhalaSupportWidget extends HTMLElement {
     this._els.guide.classList.toggle('is-flipped', flip);
     this._moveVee(vx, vy, animate);
 
-    if (!phone) {
-      const bw = Math.min(300, vw - 24);
-      let bx = vx + W + 14;
-      const vLeftOfTarget = el !== this._els.launcher && vx + W <= r.left;
-      if (vLeftOfTarget || bx + bw > vw - 12) bx = vx - bw - 14;
-      if (bx < 12) bx = Math.min(Math.max(12, vx - bw / 2), vw - bw - 12);
-      let by = vy - 6;
-      if (by + bh > vh - 12) by = vh - bh - 12;
-      if (by < 12) by = 12;
-      bubble.style.transform = `translate(${Math.round(bx)}px, ${Math.round(by)}px)`;
-    }
+    const bw = Math.min(300, vw - 24);
+    let bx = vx + W + 14;
+    const vLeftOfTarget = el !== this._els.launcher && vx + W <= r.left;
+    if (vLeftOfTarget || bx + bw > vw - 12) bx = vx - bw - 14;
+    if (bx < 12) bx = Math.min(Math.max(12, vx - bw / 2), vw - bw - 12);
+    let by = vy - 6;
+    if (by + bh > vh - 12) by = vh - bh - 12;
+    if (by < 12) by = 12;
+    bubble.style.transform = `translate(${Math.round(bx)}px, ${Math.round(by)}px)`;
   }
 
   async _showTourStep(i) {
@@ -1922,9 +1951,11 @@ class KhalaSupportWidget extends HTMLElement {
     this._els.tourBubble.classList.remove('is-shown');
     if (el !== this._els.launcher) {
       const r = el.getBoundingClientRect();
-      const fits = r.top >= 70 && r.bottom <= window.innerHeight - 220;
+      const phone = window.innerWidth < 640;
+      const room = phone ? 260 : 220;
+      const fits = r.top >= 70 && r.bottom <= window.innerHeight - room;
       if (!fits) {
-        const y = window.scrollY + r.top - Math.max(90, window.innerHeight * 0.22);
+        const y = window.scrollY + r.top - (phone ? 80 : Math.max(90, window.innerHeight * 0.22));
         window.scrollTo({ top: Math.max(0, y), behavior: this._reduced() ? 'auto' : 'smooth' });
         await this._waitForScroll();
         if (!this._tour || token !== this._tour.token) return;
