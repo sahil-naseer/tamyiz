@@ -261,6 +261,178 @@ sheet.replaceSync(`
     opacity: 0;
   }
 
+
+  /* ---- More gestures: read a book, heart eyes, wave goodbye, nod ---- */
+  .vee-book {
+    position: absolute;
+    left: 2.2em;
+    top: 8.6em;
+    width: 6.6em;
+    height: 4em;
+    border: 0.3em solid #0B0B0B;
+    border-radius: 0.4em;
+    background: linear-gradient(90deg, #FFD60A 47%, #0B0B0B 47% 53%, #FFD60A 53%);
+    opacity: 0;
+    transform: translateY(1.2em) scale(0.7);
+    transition: opacity 0.25s ease, transform 0.35s var(--_ease);
+  }
+
+  .vee-hearts {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .vee.g-read .vee-book { opacity: 1; transform: none; }
+  .vee.g-read .vee-eyes { transform: translate(0, 0.9em); }
+  .vee.g-read .vee-arm-l { transform: rotate(-38deg); transition: transform 0.3s var(--_ease); }
+  .vee.g-read .vee-arm-r { transform: rotate(38deg); transition: transform 0.3s var(--_ease); }
+
+  .vee.g-love .vee-eyes { opacity: 0; }
+  .vee.g-love .vee-hearts { opacity: 1; }
+  .vee.g-love { animation: vee-hop 1.4s ease-in-out 1; }
+
+  .vee.g-bye .vee-eyes { opacity: 0; }
+  .vee.g-bye .vee-happy { opacity: 1; }
+  .vee.g-bye .vee-arm-r { animation: vee-wave 1.5s ease-in-out 1; }
+
+  @keyframes vee-nod {
+    0%, 100% { transform: translateY(0); }
+    25%, 65% { transform: translateY(0.7em); }
+    45% { transform: translateY(0); }
+  }
+  .vee.g-nod .vee-screen { animation: vee-nod 0.9s ease-in-out 1; }
+
+  /* ---- Tour guide ---- */
+  .tour-ring {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    border: 3px solid var(--_yellow);
+    outline: 1px solid #0B0B0B;
+    box-shadow: 0 0 0 100vmax rgba(11, 11, 11, 0.28);
+    pointer-events: none;
+    display: none;
+    transition: transform 0.45s var(--_ease), width 0.45s var(--_ease), height 0.45s var(--_ease);
+  }
+
+  .tour-ring.is-on { display: block; }
+
+  .tour-bubble {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 300px;
+    max-width: calc(100vw - 24px);
+    background: #FFFFFF;
+    color: #0B0B0B;
+    border: 1px solid #0B0B0B;
+    box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.35);
+    padding: 14px 14px 12px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: auto;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .tour-bubble.is-on { display: flex; }
+  .tour-bubble.is-shown { opacity: 1; }
+
+  .tour-step {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    color: var(--_muted);
+  }
+
+  .tour-text {
+    font-size: 14.5px;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .tour-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .tour-btn {
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid #0B0B0B;
+    background: #FFFFFF;
+    color: #0B0B0B;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 0;
+  }
+
+  .tour-btn.is-main {
+    background: var(--_yellow);
+    margin-left: auto;
+  }
+
+  .tour-btn.is-quiet {
+    border-color: transparent;
+    font-weight: 500;
+    text-decoration: underline;
+    padding: 0 6px;
+  }
+
+  .tour-btn:focus-visible {
+    outline: 2px solid #0B0B0B;
+    outline-offset: 2px;
+  }
+
+  .tour-offer {
+    position: fixed;
+    right: 24px;
+    bottom: 102px;
+    width: 250px;
+    background: #FFFFFF;
+    color: #0B0B0B;
+    border: 1px solid #0B0B0B;
+    box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.35);
+    padding: 12px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: auto;
+  }
+
+  .tour-offer.is-on { display: flex; }
+
+  :host([data-open="true"]) .tour-offer { display: none; }
+
+  @media (max-width: 639px) {
+    .tour-offer {
+      right: max(14px, env(safe-area-inset-right));
+      bottom: calc(max(14px, env(safe-area-inset-bottom)) + 72px);
+      width: min(250px, calc(100vw - 28px));
+    }
+    .tour-bubble {
+      left: 12px !important;
+      right: 12px;
+      top: auto !important;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      width: auto;
+      transform: none !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tour-ring, .tour-bubble, .vee-book, .vee-hearts { transition: none; }
+  }
+
   .launcher:focus-visible,
   .icon-btn:focus-visible,
   .chip:focus-visible,
@@ -962,9 +1134,11 @@ template.innerHTML = `
       <span class="vee-arm vee-arm-l"></span>
       <span class="vee-arm vee-arm-r"></span>
       <span class="vee-body"></span>
+      <span class="vee-book"></span>
       <span class="vee-screen">
         <span class="vee-eyes"><span></span><span></span></span>
         <svg class="vee-happy" viewBox="0 0 82 50" aria-hidden="true"><path d="M20 30 Q27 18 34 30" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/><path d="M48 30 Q55 18 62 30" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/></svg>
+        <svg class="vee-hearts" viewBox="0 0 82 50" aria-hidden="true"><path d="M27 33 C20 28 17 24 20 20 C22 17.5 25.5 18 27 21 C28.5 18 32 17.5 34 20 C37 24 34 28 27 33Z" fill="#FFD60A"/><path d="M55 33 C48 28 45 24 48 20 C50 17.5 53.5 18 55 21 C56.5 18 60 17.5 62 20 C65 24 62 28 55 33Z" fill="#FFD60A"/></svg>
       </span>
     </span>
         </div>
@@ -1002,13 +1176,32 @@ template.innerHTML = `
       </button>
     </form>
   </section>
-<span class="guide-vee" data-el="guide" aria-hidden="true"><span class="guide-flip"><span class="vee" data-el="vee-guide">
+<div class="tour-ring" data-el="tour-ring" aria-hidden="true"></div>
+  <div class="tour-bubble" data-el="tour-bubble" role="dialog" aria-label="Site tour" aria-modal="false">
+    <div class="tour-step" data-el="tour-step"></div>
+    <p class="tour-text" data-el="tour-text" aria-live="polite"></p>
+    <div class="tour-actions">
+      <button type="button" class="tour-btn is-quiet" data-el="tour-skip">Skip tour</button>
+      <button type="button" class="tour-btn" data-el="tour-back">Back</button>
+      <button type="button" class="tour-btn is-main" data-el="tour-next">Next</button>
+    </div>
+  </div>
+  <div class="tour-offer" data-el="tour-offer" role="dialog" aria-label="Tour offer">
+    <p class="tour-text" data-el="tour-offer-text">New here? I can show you around in under a minute.</p>
+    <div class="tour-actions">
+      <button type="button" class="tour-btn is-quiet" data-el="tour-offer-no">No thanks</button>
+      <button type="button" class="tour-btn is-main" data-el="tour-offer-yes">Show me</button>
+    </div>
+  </div>
+  <span class="guide-vee" data-el="guide" aria-hidden="true"><span class="guide-flip"><span class="vee" data-el="vee-guide">
       <span class="vee-arm vee-arm-l"></span>
       <span class="vee-arm vee-arm-r"></span>
       <span class="vee-body"></span>
+      <span class="vee-book"></span>
       <span class="vee-screen">
         <span class="vee-eyes"><span></span><span></span></span>
         <svg class="vee-happy" viewBox="0 0 82 50" aria-hidden="true"><path d="M20 30 Q27 18 34 30" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/><path d="M48 30 Q55 18 62 30" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/></svg>
+        <svg class="vee-hearts" viewBox="0 0 82 50" aria-hidden="true"><path d="M27 33 C20 28 17 24 20 20 C22 17.5 25.5 18 27 21 C28.5 18 32 17.5 34 20 C37 24 34 28 27 33Z" fill="#FFD60A"/><path d="M55 33 C48 28 45 24 48 20 C50 17.5 53.5 18 55 21 C56.5 18 60 17.5 62 20 C65 24 62 28 55 33Z" fill="#FFD60A"/></svg>
       </span>
     </span></span></span>
   <button type="button" class="launcher" data-el="launcher" aria-expanded="false" aria-label="Chat with AI Support" title="Chat with AI Support">
@@ -1016,9 +1209,11 @@ template.innerHTML = `
       <span class="vee-arm vee-arm-l"></span>
       <span class="vee-arm vee-arm-r"></span>
       <span class="vee-body"></span>
+      <span class="vee-book"></span>
       <span class="vee-screen">
         <span class="vee-eyes"><span></span><span></span></span>
         <svg class="vee-happy" viewBox="0 0 82 50" aria-hidden="true"><path d="M20 30 Q27 18 34 30" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/><path d="M48 30 Q55 18 62 30" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/></svg>
+        <svg class="vee-hearts" viewBox="0 0 82 50" aria-hidden="true"><path d="M27 33 C20 28 17 24 20 20 C22 17.5 25.5 18 27 21 C28.5 18 32 17.5 34 20 C37 24 34 28 27 33Z" fill="#FFD60A"/><path d="M55 33 C48 28 45 24 48 20 C50 17.5 53.5 18 55 21 C56.5 18 60 17.5 62 20 C65 24 62 28 55 33Z" fill="#FFD60A"/></svg>
       </span>
     </span>
   </button>
@@ -1193,9 +1388,21 @@ class KhalaSupportWidget extends HTMLElement {
       veeLauncher: this.shadowRoot.querySelector('[data-el="vee-launcher"]'),
       veeAvatar: this.shadowRoot.querySelector('[data-el="vee-avatar"]'),
       guide: this.shadowRoot.querySelector('[data-el="guide"]'),
+      tourRing: this.shadowRoot.querySelector('[data-el="tour-ring"]'),
+      tourBubble: this.shadowRoot.querySelector('[data-el="tour-bubble"]'),
+      tourStep: this.shadowRoot.querySelector('[data-el="tour-step"]'),
+      tourText: this.shadowRoot.querySelector('[data-el="tour-text"]'),
+      tourSkip: this.shadowRoot.querySelector('[data-el="tour-skip"]'),
+      tourBack: this.shadowRoot.querySelector('[data-el="tour-back"]'),
+      tourNext: this.shadowRoot.querySelector('[data-el="tour-next"]'),
+      tourOffer: this.shadowRoot.querySelector('[data-el="tour-offer"]'),
+      tourOfferYes: this.shadowRoot.querySelector('[data-el="tour-offer-yes"]'),
+      tourOfferNo: this.shadowRoot.querySelector('[data-el="tour-offer-no"]'),
       veeGuide: this.shadowRoot.querySelector('[data-el="vee-guide"]')
     };
     this._guideTimers = [];
+    this._tour = null;
+    this._veePos = null;
     this._guideCleanup = null;
     this._veeTimers = new Map();
     this._restTimer = null;
@@ -1224,6 +1431,11 @@ class KhalaSupportWidget extends HTMLElement {
       this._listenersBound = true;
       this._els.launcher.addEventListener('click', () => this.toggle());
       this._els.launcher.addEventListener('pointerenter', () => this._wakeVee());
+      this._els.tourNext.addEventListener('click', () => this._tour && this._showTourStep(this._tour.i + 1));
+      this._els.tourBack.addEventListener('click', () => this._tour && this._showTourStep(this._tour.i - 1));
+      this._els.tourSkip.addEventListener('click', () => this.endTour(false));
+      this._els.tourOfferYes.addEventListener('click', () => this.startTour());
+      this._els.tourOfferNo.addEventListener('click', () => this._hideTourOffer(true));
       this._els.launcher.addEventListener('focus', () => this._wakeVee());
       this._els.close.addEventListener('click', () => this.close());
       this._els.backdrop.addEventListener('click', () => this.close());
@@ -1293,12 +1505,28 @@ class KhalaSupportWidget extends HTMLElement {
       try { seen = sessionStorage.getItem('khala-vee-hello') === '1'; sessionStorage.setItem('khala-vee-hello', '1'); } catch {}
       if (!seen && !this._isOpen) this._gesture(this._els.veeLauncher, 'hello', 1600);
     }, 1500);
+    clearTimeout(this._offerTimer);
+    let wantTour = false;
+    try {
+      const params = new URLSearchParams(location.search);
+      if (params.get('tour') === '1') {
+        wantTour = true;
+        params.delete('tour');
+        const q = params.toString();
+        history.replaceState(history.state, '', location.pathname + (q ? `?${q}` : '') + location.hash);
+      }
+    } catch {}
+    this._offerTimer = setTimeout(() => {
+      if (wantTour) this.startTour(); else this._maybeOfferTour();
+    }, wantTour ? 1800 : 6000);
   }
 
   disconnectedCallback() {
     document.removeEventListener('pointerdown', this._onDocPointerDown);
     clearTimeout(this._restTimer);
     clearTimeout(this._helloTimer);
+    clearTimeout(this._offerTimer);
+    this.endTour(false);
     this._veeTimers.forEach((t) => clearTimeout(t));
     this._endGuide();
     window.removeEventListener('online', this._onOnlineChange);
@@ -1376,7 +1604,7 @@ class KhalaSupportWidget extends HTMLElement {
   _gesture(vee, name, ms) {
     if (!vee) return;
     clearTimeout(this._veeTimers.get(vee));
-    vee.classList.remove('g-hello', 'g-point', 'g-think', 'g-done', 'g-shrug');
+    vee.classList.remove('g-hello', 'g-point', 'g-think', 'g-done', 'g-shrug', 'g-read', 'g-love', 'g-bye', 'g-nod');
     if (!name) return;
     void vee.offsetWidth;
     vee.classList.add(`g-${name}`);
@@ -1536,10 +1764,265 @@ class KhalaSupportWidget extends HTMLElement {
     return String(reply).replace(/\b(?:the\s+)?(?:TAMYIZ\S*\s+)?Support\s+AI\b/gi, name);
   }
 
+  // ---------------- Tour guide ----------------
+  _tourSteps() {
+    const sel = this.getAttribute('tour');
+    if (!sel) return null;
+    try {
+      const el = document.querySelector(sel);
+      const steps = JSON.parse(el ? el.textContent : 'null');
+      return Array.isArray(steps) && steps.length ? steps : null;
+    } catch {
+      return null;
+    }
+  }
+
+  _tourTarget(step) {
+    if (step.target === 'launcher') return this._els.launcher;
+    const list = Array.from(document.querySelectorAll(step.target || ''));
+    return list.find((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden';
+    }) || null;
+  }
+
+  _reduced() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  _waitForScroll() {
+    return new Promise((resolve) => {
+      let last = window.scrollY;
+      let still = 0;
+      let waited = 0;
+      const tick = () => {
+        waited += 50;
+        if (Math.abs(window.scrollY - last) < 1) still += 50; else still = 0;
+        last = window.scrollY;
+        if (still >= 150 || waited >= 1400) resolve(); else setTimeout(tick, 50);
+      };
+      setTimeout(tick, 50);
+    });
+  }
+
+  _moveVee(x, y, animate) {
+    const guide = this._els.guide;
+    const to = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+    const from = this._veePos ? `translate(${Math.round(this._veePos.x)}px, ${Math.round(this._veePos.y)}px)` : to;
+    if (this._veeAnim) { this._veeAnim.cancel(); this._veeAnim = null; }
+    guide.style.transform = to;
+    if (animate && !this._reduced() && guide.animate && from !== to) {
+      this._veeAnim = guide.animate([{ transform: from }, { transform: to }], { duration: 700, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+    }
+    this._veePos = { x, y };
+  }
+
+  _layoutTour(animate) {
+    const t = this._tour;
+    if (!t) return;
+    const step = t.steps[t.i];
+    const el = t.el;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const W = 44;
+    const H = 56;
+    const phone = vw < 640;
+    const ring = this._els.tourRing;
+    const bubble = this._els.tourBubble;
+
+    let r;
+    if (el === this._els.launcher) {
+      ring.classList.remove('is-on');
+      const lr = this._els.veeLauncher.getBoundingClientRect();
+      r = { left: lr.left, top: lr.top, right: lr.right, bottom: lr.bottom, width: lr.width, height: lr.height };
+    } else {
+      const b = el.getBoundingClientRect();
+      const pad = 8;
+      r = { left: b.left - pad, top: b.top - pad, right: b.right + pad, bottom: b.bottom + pad, width: b.width + pad * 2, height: b.height + pad * 2 };
+      ring.classList.add('is-on');
+      ring.style.transform = `translate(${Math.round(r.left)}px, ${Math.round(r.top)}px)`;
+      ring.style.width = `${Math.round(r.width)}px`;
+      ring.style.height = `${Math.round(r.height)}px`;
+    }
+
+    const bh = bubble.offsetHeight || 150;
+    let vx;
+    let vy;
+    let flip = false;
+    if (el === this._els.launcher) {
+      vx = r.left;
+      vy = r.top;
+    } else if (phone) {
+      // On phones the bubble sits at the bottom of the screen; Vee peeks over its top edge.
+      const bubbleTop = bubble.getBoundingClientRect().top || (vh - bh - 12);
+      vx = vw - W - 24;
+      vy = bubbleTop - H + 10;
+    } else {
+      vx = r.left - W * 0.55;
+      if (vx < 8) { vx = r.right - W * 0.45; flip = true; }
+      vy = r.bottom + 6;
+      if (vy + H > vh - 8) vy = Math.max(r.top - H - 6, 8);
+    }
+    vx = Math.min(Math.max(vx, 8), vw - W - 8);
+    vy = Math.min(Math.max(vy, 8), vh - H - 8);
+    this._els.guide.classList.toggle('is-flipped', flip);
+    this._moveVee(vx, vy, animate);
+
+    if (!phone) {
+      const bw = Math.min(300, vw - 24);
+      let bx = vx + W + 14;
+      if (bx + bw > vw - 12) bx = vx - bw - 14;
+      if (bx < 12) bx = Math.min(Math.max(12, vx - bw / 2), vw - bw - 12);
+      let by = vy - 6;
+      if (by + bh > vh - 12) by = vh - bh - 12;
+      if (by < 12) by = 12;
+      bubble.style.transform = `translate(${Math.round(bx)}px, ${Math.round(by)}px)`;
+    }
+  }
+
+  async _showTourStep(i) {
+    const t = this._tour;
+    if (!t) return;
+    const total = t.steps.length;
+    if (i < 0) i = 0;
+    if (i >= total) { this.endTour(true); return; }
+
+    let step = t.steps[i];
+    let el = this._tourTarget(step);
+    const dir = i >= t.i ? 1 : -1;
+    while (!el) {
+      i += dir;
+      if (i < 0 || i >= total) { this.endTour(true); return; }
+      step = t.steps[i];
+      el = this._tourTarget(step);
+    }
+    t.i = i;
+    t.el = el;
+    const token = ++t.token;
+
+    this._els.tourBubble.classList.remove('is-shown');
+    if (el !== this._els.launcher) {
+      const r = el.getBoundingClientRect();
+      const fits = r.top >= 70 && r.bottom <= window.innerHeight - 220;
+      if (!fits) {
+        const y = window.scrollY + r.top - Math.max(90, window.innerHeight * 0.22);
+        window.scrollTo({ top: Math.max(0, y), behavior: this._reduced() ? 'auto' : 'smooth' });
+        await this._waitForScroll();
+        if (!this._tour || token !== this._tour.token) return;
+      }
+    }
+
+    this._els.tourStep.textContent = `[ ${i + 1} / ${total} ]`;
+    this._els.tourText.textContent = step.text || '';
+    this._els.tourBack.hidden = i === 0;
+    this._els.tourNext.textContent = i === total - 1 ? 'Done' : 'Next';
+    this._els.tourBubble.classList.add('is-on');
+    this._layoutTour(true);
+    this._gesture(this._els.veeGuide, step.gesture || 'point', 2400);
+    later.call(this, () => {
+      if (!this._tour || token !== this._tour.token) return;
+      this._layoutTour(false);
+      this._els.tourBubble.classList.add('is-shown');
+      this._els.tourNext.focus({ preventScroll: true });
+    }, this._reduced() ? 0 : 520);
+
+    function later(fn, ms) { this._guideTimers.push(setTimeout(fn, ms)); }
+  }
+
+  _requestTour() {
+    const first = this._tourTarget(this._tourSteps()[0]);
+    if (first) { this.startTour(); return; }
+    const home = this.getAttribute('tour-home') || '/';
+    location.assign(`${home}${home.includes('?') ? '&' : '?'}tour=1`);
+  }
+
+  startTour() {
+    const all = this._tourSteps();
+    if (!all || this._tour) return false;
+    const steps = all.filter((step) => this._tourTarget(step));
+    if (!steps.length) return false;
+    this._endGuide();
+    this._hideTourOffer(true);
+    if (this._isOpen) this.close();
+    this._wakeVee();
+    clearTimeout(this._restTimer);
+
+    const start = this._els.veeLauncher.getBoundingClientRect();
+    this._veePos = { x: start.left, y: start.top };
+    this._els.guide.style.transform = `translate(${start.left}px, ${start.top}px)`;
+    this._els.guide.classList.add('is-active');
+    this._els.launcher.classList.add('is-away');
+
+    this._tour = { steps, i: 0, el: null, token: 0 };
+    this._onTourViewport = () => {
+      if (this._tourRaf) return;
+      this._tourRaf = requestAnimationFrame(() => {
+        this._tourRaf = null;
+        this._layoutTour(false);
+      });
+    };
+    this._onTourKey = (e) => {
+      if (e.key === 'Escape') this.endTour(false);
+    };
+    window.addEventListener('scroll', this._onTourViewport, { passive: true });
+    window.addEventListener('resize', this._onTourViewport);
+    document.addEventListener('keydown', this._onTourKey);
+    try { localStorage.setItem('khala-tour-seen', '1'); } catch {}
+    this._showTourStep(0);
+    return true;
+  }
+
+  endTour(finished) {
+    if (!this._tour) return;
+    this._tour.token++;
+    this._tour = null;
+    window.removeEventListener('scroll', this._onTourViewport);
+    window.removeEventListener('resize', this._onTourViewport);
+    document.removeEventListener('keydown', this._onTourKey);
+    this._guideTimers.forEach((t) => clearTimeout(t));
+    this._guideTimers = [];
+    this._els.tourRing.classList.remove('is-on');
+    this._els.tourBubble.classList.remove('is-on', 'is-shown');
+    this._gesture(this._els.veeGuide, null);
+
+    const done = () => {
+      if (this._veeAnim) { this._veeAnim.cancel(); this._veeAnim = null; }
+      this._els.guide.classList.remove('is-active', 'is-flipped');
+      this._els.guide.style.transform = '';
+      this._els.launcher.classList.remove('is-away');
+      this._veePos = null;
+      this._gesture(this._els.veeLauncher, finished ? 'bye' : null, 1600);
+      this._wakeVee();
+      this._els.launcher.focus({ preventScroll: true });
+    };
+    const home = this._els.veeLauncher.getBoundingClientRect();
+    this._els.guide.classList.remove('is-flipped');
+    this._moveVee(home.left, home.top, true);
+    if (this._veeAnim) this._veeAnim.onfinish = done; else done();
+  }
+
+  _maybeOfferTour() {
+    if (!this._tourSteps() || this._tour || this._isOpen) return;
+    if (this.hasAttribute('tour-no-offer')) return;
+    try { if (localStorage.getItem('khala-tour-seen') === '1') return; } catch { return; }
+    const first = this._tourTarget(this._tourSteps()[0]);
+    if (!first) return;
+    this._els.tourOffer.classList.add('is-on');
+    this._gesture(this._els.veeLauncher, 'hello', 1600);
+  }
+
+  _hideTourOffer(remember) {
+    this._els.tourOffer.classList.remove('is-on');
+    if (remember) {
+      try { localStorage.setItem('khala-tour-seen', '1'); } catch {}
+    }
+  }
+
   _gestureForReply(reply) {
     const text = String(reply || '');
     if (/\b(not sure|don't know|do not know|don't have that|cannot help|can't help)\b/i.test(text)) return 'shrug';
     if (/tamyiz\.pages\.dev\/[a-z]|\]\(\/[a-z]/i.test(text)) return 'point';
+    if (/^\W*(yes|yep|sure|absolutely|of course|definitely)\b/i.test(text)) return 'nod';
     return 'done';
   }
 
@@ -1635,10 +2118,20 @@ class KhalaSupportWidget extends HTMLElement {
       this._suggestionsEl.remove();
       this._suggestionsEl = null;
     }
-    if (!Array.isArray(questions) || questions.length === 0) return;
+    const tourLabel = this._tourSteps() ? (this.getAttribute('tour-label') || 'Give me a tour') : null;
+    if ((!Array.isArray(questions) || questions.length === 0) && !tourLabel) return;
 
     const wrap = document.createElement('div');
     wrap.className = 'suggestions';
+    if (tourLabel) {
+      const tourBtn = document.createElement('button');
+      tourBtn.type = 'button';
+      tourBtn.className = 'chip';
+      tourBtn.textContent = tourLabel;
+      tourBtn.addEventListener('click', () => this._requestTour());
+      wrap.append(tourBtn);
+    }
+    questions = Array.isArray(questions) ? questions : [];
     for (const q of questions) {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -1737,6 +2230,11 @@ class KhalaSupportWidget extends HTMLElement {
   async sendMessage(rawText, options = {}) {
     const text = (rawText || '').trim();
     if (!text || this._busy) return;
+    if (this._tourSteps() && /\b(tour|show me around|walk me through|guide me)\b/i.test(text) && text.length < 80) {
+      this._els.input.value = '';
+      this._requestTour();
+      return;
+    }
 
     const { skipUserBubble = false } = options;
 
@@ -1799,7 +2297,8 @@ class KhalaSupportWidget extends HTMLElement {
         data.reply = this._applyAgentName(data.reply);
         this._history.push({ role: 'model', text: data.reply });
         this._appendMessage('bot', data.reply, { animateBlocks: true });
-        const gesture = this._gestureForReply(data.reply);
+        let gesture = this._gestureForReply(data.reply);
+        if (gesture === 'done' && /\b(thank|thanks|thx|shukriya|jazak)/i.test(text)) gesture = 'love';
         this._gesture(this._els.veeAvatar, gesture, gesture === 'point' ? 2300 : gesture === 'shrug' ? 1900 : 1500);
         if (gesture === 'point') {
           const url = this._siteLinkIn(data.reply);
@@ -1845,6 +2344,10 @@ if (!customElements.get('khala-support-widget')) {
     const agentNote = current.getAttribute('data-agent-note');
     if (agentNote) el.setAttribute('agent-note', agentNote);
     if (current.hasAttribute('data-hide-tagline')) el.setAttribute('hide-tagline', '');
+    for (const key of ['tour', 'tour-label', 'tour-home']) {
+      const v = current.getAttribute(`data-${key}`);
+      if (v) el.setAttribute(key, v);
+    }
     document.body.append(el);
   };
 

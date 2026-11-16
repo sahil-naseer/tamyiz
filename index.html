@@ -40,6 +40,18 @@
   <script type="module" src="/src/scripts/tamyiz-unified-app.js"></script>
 
   <!-- TAMYIZ AI Support Widget -->
-  <script src="/vee/widget.js?v=14" data-client="tamyiz" data-api-base="https://khala-ai-agents.pages.dev" data-agent-name="Vee" data-agent-note="When you send someone to a page of the site, link that exact page, not the home page: all e-books https://tamyiz.pages.dev/editions, lost or re-download links https://tamyiz.pages.dev/downloads, how we write https://tamyiz.pages.dev/philosophy, about us https://tamyiz.pages.dev/atelier, contact https://tamyiz.pages.dev/legal/contact, refunds https://tamyiz.pages.dev/legal/license." data-hide-tagline defer></script>
+  <!-- Vee site tour: each stop is a CSS selector (or "launcher"), the words Vee says, and a gesture -->
+  <script type="application/json" id="vee-tour">
+[
+ {"target":"#hero h1","gesture":"hello","text":"Hi, I'm Vee! Tamyiz means telling things apart, and our short e-books help you do just that. Let me show you around."},
+ {"target":"#nav-link-editions","gesture":"point","text":"The menu takes you anywhere: all the e-books, how we write, and who we are."},
+ {"target":"#editions .tamyiz-product-card","gesture":"read","text":"These are our latest e-books. Open any one to see what's inside and get the first chapter free."},
+ {"target":"#editions h2","gesture":"love","text":"Buying more than one? 2 books are 20% off and 3 or more are 25% off. It's applied automatically at checkout."},
+ {"target":"#philosophy h2","gesture":"point","text":"Every book keeps three promises. This is how we write them."},
+ {"target":"#format-guide h2","gesture":"read","text":"After you pay, you download the PDF straight away. Read it on your phone, tablet or laptop."},
+ {"target":"launcher","gesture":"bye","text":"That's the tour! Got a question, or lost a download? Tap me any time."}
+]
+  </script>
+  <script src="/vee/widget.js?v=15" data-client="tamyiz" data-api-base="https://khala-ai-agents.pages.dev" data-agent-name="Vee" data-agent-note="When you send someone to a page of the site, link that exact page, not the home page: all e-books https://tamyiz.pages.dev/editions, lost or re-download links https://tamyiz.pages.dev/downloads, how we write https://tamyiz.pages.dev/philosophy, about us https://tamyiz.pages.dev/atelier, contact https://tamyiz.pages.dev/legal/contact, refunds https://tamyiz.pages.dev/legal/license." data-hide-tagline data-tour="#vee-tour" defer></script>
 </body>
 </html>

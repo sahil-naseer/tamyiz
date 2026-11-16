@@ -341,3 +341,8 @@ Design and motion (all in the "POLISH 14 Nov 2026 (second pass)" block at the en
 - Vee: black oval with a screen face, two eyes, two small arms; launcher and chat-header avatar. One-shot gestures
   (wave, think, happy hop, point, shrug), eyes close after 30 s idle. When an answer links a page of the site and that
   link is visible, a second Vee glides to it, highlights it yellow and points, then returns. Reduced motion: no movement.
+- Tour guide (16 Nov 2026): the stops are the JSON in `<script type="application/json" id="vee-tour">` in index.html
+  (`target` = CSS selector or "launcher", `text`, `gesture`: hello, point, read, love, bye, nod, done, shrug). Stops whose
+  target is hidden are skipped. Offered once per browser (localStorage `khala-tour-seen`), from the chat chip "Give me a
+  tour", or by typing "tour"; on other pages it opens `/?tour=1`. Keep the words true (honesty rules): if prices,
+  discounts or the sample change, update the tour text too.
