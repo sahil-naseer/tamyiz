@@ -261,6 +261,16 @@ sheet.replaceSync(`
     opacity: 0;
   }
 
+  /* While Vee is away (guiding or touring) the corner button must not catch taps meant for the tour bubble */
+  .launcher.is-away {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .tour-ring { z-index: 1; }
+  .guide-vee { z-index: 2; }
+  .tour-bubble { z-index: 3; }
+
 
   /* ---- More gestures: read a book, heart eyes, wave goodbye, nod ---- */
   .vee-book {
@@ -2036,6 +2046,7 @@ class KhalaSupportWidget extends HTMLElement {
   }
 
   open() {
+    if (this._tour) this.endTour(false);
     this._isOpen = true;
     this._updateViewportMetrics();
     this.setAttribute('data-open', 'true');
