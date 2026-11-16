@@ -1519,6 +1519,23 @@ class KhalaSupportWidget extends HTMLElement {
     return true;
   }
 
+  _historyForServer() {
+    const name = this.getAttribute('agent-name');
+    if (!name) return this._history;
+    const note = this.getAttribute('agent-note') || '';
+    const primer = [
+      { role: 'user', text: `For this whole conversation your name is ${name}. Always call yourself ${name}, never "Support AI" or "${this._config?.businessName || 'the business'} Support". ${note}`.trim() },
+      { role: 'model', text: `Understood. I'm ${name}.` }
+    ];
+    return [...primer, ...this._history.slice(-8)];
+  }
+
+  _applyAgentName(reply) {
+    const name = this.getAttribute('agent-name');
+    if (!name) return reply;
+    return String(reply).replace(/\b(?:the\s+)?(?:TAMYIZ\S*\s+)?Support\s+AI\b/gi, name);
+  }
+
   _gestureForReply(reply) {
     const text = String(reply || '');
     if (/\b(not sure|don't know|do not know|don't have that|cannot help|can't help)\b/i.test(text)) return 'shrug';
@@ -1593,7 +1610,7 @@ class KhalaSupportWidget extends HTMLElement {
     this._els.scrollBottom.classList.remove('is-visible');
     this._els.messages.replaceChildren();
     const greeting = this._config?.greeting || fallbackGreeting || 'Hi! How can I help you today?';
-    this._appendMessage('bot', greeting);
+    this._appendMessage('bot', this._applyAgentName(greeting));
     this._renderSuggestions(this._config?.suggestedQuestions || []);
   }
 
@@ -1763,7 +1780,7 @@ class KhalaSupportWidget extends HTMLElement {
         body: JSON.stringify({
           clientId: this.clientId,
           message: text,
-          history: this._history
+          history: this._historyForServer()
         })
       });
 
@@ -1779,6 +1796,7 @@ class KhalaSupportWidget extends HTMLElement {
         });
       } else {
         this._history.push({ role: 'user', text });
+        data.reply = this._applyAgentName(data.reply);
         this._history.push({ role: 'model', text: data.reply });
         this._appendMessage('bot', data.reply, { animateBlocks: true });
         const gesture = this._gestureForReply(data.reply);
@@ -1824,6 +1842,8 @@ if (!customElements.get('khala-support-widget')) {
     el.setAttribute('api-base', apiBase);
     const agentName = current.getAttribute('data-agent-name');
     if (agentName) el.setAttribute('agent-name', agentName);
+    const agentNote = current.getAttribute('data-agent-note');
+    if (agentNote) el.setAttribute('agent-note', agentNote);
     if (current.hasAttribute('data-hide-tagline')) el.setAttribute('hide-tagline', '');
     document.body.append(el);
   };
