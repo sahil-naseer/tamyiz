@@ -1762,8 +1762,8 @@ class KhalaSupportWidget extends HTMLElement {
     if (!name) return this._history;
     const note = this.getAttribute('agent-note') || '';
     const primer = [
-      { role: 'user', text: `For this whole conversation your name is ${name}. Always call yourself ${name}, never "Support AI" or "${this._config?.businessName || 'the business'} Support". ${note}`.trim() },
-      { role: 'model', text: `Understood. I'm ${name}.` }
+      { role: 'user', text: `Your name is ${name}. Never refer to yourself as "Support AI" or "${this._config?.businessName || 'the business'} Support". Do not repeat your name or introduce yourself (never start replies with "Hi, I'm ${name}" or "Hello, I am ${name}")—answer questions directly. ${note}`.trim() },
+      { role: 'model', text: 'Understood.' }
     ];
     return [...primer, ...this._history.slice(-8)];
   }
@@ -1772,6 +1772,16 @@ class KhalaSupportWidget extends HTMLElement {
     const name = this.getAttribute('agent-name');
     if (!name) return reply;
     return String(reply).replace(/\b(?:the\s+)?(?:TAMYIZ\S*\s+)?Support\s+AI\b/gi, name);
+  }
+
+  _stripSelfIntro(reply) {
+    const name = this.getAttribute('agent-name') || 'Vee';
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const introPattern = new RegExp(
+      `^(?:(?:Assalamu Alaikum[!,.]*|Hi|Hello|Hey|Greetings)[!,.]*\\s+)?(?:I'm|I am)\\s+${escapedName}(?:\\s*[,-]?\\s*(?:your|the|an)\\s+[^.!?\\n]+[!.?]+|\\s+from\\s+[^.!?\\n]+[!.?]+|[!,.]+|\\s+and\\s+[^.!?\\n]+[!.?]+)\\s*`,
+      'i'
+    );
+    return String(reply || '').replace(introPattern, '').trim() || String(reply || '');
   }
 
   // ---------------- Tour guide ----------------
@@ -2356,7 +2366,7 @@ class KhalaSupportWidget extends HTMLElement {
         });
       } else {
         this._history.push({ role: 'user', text });
-        data.reply = this._applyAgentName(data.reply);
+        data.reply = this._stripSelfIntro(this._applyAgentName(data.reply));
         this._history.push({ role: 'model', text: data.reply });
         this._appendMessage('bot', data.reply, { animateBlocks: true });
         let gesture = this._gestureForReply(data.reply);
