@@ -4,9 +4,9 @@
  * Keep CSP in step with public/_headers.
  */
 export const CSP =
-  "default-src 'self'; script-src 'self' https://checkout.razorpay.com; " +
+  "default-src 'self'; script-src 'self' https://checkout.razorpay.com https://khala-ai-agents.pages.dev; " +
   'frame-src https://api.razorpay.com https://checkout.razorpay.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com; ' +
-  "connect-src 'self' https://lumberjack.razorpay.com https://api.razorpay.com; " +
+  "connect-src 'self' https://lumberjack.razorpay.com https://api.razorpay.com https://khala-ai-agents.pages.dev; " +
   "img-src 'self' data: blob: https://*.razorpay.com https://i.ytimg.com https://img.youtube.com https://i.vimeocdn.com; " +
   "media-src 'self' blob: https:; " +
   "style-src 'self' 'unsafe-inline'; font-src 'self'; " +
