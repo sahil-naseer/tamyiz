@@ -1899,6 +1899,14 @@ class KhalaSupportWidget extends HTMLElement {
       const bubbleTop = bubble.getBoundingClientRect().top || (vh - bh - 12);
       vx = vw - W - 24;
       vy = bubbleTop - H + 10;
+    } else if (r.height > 140 && vw - r.right > W + 340) {
+      // Tall stop (a card): stand to its right, mirrored so the arm points back at it.
+      vx = r.right + 10;
+      vy = Math.max(r.top + 30, 70);
+      flip = true;
+    } else if (r.height > 140 && r.left > W + 340) {
+      vx = r.left - W - 10;
+      vy = Math.max(r.top + 30, 70);
     } else {
       vx = r.left - W * 0.55;
       if (vx < 8) { vx = r.right - W * 0.45; flip = true; }
@@ -1913,7 +1921,8 @@ class KhalaSupportWidget extends HTMLElement {
     if (!phone) {
       const bw = Math.min(300, vw - 24);
       let bx = vx + W + 14;
-      if (bx + bw > vw - 12) bx = vx - bw - 14;
+      const vLeftOfTarget = el !== this._els.launcher && vx + W <= r.left;
+      if (vLeftOfTarget || bx + bw > vw - 12) bx = vx - bw - 14;
       if (bx < 12) bx = Math.min(Math.max(12, vx - bw / 2), vw - bw - 12);
       let by = vy - 6;
       if (by + bh > vh - 12) by = vh - bh - 12;
