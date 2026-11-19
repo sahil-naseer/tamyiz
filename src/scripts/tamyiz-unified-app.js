@@ -77,10 +77,16 @@ class TamyizUnifiedApp {
     productsReady.then(() => {
       if (!loadState.failed) store.pruneUnavailable(); // a failed load must not empty the bag
       const y = window.scrollY;
-      this.updateCartBadge();
-      this.renderCurrentPage();
-      this.renderDrawerItems();
-      window.scrollTo({ top: y, behavior: 'instant' });
+      if (this.currentPage !== 'admin') {
+        this.renderShell();
+        this.updateCartBadge();
+        this.renderCurrentPage();
+        this.renderDrawerItems();
+        window.scrollTo({ top: y, behavior: 'instant' });
+      } else {
+        this.updateCartBadge();
+        this.renderDrawerItems();
+      }
       this.checkResumeCart();
     });
 
@@ -158,7 +164,7 @@ class TamyizUnifiedApp {
   // Parse path & hash for zero-crash routing
   parseRoute(locationPath, locationHash) {
     let raw = (locationPath || window.location.pathname || '/').toLowerCase();
-    let hash = (locationHash || window.location.hash || '');
+    let hash = locationHash !== undefined ? locationHash : (window.location.hash || '');
 
     // If raw contains hash, extract it
     if (raw.includes('#') && !raw.startsWith('#/')) {
@@ -1072,10 +1078,19 @@ class TamyizUnifiedApp {
     // Remove active from all
     Object.values(links).forEach(el => el && el.classList.remove('active'));
 
-    const isFormatsHash = window.location.hash === '#formats';
+    const hash = (window.location.hash || '').toLowerCase();
+    const isFormatsHash = hash === '#formats' || hash === '#format-guide';
 
     if (this.currentPage === 'home') {
-      links.home && links.home.classList.add('active');
+      if (hash === '#philosophy') {
+        links.philosophy && links.philosophy.classList.add('active');
+      } else if (isFormatsHash) {
+        links.formats && links.formats.classList.add('active');
+      } else if (hash === '#editions') {
+        links.editions && links.editions.classList.add('active');
+      } else {
+        links.home && links.home.classList.add('active');
+      }
     } else if (this.currentPage === 'editions' || this.currentPage === 'edition') {
       links.editions && links.editions.classList.add('active');
     } else if (this.currentPage === 'films') {
