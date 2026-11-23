@@ -94,8 +94,8 @@ export function buyLabel(p, price, where) {
     return { card: 'Pre-order on WhatsApp', pdp: '<span>Pre-order on WhatsApp</span>', modal: 'PRE-ORDER ON WHATSAPP →' }[where];
   }
   return {
-    card: `Instant Access • ${inr}`,
-    pdp: `<span>Add to Bag • Instant Access</span><span>•</span><span>${inr}</span>`,
+    card: `Add to bag · ${inr}`,
+    pdp: `<span>Add to bag</span><span>·</span><span>${inr}</span>`,
     modal: `UNLOCK FULL EDITION • ${inr} →`
   }[where];
 }

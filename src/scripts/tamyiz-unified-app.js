@@ -1326,7 +1326,7 @@ class TamyizUnifiedApp {
     }
     const pdpBuyBtn = document.getElementById('pdp-buy-btn') || document.querySelector('.tamyiz-pdp-btn-buy-now');
     if (pdpBuyBtn) {
-      pdpBuyBtn.innerHTML = `<span>Buy Now • Direct Checkout →</span>`;
+      pdpBuyBtn.innerHTML = `<span>Buy now →</span>`;
     }
 
     // 3. Update Modal Price & Button (if open)
