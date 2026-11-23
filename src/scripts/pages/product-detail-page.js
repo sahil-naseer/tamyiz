@@ -277,7 +277,7 @@ export function renderProductDetailPage(slug, appInstance) {
                     data-action="buy-now"
                     data-id="${product.id}"
                   >
-                    <span>Buy Now • Direct Checkout →</span>
+                    <span>Buy now →</span>
                   </button>` : ''}
 
                   ${product.video ? `

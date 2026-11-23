@@ -45,7 +45,9 @@ sold with Razorpay and delivered as private signed download links.
   Fix: GitHub → Settings → Applications → Cloudflare Workers and Pages → Configure → Repository access must list
   BOTH tamyiz and eternal-polyclinic → Save. (Happened 23 Oct 2026.)
 - Visitor stats (25 Oct 2026): Cloudflare Web Analytics is on (Pages project → Metrics → Web Analytics; cookieless, counts
-  only, no personal data). The privacy policy (/legal/privacy, section 03) says so; keep it in step if analytics changes.
+  only, no personal data). Its script needs the CSP to allow `https://static.cloudflareinsights.com` (script-src) and
+  `https://cloudflareinsights.com` (connect-src) in both places; until 23 Nov 2026 the CSP blocked it, so visits were not
+  being recorded. The privacy policy (/legal/privacy, section 03) says so; keep it in step if analytics changes.
   /admin shows a Visitors card (visits, page views, per day, sources, pages, countries, devices; Today/7/30 days) from
   `GET /api/admin/stats` (`server/stats.js`, admin login required), which asks Cloudflare's GraphQL API using the secret
   `CF_API_TOKEN` (Account Analytics: Read only). Account id and site tag are in stats.js (identifiers, not secrets).
@@ -337,7 +339,8 @@ Design and motion (all in the "POLISH 14 Nov 2026 (second pass)" block at the en
   runs the chat API (`https://khala-ai-agents.pages.dev/api/*`, Gemini). Cloudflare stopped deploying that repo's pushes
   (16 Nov 2026), so Tamyiz serves its own COPY of the widget at `public/vee/widget.js`, loaded in index.html with
   `data-api-base="https://khala-ai-agents.pages.dev"`. After changing the widget in khala-ai-agents, copy it here and bump
-  `?v=` in index.html. CSP: `connect-src` must keep `https://khala-ai-agents.pages.dev` (both places).
+  `?v=` in index.html. CSP: `connect-src` must keep `https://khala-ai-agents.pages.dev` (both places); `script-src` does NOT list it
+  (removed 23 Nov 2026: the widget is served from our own `/vee/widget.js`, so no script needs to come from that site).
 - Vee: black oval with a screen face, two eyes, two small arms; launcher and chat-header avatar. One-shot gestures
   (wave, think, happy hop, point, shrug), eyes close after 30 s idle. When an answer links a page of the site and that
   link is visible, a second Vee glides to it, highlights it yellow and points, then returns. Reduced motion: no movement.
