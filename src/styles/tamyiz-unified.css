@@ -8,6 +8,17 @@
      Soft Grey:  #8A8A8A
    ========================================================================== */
 
+/* HOW THIS FILE IS LAID OUT (tidied 25 Nov 2026: ~2,100 lines of rules no page used were removed)
+   Later blocks override earlier ones, so read it bottom-up when you look for what wins:
+     1. Base components (header, buttons, shop grid, bag, footer, book page, checkout, toasts, print)
+     2. PHONES (up to 639px), 24 Oct 2026
+     3. REDESIGN 24 Oct 2026: black and white
+     4. TAMYIZ FILMS
+     5. REDESIGN 14 Nov 2026 "paper and hairlines" (+ admin console look)
+     6. POLISH 14 Nov 2026 (second pass)
+     7. CALM 25 Nov 2026 (current look; put new rules at the end of this block)
+   Before adding a rule, check `npm run css:unused`: it lists rules whose classes appear nowhere in the code. */
+
 /* Fonts are self-hosted (no request to Google; faster and private). */
 @import '@fontsource-variable/inter/wght.css';
 @import '@fontsource-variable/space-grotesk/wght.css';
@@ -170,44 +181,6 @@ img {
   text-decoration: none;
 }
 
-.tamyiz-header-brand-mobile {
-  display: none;
-}
-
-.tamyiz-header-brand-desktop .tamyiz-top-meta {
-  color: #1A1A1A;
-  font-family: var(--font-sub);
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
-  font-weight: 800;
-  text-transform: uppercase;
-  white-space: nowrap;
-  transition: color 0.2s ease;
-}
-
-.tamyiz-header-brand-desktop:hover .tamyiz-top-meta {
-  color: var(--color-red);
-}
-
-.tamyiz-header-brand-desktop .tamyiz-header-brand-title {
-  font-family: var(--font-brand);
-  font-size: 1.15rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  color: var(--color-black);
-  text-transform: uppercase;
-  display: inline-flex;
-  align-items: center;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.tamyiz-brand-dot {
-  color: var(--color-red);
-  margin-left: 0.05em;
-  font-weight: 900;
-}
-
 .tamyiz-header-nav {
   display: flex;
   align-items: center;
@@ -244,51 +217,6 @@ img {
   .tamyiz-header-brand-desktop {
     display: none !important;
   }
-
-  .tamyiz-header-brand-mobile {
-    display: inline-flex !important;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%) !important;
-    font-family: var(--font-brand);
-    font-size: 0.95rem;
-    font-weight: 900;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-black);
-    text-decoration: none;
-    align-items: center;
-    gap: 0.45rem;
-    white-space: nowrap;
-    z-index: 10;
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-  }
-
-  .tamyiz-header-doom-mark {
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .tamyiz-header-doom-img {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    display: block;
-    filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.45));
-    border-radius: 50%;
-  }
-
-  .tamyiz-header-brand-text {
-    line-height: 1;
-    font-weight: 900;
-    letter-spacing: 0.12em;
-  }
 }
 
 @media (max-width: 768px) {
@@ -298,21 +226,6 @@ img {
   }
 
   /* CRITICAL: Completely remove duplicate navbar brand icon and text on mobile viewports */
-  .tamyiz-header-brand-mobile,
-  .tamyiz-header .tamyiz-header-brand-mobile,
-  header .tamyiz-header-brand-mobile,
-  a.tamyiz-header-brand-mobile {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    position: absolute !important;
-    left: -9999px !important;
-  }
 
   /* Completely remove desktop left brand on mobile so ONLY the MENU button remains on the far left */
   .tamyiz-header-brand-desktop,
@@ -422,107 +335,14 @@ img {
 /* ==========================================================================
    2. PRIMARY & SECONDARY ACTION BUTTONS + FLOATING WHATSAPP
    ========================================================================== */
-.tamyiz-hero-btn-primary {
-  background: var(--color-black);
-  color: #FFFFFF;
-  border-radius: 9999px;
-  padding: 0.85rem 2rem;
-  font-family: var(--font-sub);
-  font-size: 0.88rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
-  transition-duration: 0.2s;
-  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.tamyiz-hero-btn-primary:hover {
-  background: var(--color-red);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
-}
-
-.tamyiz-hero-btn-secondary {
-  background: transparent;
-  color: var(--color-black);
-  border: 1.5px solid var(--color-black);
-  border-radius: 9999px;
-  padding: 0.8rem 1.9rem;
-  min-height: 44px;
-  font-family: var(--font-sub);
-  font-size: 0.88rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
-  transition: background 0.2s, color 0.2s;
-}
-
-.tamyiz-hero-btn-secondary:hover {
-  background: var(--color-black);
-  color: #FFFFFF;
-}
 
 /* Compact WhatsApp Floating Action Button (Clean separation: bottom-6 right-6 z-40) */
-.tamyiz-whatsapp-fab {
-  position: fixed;
-  bottom: 1.5rem;
-  /* bottom-6 */
-  right: 1.5rem;
-  /* right-6 */
-  z-index: 40;
-  width: 48px;
-  /* w-12 */
-  height: 48px;
-  /* h-12 */
-  border-radius: 50%;
-  background: #0B0B0B;
-  border: 1.5px solid var(--color-red);
-  color: #FFFFFF;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.25);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
-  text-decoration: none;
-}
-
-.tamyiz-whatsapp-fab:hover {
-  transform: scale(1.08);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.4);
-}
 
 @media (max-width: 768px) {
-  .tamyiz-hero-btn-primary {
-    margin-bottom: 1.25rem !important;
-  }
 
   /* Floating WhatsApp Button on Mobile: Compact and safely clear */
-  .tamyiz-whatsapp-fab {
-    bottom: max(14px, env(safe-area-inset-bottom)) !important;
-    right: max(14px, env(safe-area-inset-right)) !important;
-    width: 44px !important;
-    height: 44px !important;
-    z-index: 40 !important;
-    transform: none !important;
-    transition: opacity 0.25s ease, transform 0.25s ease !important;
-  }
 
   /* Step aside while scrolling so it never sits on top of text being read */
-  body.is-scrolling .tamyiz-whatsapp-fab {
-    opacity: 0 !important;
-    transform: translateY(16px) !important;
-    pointer-events: none !important;
-  }
 
   /* Keep the very end of every page clear of the button */
   .tamyiz-footer {
@@ -533,25 +353,6 @@ img {
 /* ==========================================================================
    3. BRAND PROMISE / FEATURES STRIP (Unclipped Text & Balanced Padding)
    ========================================================================== */
-.tamyiz-promise-strip {
-  background: var(--color-black);
-  color: #FFFFFF;
-  padding: 0 !important;
-  box-sizing: border-box;
-  width: 100%;
-}
-
-@media (min-width: 768px) {
-  .tamyiz-promise-strip {
-    padding: 0 !important;
-  }
-}
-
-.tamyiz-promise-grid {
-  display: grid;
-  align-items: flex-start;
-  width: 100%;
-}
 
 .tamyiz-promise-item {
   display: flex;
@@ -587,32 +388,7 @@ img {
   word-break: break-word;
 }
 
-.tamyiz-promise-icon {
-  font-size: 1.5rem;
-  line-height: 1;
-  color: var(--color-red);
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-}
-
-.tamyiz-promise-title {
-  font-family: var(--font-sub);
-  font-size: 0.82rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.tamyiz-promise-desc {
-  font-size: 0.75rem;
-  color: #8E8E8E;
-}
-
 @media (max-width: 1024px) {
-  .tamyiz-promise-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2.25rem 1.75rem;
-  }
 
   .tamyiz-promise-item:nth-child(2n) {
     border-right: none;
@@ -620,10 +396,6 @@ img {
 }
 
 @media (max-width: 640px) {
-  .tamyiz-promise-grid {
-    grid-template-columns: 1fr;
-    gap: 1.75rem;
-  }
 
   .tamyiz-promise-item {
     border-right: none;
@@ -640,16 +412,6 @@ img {
 /* ==========================================================================
    5. PRODUCT CATALOG / SHOP GRID (12 Products)
    ========================================================================== */
-.tamyiz-shop-section {
-  padding: 6rem 0;
-}
-
-@media (max-width: 767px) {
-  .tamyiz-shop-section {
-    padding: 3.5rem 0;
-    /* py-14 */
-  }
-}
 
 .tamyiz-shop-header {
   display: flex;
@@ -668,42 +430,10 @@ img {
 }
 
 /* No-scrollbar utility */
-.no-scrollbar::-webkit-scrollbar {
-  display: none !important;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
 
 /* Filter pills (Horizontal swipe on phone) */
-.tamyiz-filter-pills {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-top: 2rem !important;
-  padding-top: 1rem !important;
-  margin-bottom: 2rem !important;
-}
 
 @media (max-width: 768px) {
-  .tamyiz-filter-pills {
-    display: flex;
-    overflow-x: auto;
-    white-space: nowrap;
-    gap: 0.55rem;
-    margin-top: 1.75rem !important;
-    padding-top: 1.25rem !important;
-    padding-bottom: 0.85rem !important;
-    margin-bottom: 1.75rem !important;
-    margin-left: -1rem;
-    margin-right: -1rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    -webkit-overflow-scrolling: touch;
-    flex-wrap: nowrap;
-  }
 
   .tamyiz-filter-pill {
     flex-shrink: 0;
@@ -812,29 +542,6 @@ img {
 }
 
 /* Editorial Luxury Badges (Requirement 4) */
-.tamyiz-badge-editorial {
-  position: absolute;
-  top: 0.85rem;
-  left: 0.85rem;
-  background: rgba(11, 11, 11, 0.92);
-  color: #FFFFFF;
-  font-family: var(--font-sub);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 0.25rem 0.65rem;
-  border-radius: 9999px;
-  z-index: 3;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-}
-
-.tamyiz-badge-sale {
-  display: none;
-}
 
 .tamyiz-btn-wishlist {
   position: absolute;
@@ -869,15 +576,6 @@ img {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-}
-
-.tamyiz-product-cat {
-  font-size: 0.72rem;
-  color: var(--color-grey);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.35rem;
-  font-weight: 600;
 }
 
 .tamyiz-product-name {
@@ -1302,14 +1000,6 @@ img {
   padding: 4.5rem 0 2rem 0;
 }
 
-.tamyiz-footer-trust-bar {
-  margin-bottom: 3rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  font-size: 0.78rem;
-  color: #BBB;
-}
-
 .tamyiz-footer-grid {
   display: grid;
   grid-template-columns: 1.35fr 1fr 1fr 1.15fr;
@@ -1329,15 +1019,6 @@ img {
     padding: 2.25rem 0 1.25rem 0;
   }
 
-  .tamyiz-footer-trust-bar {
-    margin-bottom: 1.25rem !important;
-    padding-bottom: 0.85rem !important;
-    font-size: 0.68rem !important;
-    gap: 0.35rem !important;
-    flex-wrap: wrap;
-    line-height: 1.4;
-  }
-
   .tamyiz-footer-grid {
     grid-template-columns: 1fr 1fr !important;
     gap: 1.25rem 0.85rem !important;
@@ -1349,8 +1030,7 @@ img {
     margin-bottom: 0.2rem;
   }
 
-  .tamyiz-footer-brand h2,
-  .tamyiz-footer-brand-title {
+  .tamyiz-footer-brand h2 {
     font-size: 1.2rem !important;
     margin-bottom: 0.3rem !important;
     letter-spacing: 0.08em;
@@ -1375,8 +1055,7 @@ img {
   }
 
   .tamyiz-footer-links a,
-  .tamyiz-footer-links button,
-  .tamyiz-footer-btn {
+  .tamyiz-footer-links button {
     font-size: 0.75rem !important;
     line-height: 1.35;
     padding: 0.1rem 0;
@@ -1396,8 +1075,7 @@ img {
   }
 }
 
-.tamyiz-footer-brand h2,
-.tamyiz-footer-brand-title {
+.tamyiz-footer-brand h2 {
   font-family: var(--font-brand);
   font-size: clamp(1.35rem, 2.2vw, 1.75rem);
   font-weight: 900;
@@ -1437,8 +1115,7 @@ img {
 }
 
 .tamyiz-footer-links a,
-.tamyiz-footer-links button,
-.tamyiz-footer-btn {
+.tamyiz-footer-links button {
   background: none;
   border: none;
   padding: 0;
@@ -1454,8 +1131,7 @@ img {
 }
 
 .tamyiz-footer-links a:hover,
-.tamyiz-footer-links button:hover,
-.tamyiz-footer-btn:hover {
+.tamyiz-footer-links button:hover {
   color: #FFFFFF;
 }
 
@@ -1545,24 +1221,6 @@ img {
     min-height: 36px;
     gap: 0.35rem;
   }
-}
-
-.tamyiz-header-nav-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: var(--font-sub);
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #333333;
-  cursor: pointer;
-  transition: color 0.15s ease;
-}
-
-.tamyiz-header-nav-btn:hover {
-  color: var(--color-red);
 }
 
 /* Mobile Slide-Out Menu Drawer */
@@ -1660,41 +1318,6 @@ img {
 
 .tamyiz-mobile-nav-link:hover {
   color: var(--color-red);
-}
-
-.tamyiz-mobile-cat-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.tamyiz-mobile-cat-btn {
-  background: #F5F5F3;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  padding: 0.65rem 0.95rem;
-  font-family: var(--font-sub);
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-align: left;
-  cursor: pointer;
-  color: var(--color-black);
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
-  transition-duration: 0.15s;
-  transition-timing-function: ease;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  text-decoration: none;
-}
-
-.tamyiz-mobile-cat-btn:hover,
-.tamyiz-mobile-cat-btn.active {
-  background: var(--color-black);
-  color: #FFFFFF;
-  border-color: var(--color-black);
 }
 
 /* ==========================================================================
@@ -1848,101 +1471,8 @@ img {
 /* ==========================================================================
    ARTIFACT DETAIL VIEW (FULL-SCREEN / SLIDE-OVER PDP) (Feature 1)
    ========================================================================== */
-.tamyiz-pdp-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(11, 11, 11, 0.85);
-  z-index: 2800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  opacity: 0;
-  visibility: hidden;
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
-  transition-duration: 0.25s;
-  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.tamyiz-pdp-modal.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.tamyiz-pdp-container {
-  background: #FFFFFF;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 1040px;
-  max-height: 92vh;
-  max-height: 92dvh;
-  overflow-y: auto;
-  position: relative;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
-  display: flex;
-  flex-direction: column;
-  padding: 2.5rem;
-}
-
-@media (max-width: 640px) {
-  .tamyiz-pdp-modal {
-    padding: 0;
-  }
-
-  .tamyiz-pdp-container {
-    max-height: 100vh;
-    max-height: 100dvh;
-    height: 100%;
-    border-radius: 0;
-    padding: 1.5rem 1.25rem 2.5rem 1.25rem;
-  }
-}
-
-.tamyiz-pdp-close-btn {
-  position: absolute;
-  top: 1.25rem;
-  right: 1.25rem;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #F5F5F3;
-  border: 1px solid var(--color-border);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.15rem;
-  color: var(--color-black);
-  z-index: 10;
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
-  transition-duration: 0.15s;
-  transition-timing-function: ease;
-}
-
-.tamyiz-pdp-close-btn:hover {
-  background: var(--color-black);
-  color: #FFFFFF;
-}
-
-.tamyiz-pdp-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-  align-items: start;
-}
-
-@media (max-width: 860px) {
-  .tamyiz-pdp-grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-}
 
 /* Gallery & Zoom-on-Hover */
-.tamyiz-pdp-gallery {
-  display: flex;
-  flex-direction: column;
-}
 
 .tamyiz-pdp-main-img-wrap {
   width: 100%;
@@ -2000,10 +1530,6 @@ img {
 }
 
 /* PDP Info Column */
-.tamyiz-pdp-info {
-  display: flex;
-  flex-direction: column;
-}
 
 .tamyiz-pdp-badge-pill {
   display: inline-flex;
@@ -2167,99 +1693,11 @@ img {
   padding-top: 2rem;
 }
 
-.tamyiz-pdp-related-header {
-  margin-bottom: 1.25rem;
-}
-
-.tamyiz-pdp-related-header h4 {
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.01em;
-  margin: 0 0 0.25rem 0;
-}
-
-.tamyiz-pdp-related-header p {
-  font-size: 0.8rem;
-  color: var(--color-grey);
-  margin: 0;
-}
-
-.tamyiz-pdp-related-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
-}
-
-@media (max-width: 540px) {
-  .tamyiz-pdp-related-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.tamyiz-pdp-related-card {
-  display: flex;
-  gap: 0.85rem;
-  background: #F9F9F7;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  padding: 0.75rem;
-  cursor: pointer;
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
-  align-items: center;
-}
-
-.tamyiz-pdp-related-card:hover {
-  background: #FFFFFF;
-  border-color: var(--color-black);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-}
-
-.tamyiz-pdp-related-thumb {
-  width: 64px;
-  height: 64px;
-  border-radius: 3px;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
 /* ========================================================
    DIGITAL MONOGRAPHS & CONCEPT LAB ENHANCEMENTS
    ======================================================== */
 
 /* Concept Lab Badge & Buttons */
-.tamyiz-badge-concept {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  background: rgba(18, 18, 18, 0.92);
-  color: #E5E5E5;
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  font-family: var(--font-sub);
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.28rem 0.6rem;
-  border-radius: 2px;
-  backdrop-filter: blur(8px);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.tamyiz-badge-concept::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-red);
-  box-shadow: 0 0 6px var(--color-red);
-}
 
 .tamyiz-badge-digital {
   position: absolute;
@@ -2295,37 +1733,6 @@ img {
   box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
 }
 
-.tamyiz-btn-waitlist {
-  width: 100%;
-  background: #0B0B0B;
-  color: #EAEAEA;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 3px;
-  padding: 0.75rem 1rem;
-  font-family: var(--font-display);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
-  transition-duration: 0.25s;
-  transition-timing-function: ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.tamyiz-btn-waitlist:hover {
-  background: #FFFFFF;
-  color: #000000;
-  border-color: #FFFFFF;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-}
-
 .tamyiz-card-actions-row {
   display: grid;
   grid-template-columns: 1fr;
@@ -2333,122 +1740,15 @@ img {
   margin-top: 0.75rem;
 }
 
-.tamyiz-btn-preview-trigger {
-  width: 100%;
-  background: transparent;
-  color: var(--color-black);
-  border: 1px solid var(--color-border);
-  border-radius: 3px;
-  padding: 0.65rem 0.9rem;
-  font-family: var(--font-sub);
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-}
-
-.tamyiz-btn-preview-trigger:hover {
-  background: #F4F4F0;
-  border-color: var(--color-black);
-  color: var(--color-red);
-}
-
-@media (max-width: 639px) {
-  .tamyiz-btn-preview-trigger {
-    min-height: 44px;
-    font-size: 0.8rem;
-    padding: 0.85rem;
-  }
-}
-
 /* Editorial Monograph Reader Modal */
-.tamyiz-editorial-reader {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.tamyiz-reader-header {
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 1.25rem;
-}
-
-.tamyiz-reader-pills {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.tamyiz-reader-pill {
-  font-family: var(--font-sub);
-  font-size: 0.7rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.25rem 0.65rem;
-  border-radius: 2px;
-  background: #F4F4F0;
-  color: #444;
-}
-
-.tamyiz-reader-title {
-  font-family: var(--font-display);
-  font-size: clamp(1.6rem, 3.5vw, 2.3rem);
-  font-weight: 900;
-  text-transform: uppercase;
-  line-height: 1.1;
-  margin: 0 0 0.5rem 0;
-}
-
-.tamyiz-reader-subtitle {
-  font-size: 0.95rem;
-  color: var(--color-grey);
-  line-height: 1.5;
-  margin: 0;
-}
 
 /* Reader Layout: Left Table of Contents, Right Editorial Excerpt */
-.tamyiz-reader-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.35fr;
-  gap: 2rem;
-}
-
-@media (max-width: 860px) {
-  .tamyiz-reader-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-}
 
 .tamyiz-toc-box {
   background: #FBFBFA;
   border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 1.5rem;
-}
-
-.tamyiz-toc-title {
-  font-family: var(--font-display);
-  font-size: 0.9rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0 0 1rem 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 0.6rem;
 }
 
 .tamyiz-toc-list {
@@ -2547,16 +1847,6 @@ img {
   color: #444;
 }
 
-.tamyiz-reader-footer-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid var(--color-border);
-  padding-top: 1.25rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
 .tamyiz-reader-specs-chip {
   font-family: var(--font-sub);
   font-size: 0.76rem;
@@ -2588,47 +1878,6 @@ img {
   margin-bottom: 0.5rem;
 }
 
-.tamyiz-download-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #FFFFFF;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 0.75rem;
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
-}
-
-.tamyiz-download-card:hover {
-  border-color: var(--color-black);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-}
-
-.tamyiz-btn-download-action {
-  background: var(--color-black);
-  color: #FFFFFF;
-  padding: 0.55rem 1rem;
-  border-radius: 3px;
-  font-family: var(--font-sub);
-  font-size: 0.76rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  cursor: pointer;
-  border: none;
-}
-
-.tamyiz-btn-download-action:hover {
-  background: var(--color-red);
-}
-
 /* ==========================================================================
    MOBILE SAFE AREA & TAILWIND UTILITY HELPERS
    ========================================================================== */
@@ -2637,39 +1886,9 @@ img {
     padding-bottom: 7rem !important;
     /* safe area pb-28 against floating WhatsApp button */
   }
-
-  .tamyiz-founders-intro {
-    padding-right: 1.25rem !important;
-    padding-left: 1.25rem !important;
-  }
 }
 
 /* Tailwind utility helpers */
-.pb-24 {
-  padding-bottom: 6rem !important;
-}
-
-.pr-14 {
-  padding-right: 3.5rem !important;
-}
-
-@media (min-width: 768px) {
-  .md\:pb-0 {
-    padding-bottom: 0 !important;
-  }
-
-  .md\:pr-0 {
-    padding-right: 0 !important;
-  }
-}
-
-.max-w-prose {
-  max-width: 65ch !important;
-}
-
-.max-w-2xl {
-  max-width: 42rem !important;
-}
 
 .mx-auto {
   margin-left: auto !important;
@@ -2711,25 +1930,6 @@ img {
 }
 
 /* Tailwind Live Animation Arbitrary Classes */
-.animate-\[pulse_4s_ease-in-out_infinite\] {
-  animation: tamyiz-dome-ambient-glow 4s ease-in-out infinite alternate !important;
-}
-
-.animate-\[float_4s_ease-in-out_infinite\] {
-  animation: tamyiz-dome-ambient-glow 4s ease-in-out infinite alternate !important;
-}
-
-.hover\:scale-105:hover {
-  transform: scale(1.05) !important;
-}
-
-.transition-transform {
-  transition-property: transform !important;
-}
-
-.duration-700 {
-  transition-duration: 700ms !important;
-}
 
 /* ==========================================================================
    MOBILE-FIRST ARCHITECTURE: RESPONSIVE UTILITIES & SPACING
@@ -2758,56 +1958,12 @@ img {
   }
 }
 
-.pt-2 {
-  padding-top: 0.5rem !important;
-}
-
-.pt-3 {
-  padding-top: 0.75rem !important;
-}
-
 .pt-4 {
   padding-top: 1rem !important;
 }
 
-.pt-6 {
-  padding-top: 1.5rem !important;
-}
-
-.pt-8 {
-  padding-top: 2rem !important;
-}
-
-.pt-10 {
-  padding-top: 2.5rem !important;
-}
-
 .pt-12 {
   padding-top: 3rem !important;
-}
-
-.pt-16 {
-  padding-top: 4rem !important;
-}
-
-.pb-2 {
-  padding-bottom: 0.5rem !important;
-}
-
-.pb-3 {
-  padding-bottom: 0.75rem !important;
-}
-
-.pb-4 {
-  padding-bottom: 1rem !important;
-}
-
-.pb-6 {
-  padding-bottom: 1.5rem !important;
-}
-
-.pb-8 {
-  padding-bottom: 2rem !important;
 }
 
 .mt-2 {
@@ -2826,24 +1982,8 @@ img {
   margin-top: 2rem !important;
 }
 
-.mt-10 {
-  margin-top: 2.5rem !important;
-}
-
-.mt-12 {
-  margin-top: 3rem !important;
-}
-
 .mb-2 {
   margin-bottom: 0.5rem !important;
-}
-
-.mb-3 {
-  margin-bottom: 0.75rem !important;
-}
-
-.mb-4 {
-  margin-bottom: 1rem !important;
 }
 
 .mb-6 {
@@ -2852,28 +1992,6 @@ img {
 
 .mb-8 {
   margin-bottom: 2rem !important;
-}
-
-@media (min-width: 640px) {
-  .sm\:pt-6 {
-    padding-top: 1.5rem !important;
-  }
-
-  .sm\:pt-8 {
-    padding-top: 2rem !important;
-  }
-
-  .sm\:pt-10 {
-    padding-top: 2.5rem !important;
-  }
-
-  .sm\:mt-6 {
-    margin-top: 1.5rem !important;
-  }
-
-  .sm\:mt-8 {
-    margin-top: 2rem !important;
-  }
 }
 
 .py-8 {
@@ -2902,10 +2020,6 @@ img {
 }
 
 @media (min-width: 768px) {
-  .md\:py-12 {
-    padding-top: 3rem !important;
-    padding-bottom: 3rem !important;
-  }
 
   .md\:py-16 {
     padding-top: 4rem !important;
@@ -2923,31 +2037,8 @@ img {
   }
 }
 
-.px-4 {
-  padding-left: 1rem !important;
-  padding-right: 1rem !important;
-}
-
-@media (min-width: 640px) {
-  .sm\:px-6 {
-    padding-left: 1.5rem !important;
-    padding-right: 1.5rem !important;
-  }
-}
-
-@media (min-width: 1024px) {
-  .lg\:px-12 {
-    padding-left: 3rem !important;
-    padding-right: 3rem !important;
-  }
-}
-
 .w-full {
   width: 100% !important;
-}
-
-.overflow-x-hidden {
-  overflow-x: hidden !important;
 }
 
 .flex {
@@ -2958,21 +2049,8 @@ img {
   flex-direction: column !important;
 }
 
-.flex-row {
-  flex-direction: row !important;
-}
-
 .flex-wrap {
   flex-wrap: wrap !important;
-}
-
-.whitespace-nowrap {
-  white-space: nowrap !important;
-}
-
-.overflow-x-auto {
-  overflow-x: auto !important;
-  -webkit-overflow-scrolling: touch;
 }
 
 .items-center {
@@ -2991,36 +2069,6 @@ img {
   display: none !important;
 }
 
-@media (min-width: 769px) {
-  .md\:flex {
-    display: flex !important;
-  }
-}
-
-.py-6 {
-  padding-top: 1.5rem !important;
-  padding-bottom: 1.5rem !important;
-}
-
-@media (min-width: 640px) {
-  .sm\:py-12 {
-    padding-top: 3rem !important;
-    padding-bottom: 3rem !important;
-  }
-}
-
-.rounded-2xl {
-  border-radius: 1rem !important;
-}
-
-.p-5 {
-  padding: 1.25rem !important;
-}
-
-.text-base {
-  font-size: 1rem !important;
-}
-
 .text-xs {
   font-size: 0.75rem !important;
 }
@@ -3031,19 +2079,6 @@ img {
 
 .grid-cols-1 {
   grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
-}
-
-.max-w-7xl {
-  max-width: 80rem !important;
-}
-
-.min-h-\[calc\(100vh-210px\)\] {
-  min-height: calc(100vh - 210px) !important;
-}
-
-.px-6 {
-  padding-left: 1.5rem !important;
-  padding-right: 1.5rem !important;
 }
 
 .gap-2 {
@@ -3062,29 +2097,12 @@ img {
   gap: 1.25rem !important;
 }
 
-.gap-6 {
-  gap: 1.5rem !important;
-}
-
-.gap-8 {
-  gap: 2rem !important;
-}
-
-.gap-10 {
-  gap: 2.5rem !important;
-}
-
 .items-start {
   align-items: flex-start !important;
 }
 
 .text-left {
   text-align: left !important;
-}
-
-.text-6xl {
-  font-size: 3.75rem !important;
-  line-height: 1 !important;
 }
 
 .font-black {
@@ -3095,57 +2113,12 @@ img {
   letter-spacing: -0.025em !important;
 }
 
-.leading-\[0\.95\] {
-  line-height: 0.95 !important;
-}
-
-.text-lg {
-  font-size: 1.125rem !important;
-  line-height: 1.75rem !important;
-}
-
-.leading-\[1\.55\] {
-  line-height: 1.55 !important;
-}
-
-.max-w-\[540px\] {
-  max-width: 540px !important;
-}
-
-.mb-5 {
-  margin-bottom: 1.25rem !important;
-}
-
 .text-\[11px\] {
   font-size: 11px !important;
 }
 
-.tracking-\[0\.16em\] {
-  letter-spacing: 0.16em !important;
-}
-
 .uppercase {
   text-transform: uppercase !important;
-}
-
-.max-w-\[460px\] {
-  max-width: 460px !important;
-}
-
-.scale-105 {
-  transform: scale(1.05) !important;
-}
-
-.object-contain {
-  object-fit: contain !important;
-}
-
-.mix-blend-multiply {
-  mix-blend-mode: multiply !important;
-}
-
-.pr-20 {
-  padding-right: 5rem !important;
 }
 
 @media (min-width: 640px) {
@@ -3157,57 +2130,8 @@ img {
     flex-direction: row !important;
   }
 
-  .sm\:flex-wrap {
-    flex-wrap: wrap !important;
-  }
-
-  .sm\:w-auto {
-    width: auto !important;
-  }
-
-  .sm\:gap-4 {
-    gap: 1rem !important;
-  }
-
-  .sm\:mx-0 {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-
-  .sm\:px-0 {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
-
-  .sm\:px-10 {
-    padding-left: 2.5rem !important;
-    padding-right: 2.5rem !important;
-  }
-
-  .sm\:p-8 {
-    padding: 2rem !important;
-  }
-
-  .sm\:text-sm {
-    font-size: 0.875rem !important;
-  }
-
-  .sm\:text-xl {
-    font-size: 1.25rem !important;
-    line-height: 1.75rem !important;
-  }
-
-  .sm\:text-7xl {
-    font-size: 4.5rem !important;
-    line-height: 1 !important;
-  }
-
   .sm\:max-w-md {
     max-width: 28rem !important;
-  }
-
-  .sm\:max-w-\[360px\] {
-    max-width: 360px !important;
   }
 }
 
@@ -3219,112 +2143,12 @@ img {
   .md\:gap-8 {
     gap: 2rem !important;
   }
-
-  .md\:pb-12 {
-    padding-bottom: 3rem !important;
-  }
 }
 
 @media (min-width: 1024px) {
-  .lg\:grid-cols-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
 
   .lg\:grid-cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  }
-
-  .lg\:grid-cols-4 {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  }
-
-  .lg\:grid-cols-12 {
-    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
-  }
-
-  .lg\:col-span-7 {
-    grid-column: span 7 / span 7 !important;
-  }
-
-  .lg\:col-span-5 {
-    grid-column: span 5 / span 5 !important;
-  }
-
-  .lg\:gap-12 {
-    gap: 3rem !important;
-  }
-
-  .lg\:px-14 {
-    padding-left: 3.5rem !important;
-    padding-right: 3.5rem !important;
-  }
-
-  .lg\:py-20 {
-    padding-top: 5rem !important;
-    padding-bottom: 5rem !important;
-  }
-
-  .lg\:flex {
-    display: flex !important;
-  }
-
-  .lg\:items-start {
-    align-items: flex-start !important;
-  }
-
-  .lg\:text-left {
-    text-align: left !important;
-  }
-
-  .lg\:justify-end {
-    justify-content: flex-end !important;
-  }
-
-  .lg\:text-\[88px\] {
-    font-size: 88px !important;
-    line-height: 0.95 !important;
-  }
-
-  .lg\:text-\[21px\] {
-    font-size: 21px !important;
-  }
-
-  .lg\:max-w-\[500px\] {
-    max-width: 500px !important;
-  }
-
-  .lg\:max-w-\[520px\] {
-    max-width: 520px !important;
-  }
-
-  .lg\:scale-110 {
-    transform: scale(1.1) !important;
-  }
-
-  .lg\:pr-28 {
-    padding-right: 7rem !important;
-  }
-
-  .lg\:px-8 {
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
-  }
-
-  .first\:lg\:pl-0:first-child {
-    padding-left: 0 !important;
-  }
-
-  .last\:lg\:pr-0:last-child {
-    padding-right: 0 !important;
-  }
-
-  .lg\:divide-x> :not([hidden])~ :not([hidden]) {
-    border-left-width: 1px !important;
-    border-left-style: solid !important;
-  }
-
-  .lg\:divide-neutral-800> :not([hidden])~ :not([hidden]) {
-    border-left-color: #262626 !important;
   }
 }
 
@@ -3421,151 +2245,7 @@ img {
   color: #FFFFFF;
 }
 
-.tamyiz-btn-primary-large {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 2.25rem;
-  background: var(--color-black);
-  color: #FFFFFF;
-  border-radius: 9999px;
-  font-family: var(--font-sub);
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.tamyiz-btn-primary-large:hover {
-  background: var(--color-red);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
-}
-
-.tamyiz-review-card {
-  background: #FFFFFF;
-  padding: 2.25rem;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
-}
-
 /* Founders Teaser Card on Home */
-.tamyiz-founders-teaser-card {
-  background: #FFFFFF;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 2.5rem;
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 3rem;
-  align-items: center;
-}
-
-@media (max-width: 900px) {
-  .tamyiz-founders-teaser-card {
-    grid-template-columns: 1fr;
-    padding: 1.75rem;
-    gap: 2rem;
-  }
-}
-
-.tamyiz-founders-teaser-duo {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
-  align-items: flex-start;
-}
-
-.tamyiz-founder-mini-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.tamyiz-founder-mini-portrait {
-  position: relative;
-  aspect-ratio: 4/5;
-  border-radius: 4px;
-  overflow: hidden;
-  background: #111111;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  transition: transform 0.4s ease, border-color 0.4s ease;
-}
-
-.tamyiz-founder-mini-card:hover .tamyiz-founder-mini-portrait {
-  transform: translateY(-3px);
-  border-color: rgba(0, 0, 0, 0.4);
-}
-
-.tamyiz-founder-mini-portrait img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
-  display: block;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.tamyiz-founder-mini-card:hover .tamyiz-founder-mini-portrait img {
-  transform: scale(1.03);
-}
-
-.tamyiz-founder-mini-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0 0.15rem;
-}
-
-.tamyiz-founder-mini-name {
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  color: #FFFFFF;
-  text-transform: uppercase;
-}
-
-.tamyiz-founder-mini-role {
-  font-family: var(--font-sub);
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.tamyiz-mini-socials {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 0.75rem;
-  margin-top: 0.35rem;
-  font-family: var(--font-sub);
-  font-size: 0.68rem;
-  font-weight: 700;
-}
-
-.tamyiz-mini-socials a {
-  color: #FFFFFF;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  opacity: 0.85;
-  transition: opacity 0.15s ease, color 0.15s ease;
-  white-space: nowrap;
-}
-
-.tamyiz-mini-socials a:hover {
-  opacity: 1;
-  color: var(--color-red);
-}
 
 /* ==========================================================================
    PRODUCT DETAIL PAGE (PDP) ARCHITECTURE
@@ -3666,28 +2346,6 @@ img {
   color: #555555;
   line-height: 1.5;
   margin-bottom: 1.25rem;
-}
-
-.tamyiz-pdp-rating-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-  font-size: 0.85rem;
-}
-
-.tamyiz-stars {
-  color: var(--color-red);
-  letter-spacing: 2px;
-}
-
-.tamyiz-rating-score {
-  font-weight: 800;
-  color: var(--color-black);
-}
-
-.tamyiz-rating-count {
-  color: var(--color-grey);
 }
 
 .tamyiz-pdp-save-badge {
@@ -4216,97 +2874,6 @@ img {
 /* ==========================================================================
    PHILOSOPHY PAGE & COMPATIBILITY MATRIX
    ========================================================================== */
-.tamyiz-pillars-detailed-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-.tamyiz-pillar-detail-card {
-  background: var(--color-offwhite);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 2.5rem;
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: 2rem;
-  align-items: flex-start;
-}
-
-@media (max-width: 639px) {
-  .tamyiz-pillar-detail-card {
-    grid-template-columns: 1fr;
-    padding: 1.75rem 1.25rem;
-    gap: 1.25rem;
-  }
-}
-
-.tamyiz-pillar-num-badge {
-  font-family: var(--font-brand);
-  font-size: 2.2rem;
-  font-weight: 900;
-  color: var(--color-red);
-  line-height: 1;
-}
-
-.tamyiz-pillar-tag {
-  font-family: var(--font-sub);
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--color-grey);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  display: block;
-  margin-bottom: 0.35rem;
-}
-
-.tamyiz-pillar-heading {
-  font-family: var(--font-display);
-  font-size: 1.6rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  margin-bottom: 0.75rem;
-}
-
-.tamyiz-pillar-body {
-  font-size: 0.95rem;
-  color: #444444;
-  line-height: 1.65;
-  margin-bottom: 1.25rem;
-}
-
-.tamyiz-pillar-specs-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
-  border-top: 1px solid var(--color-border);
-  padding-top: 1.25rem;
-}
-
-@media (max-width: 639px) {
-  .tamyiz-pillar-specs-grid {
-    grid-template-columns: 1fr;
-    gap: 0.85rem;
-  }
-}
-
-.pillar-spec strong {
-  display: block;
-  font-size: 0.82rem;
-  font-family: var(--font-sub);
-  font-weight: 800;
-  color: var(--color-black);
-  text-transform: uppercase;
-  margin-bottom: 0.2rem;
-}
-
-.pillar-spec span {
-  font-size: 0.82rem;
-  color: #666;
-  line-height: 1.45;
-}
 
 /* Compatibility Matrix Cards */
 .tamyiz-matrix-card {
@@ -4549,39 +3116,6 @@ img {
   margin: 0.15rem 0 0 0;
 }
 
-.tamyiz-payment-option-label {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.85rem;
-  padding: 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background: #FFFFFF;
-  cursor: pointer;
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
-  transition-duration: 0.15s;
-  transition-timing-function: ease;
-}
-
-.tamyiz-payment-option-label:hover {
-  border-color: var(--color-black);
-}
-
-.tamyiz-payment-option-label input[type="radio"] {
-  margin-top: 0.25rem;
-  accent-color: var(--color-red);
-}
-
-.tamyiz-badge-fast {
-  font-family: var(--font-sub);
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: #1E7B2E;
-  background: rgba(39, 136, 56, 0.1);
-  padding: 0.2rem 0.5rem;
-  border-radius: 2px;
-}
-
 .tamyiz-btn-submit-order {
   width: 100%;
   padding: 1.15rem;
@@ -4691,27 +3225,6 @@ img {
 
 .summary-item-remove:hover {
   color: var(--color-red);
-}
-
-.tamyiz-qty-picker-small {
-  display: inline-flex;
-  border: 1px solid var(--color-border);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.tamyiz-qty-picker-small button {
-  padding: 0.15rem 0.5rem;
-  background: #F4F4F2;
-  font-weight: 700;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-
-.tamyiz-qty-picker-small span {
-  padding: 0.15rem 0.55rem;
-  font-size: 0.75rem;
-  font-weight: 800;
 }
 
 .tamyiz-summary-coupon-box {
@@ -4854,22 +3367,6 @@ img {
   margin-bottom: 0.35rem;
 }
 
-.vault-item-key {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.7rem;
-  color: #888;
-}
-
-.vault-item-key code {
-  background: #EBEBE8;
-  padding: 0.15rem 0.4rem;
-  border-radius: 2px;
-  font-weight: 700;
-  color: #222;
-}
-
 .tamyiz-btn-download-vault {
   padding: 0.75rem 1.35rem;
   background: var(--color-black);
@@ -4907,8 +3404,7 @@ img {
 .tamyiz-section h2,
 .tamyiz-page-title,
 .tamyiz-shop-header h2,
-.tamyiz-step-title,
-.tamyiz-pillar-heading {
+.tamyiz-step-title {
   font-family: var(--font-display) !important;
   font-weight: 700 !important;
   letter-spacing: -0.03em !important;
@@ -5385,7 +3881,6 @@ img {
   /* Hide all surrounding app elements */
   .tamyiz-header,
   .tamyiz-footer,
-  .tamyiz-whatsapp-fab,
   .tamyiz-modal-backdrop,
   .tamyiz-drawer,
   .no-print,
@@ -5452,27 +3947,6 @@ img {
 }
 
 /* Bag Items: Format Pill & License Tag */
-.tamyiz-format-pill {
-  display: inline-block;
-  font-family: monospace;
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: #000000;
-  color: #FFFFFF;
-  padding: 0.15rem 0.45rem;
-  border-radius: 0px;
-}
-
-.tamyiz-license-tag {
-  font-family: monospace;
-  font-size: 0.68rem;
-  color: #666666;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-left: 0.35rem;
-}
 
 .tamyiz-cart-del {
   background: none;
@@ -6049,15 +4523,6 @@ img {
     min-height: 44px;
   }
 
-  .tamyiz-founder-social-link,
-  .tamyiz-founder-socials a,
-  .tamyiz-mini-socials a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    padding: 0 0.25rem;
-  }
-
   .tamyiz-product-name a {
     display: block;
     padding: 0.35rem 0;
@@ -6071,12 +4536,6 @@ img {
 }
 
 /* The card's second button is a link to the product page. */
-a.tamyiz-btn-preview-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-}
 
 /* ==========================================================================
    SECTION HEADINGS (shared sections: sections.js)
@@ -6147,17 +4606,6 @@ a.tamyiz-btn-preview-trigger {
 }
 
 /* Founder names under the photos sit on a white card: dark text. */
-.tamyiz-founder-mini-name {
-  color: var(--color-black);
-}
-
-.tamyiz-founder-mini-role {
-  color: #555;
-}
-
-.tamyiz-mini-socials a {
-  color: var(--color-black);
-}
 
 /* Policy pages: space between sections; tabs wrap instead of running off screen. */
 .legal-section+.legal-section {
@@ -6220,19 +4668,7 @@ a.tamyiz-btn-preview-trigger {
     gap: 1.5rem !important;
   }
 
-  .tamyiz-hero-logo-img {
-    max-width: 280px !important;
-  }
-
   /* Promise strip: 2 x 2 instead of 4 tall rows */
-  .tamyiz-promise-strip>div {
-    padding: 1.25rem 1rem !important;
-  }
-
-  .tamyiz-promise-grid {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 1rem 0.85rem !important;
-  }
 
   .tamyiz-promise-item {
     flex-direction: column;
@@ -6250,18 +4686,6 @@ a.tamyiz-btn-preview-trigger {
   }
 
   /* Cards and grids */
-  .tamyiz-values-grid {
-    gap: 0.75rem;
-    margin-top: 0;
-  }
-
-  .tamyiz-value-card {
-    padding: 1.25rem;
-  }
-
-  .tamyiz-value-num {
-    margin-bottom: 0.4rem;
-  }
 
   .tamyiz-matrix-card {
     padding: 1.25rem;
@@ -6273,15 +4697,6 @@ a.tamyiz-btn-preview-trigger {
 
   .matrix-compatibility-tags {
     padding-top: 0.75rem;
-  }
-
-  .tamyiz-founders-teaser-card {
-    padding: 1.25rem;
-    gap: 1.25rem;
-  }
-
-  .tamyiz-founders-teaser-content p {
-    margin-bottom: 1.25rem !important;
   }
 
   /* Product cards: 2 books per row on phones */
@@ -6357,14 +4772,6 @@ a.tamyiz-btn-preview-trigger {
     text-align: center;
   }
 
-  .tamyiz-card-actions-row .tamyiz-btn-preview-trigger {
-    min-height: 44px;
-    padding: 0.45rem 0.5rem;
-    font-size: 0.72rem;
-    line-height: 1.2;
-    text-align: center;
-  }
-
   .tamyiz-btn-wishlist {
     display: none !important;
   }
@@ -6382,11 +4789,6 @@ a.tamyiz-btn-preview-trigger {
     line-height: 1.28;
     margin-bottom: 0.35rem;
     overflow-wrap: anywhere;
-  }
-
-  .tamyiz-product-cat {
-    font-size: 0.62rem;
-    margin-bottom: 0.2rem;
   }
 
   .tamyiz-price-cur {
@@ -6566,15 +4968,6 @@ a.tamyiz-btn-preview-trigger {
   }
 
   /* Promise cards: tinted, tight */
-  .tamyiz-values-grid {
-    gap: 0.6rem !important;
-  }
-
-  .tamyiz-value-card {
-    background: var(--color-offwhite);
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-  }
 
   /* Product page: cover centred, no floating badge, softer note, closer "more e-books" */
   .tamyiz-pdp-main-img {
@@ -6603,9 +4996,6 @@ a.tamyiz-btn-preview-trigger {
   }
 
   /* About page: founder photos no taller than about half a screen */
-  .tamyiz-founder-portrait-wrap {
-    aspect-ratio: 1 / 1;
-  }
 }
 
 @media (max-width: 639px) {
@@ -6643,9 +5033,6 @@ a.tamyiz-btn-preview-trigger {
 }
 
 /* Readable red on light backgrounds */
-.tamyiz-value-num {
-  color: var(--color-red-ink);
-}
 
 /* Product page cover: space reserved before the image loads (no jump). Covers are portrait. */
 .tamyiz-pdp-main-img-wrap {
@@ -6694,19 +5081,6 @@ a.tamyiz-btn-preview-trigger {
 }
 
 /* Frosted glass: used only for things that float over the covers and for the header. */
-.tmz-glass {
-  background: var(--tmz-glass);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid var(--tmz-glass-edge);
-  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .tmz-glass {
-    background: rgba(255, 255, 255, 0.94);
-  }
-}
 
 .tamyiz-header {
   background: rgba(255, 255, 255, 0.62);
@@ -6851,36 +5225,6 @@ a.tamyiz-btn-preview-trigger {
   background: #000;
 }
 
-.tmz-about-card {
-  background: #fff;
-  border-radius: 24px;
-  padding: 1.6rem;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05), 0 30px 60px -36px rgba(0, 0, 0, 0.4);
-}
-
-.tmz-about-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-
-.tmz-about-head h2 {
-  margin: 0;
-  font-family: var(--font-sub);
-  font-size: 1.4rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  text-transform: none;
-}
-
-.tmz-about-head span {
-  font-size: 0.82rem;
-  color: var(--tmz-graphite);
-  text-align: right;
-}
-
 .tmz-about-people {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -6954,27 +5298,12 @@ a.tamyiz-btn-preview-trigger {
   text-underline-offset: 4px;
 }
 
-.tmz-about-foot .tmz-about-wa {
-  font-size: 0.82rem;
-  color: var(--tmz-graphite);
-  text-decoration: none;
-}
-
-.tmz-about-foot .tmz-about-wa:hover {
-  color: #000;
-  text-decoration: underline;
-}
-
 /* Tablets and small laptops: copy first, card under it */
 @media (max-width: 1099px) {
   .tmz-hero-inner {
     grid-template-columns: minmax(0, 1fr);
     gap: 3rem;
     padding: 3.5rem 2rem 4rem;
-  }
-
-  .tmz-about-card {
-    max-width: 36rem;
   }
 }
 
@@ -7013,21 +5342,6 @@ a.tamyiz-btn-preview-trigger {
     font-size: 0.85rem;
   }
 
-  .tmz-about-card {
-    padding: 1.1rem;
-    border-radius: 20px;
-  }
-
-  .tmz-about-head {
-    flex-direction: column;
-    gap: 0.2rem;
-    margin-bottom: 1rem;
-  }
-
-  .tmz-about-head span {
-    text-align: left;
-  }
-
   .tmz-about-people {
     gap: 0.75rem;
   }
@@ -7045,8 +5359,7 @@ a.tamyiz-btn-preview-trigger {
 
 /* Leftover accent colours → black and white (success states in the bag/after payment keep their green). */
 .comp-tag.active,
-.tamyiz-tag-dispatch,
-.tamyiz-badge-fast {
+.tamyiz-tag-dispatch {
   color: #000;
   background: rgba(0, 0, 0, 0.07);
 }
@@ -7057,14 +5370,6 @@ a.tamyiz-btn-preview-trigger {
 
 .tamyiz-footer .tamyiz-trust-bar-dot {
   color: rgba(255, 255, 255, 0.5);
-}
-
-.tamyiz-promise-icon {
-  color: #FFFFFF;
-}
-
-.tamyiz-whatsapp-fab {
-  border-color: rgba(255, 255, 255, 0.35);
 }
 
 /* Header logo (dome + wordmark), on every screen size. Older rules hid this link below 1024px with !important. */
@@ -7591,8 +5896,7 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
 }
 
 .tamyiz-pdp-title,
-.tamyiz-product-name,
-.tamyiz-founder-title {
+.tamyiz-product-name {
   text-transform: none !important;
   letter-spacing: -0.01em;
 }
@@ -7704,15 +6008,6 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
 
 @media (max-width: 1023px),
 (pointer: coarse) {
-  .tamyiz-page-legal .bg-neutral-50 a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-  }
-}
-
-@media (max-width: 1023px),
-(pointer: coarse) {
   .tamyiz-page-legal .border-t a {
     display: inline-flex;
     align-items: center;
@@ -7776,14 +6071,6 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
 
 .tamyiz-legal-tab-btn {
   gap: 0.4rem;
-}
-
-.tamyiz-legal-modal-tab,
-.tamyiz-legal-modal-tabs button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: 44px;
 }
 
 /* ---------- Start-up placeholder (index.html) and shop empty/error states (24 Oct 2026) ---------- */
@@ -8158,8 +6445,7 @@ body:has(#cart-drawer.active) .tamyiz-toast-container {
     margin: 0;
   }
 
-  .tamyiz-pdp-reviews-box button,
-  .tamyiz-btn-preview-trigger {
+  .tamyiz-pdp-reviews-box button {
     min-height: 44px;
   }
 }
@@ -8423,10 +6709,6 @@ body.tmz-modal-open {
 }
 
 /* Dedicated Films Page (/films) */
-.tmz-page-films {
-  min-height: 80vh;
-  background: var(--color-offwhite, #F9F9F7);
-}
 
 .tmz-films-hero {
   padding: 4.5rem 1.5rem 2.5rem;
@@ -8732,11 +7014,6 @@ body.tmz-modal-open {
   transform: scale(1.1);
 }
 
-.tmz-film-play-btn-sm {
-  width: 34px;
-  height: 34px;
-}
-
 .tmz-film-meta-bar {
   position: absolute;
   bottom: 8px;
@@ -8909,24 +7186,6 @@ body.tmz-modal-open {
 }
 
 /* Homepage Films Showcase Section */
-.tmz-films-home-section {
-  background: #FFFFFF;
-  border-top: 1px solid rgba(11, 11, 11, 0.06);
-  border-bottom: 1px solid rgba(11, 11, 11, 0.06);
-}
-
-.tmz-home-films-layout {
-  display: grid;
-  grid-template-columns: 1.55fr 1fr;
-  gap: 2rem;
-  align-items: start;
-}
-
-@media (max-width: 899px) {
-  .tmz-home-films-layout {
-    grid-template-columns: 1fr;
-  }
-}
 
 .tmz-home-film-lead {
   display: flex;
@@ -8936,89 +7195,6 @@ body.tmz-modal-open {
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
-}
-
-.tmz-home-film-thumb-wrap {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  cursor: pointer;
-  overflow: hidden;
-  background: #000;
-}
-
-.tmz-home-film-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.35s ease;
-}
-
-.tmz-home-film-thumb-wrap:hover .tmz-home-film-img {
-  transform: scale(1.03);
-}
-
-.tmz-home-film-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.25);
-  transition: background 0.2s ease;
-}
-
-.tmz-home-film-thumb-wrap:hover .tmz-home-film-overlay {
-  background: rgba(0, 0, 0, 0.42);
-}
-
-.tmz-home-film-play-btn {
-  width: 56px;
-  height: 56px;
-  border-radius: 999px;
-  background: #FFFFFF;
-  color: #0B0B0B;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-}
-
-.tmz-home-film-watch-label {
-  font-family: var(--font-head);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  color: #FFFFFF;
-}
-
-.tmz-home-film-info {
-  padding: 1.5rem;
-}
-
-.tmz-home-film-title {
-  font-family: var(--font-head);
-  font-size: clamp(1.2rem, 2vw, 1.5rem);
-  font-weight: 800;
-  margin: 0 0 0.5rem;
-}
-
-.tmz-home-film-title a {
-  color: #FFFFFF;
-  text-decoration: none;
-}
-
-.tmz-home-film-desc {
-  font-size: 14px;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.72);
-  margin: 0 0 1rem;
-}
-
-.tmz-home-films-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 }
 
 .tmz-home-film-side-card {
@@ -9034,70 +7210,6 @@ body.tmz-modal-open {
 .tmz-home-film-side-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.08);
-}
-
-.tmz-home-side-thumb-wrap {
-  position: relative;
-  width: 140px;
-  aspect-ratio: 16 / 9;
-  flex-shrink: 0;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #000;
-  cursor: pointer;
-}
-
-.tmz-home-side-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.tmz-home-side-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-}
-
-.tmz-home-side-meta {
-  display: flex;
-  gap: 6px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--color-muted, #5E5E59);
-}
-
-.tmz-home-side-title {
-  font-family: var(--font-head);
-  font-size: 14px;
-  font-weight: 700;
-  margin: 4px 0;
-  line-height: 1.3;
-}
-
-.tmz-home-side-title a {
-  color: #0B0B0B;
-  text-decoration: none;
-}
-
-.tmz-home-side-book {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-red-ink, #B3261E);
-  text-decoration: none;
-  margin-top: 4px;
-}
-
-.tmz-badge-cat-sm {
-  background: rgba(11, 11, 11, 0.06);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.tmz-badge-dur-sm {
-  font-family: monospace;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -9275,13 +7387,6 @@ body,
   }
 }
 
-@media (max-width: 479px) {
-  .tmz-home-side-thumb-wrap {
-    width: 104px;
-    flex-basis: 104px;
-  }
-}
-
 @media (max-width: 639px), (pointer: coarse) {
   .tamyiz-modal-close-btn,
   .tamyiz-cart-del {
@@ -9412,8 +7517,7 @@ body,
   display: inline-block;
 }
 
-.tamyiz-btn-nav-outline,
-.tamyiz-btn-primary-large {
+.tamyiz-btn-nav-outline {
   border-radius: var(--tmz-r);
   text-transform: none;
   letter-spacing: 0;
@@ -9428,20 +7532,12 @@ body,
   border-color: rgba(0, 0, 0, 0.28);
 }
 
-.tamyiz-btn-primary-large:hover {
-  background: var(--tmz-yellow);
-  color: #000;
-  box-shadow: none;
-}
-
-.tamyiz-btn-nav-outline>span:last-child,
-.tamyiz-btn-primary-large>span:last-child {
+.tamyiz-btn-nav-outline>span:last-child {
   display: inline-block;
   transition: transform 0.3s var(--mo-ease);
 }
 
-.tamyiz-btn-nav-outline:hover>span:last-child,
-.tamyiz-btn-primary-large:hover>span:last-child {
+.tamyiz-btn-nav-outline:hover>span:last-child {
   transform: translateX(5px);
 }
 
@@ -9511,27 +7607,12 @@ html.is-scrolled .tamyiz-header {
 }
 
 /* Only the dots near the mouse are drawn here (laptops), and only while it moves. */
-.tmz-dots {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
 
 .tmz-hero-inner {
   display: block;
   max-width: 80rem;
   margin: 0 auto;
   padding: 4.5rem 3.5rem 0;
-}
-
-.tmz-hero-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
-  gap: 4rem;
-  align-items: end;
 }
 
 .tmz-hero-meaning {
@@ -9558,10 +7639,6 @@ html.is-scrolled .tamyiz-header {
 
 .tmz-line>span {
   display: inline-block;
-}
-
-.tmz-hero-side {
-  padding-bottom: 0.5rem;
 }
 
 .tmz-hero-lede {
@@ -9733,15 +7810,6 @@ html.is-scrolled .tamyiz-header {
 }
 
 /* ---------- Promise strip: a light band with boxed icons ---------- */
-.tamyiz-promise-strip {
-  background: var(--tmz-paper);
-  color: #000;
-  border-bottom: 1px solid var(--tmz-hair);
-}
-
-.tamyiz-promise-grid>.tamyiz-promise-item:not([hidden])~.tamyiz-promise-item:not([hidden]) {
-  border-color: var(--tmz-hair) !important;
-}
 
 .tamyiz-promise-item strong {
   color: #000;
@@ -9754,20 +7822,6 @@ html.is-scrolled .tamyiz-header {
 .tamyiz-promise-item p {
   color: var(--tmz-graphite);
   font-size: 0.85rem;
-}
-
-.tamyiz-promise-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  margin-top: 0;
-  border: 1px solid rgba(0, 0, 0, 0.16);
-  border-radius: var(--tmz-r);
-  background: #fff;
-  color: #000;
-  transition: background-color 0.25s ease, color 0.25s ease, transform 0.35s var(--mo-ease);
 }
 
 /* ---------- Book cards ---------- */
@@ -9801,23 +7855,8 @@ html.is-scrolled .tamyiz-header {
   color: #000;
 }
 
-.tamyiz-btn-quick-add:active,
-.tamyiz-btn-preview-trigger:active {
+.tamyiz-btn-quick-add:active {
   transform: scale(0.98);
-}
-
-.tamyiz-btn-preview-trigger {
-  border-radius: var(--tmz-r);
-  border-color: rgba(0, 0, 0, 0.18);
-  text-transform: none;
-  letter-spacing: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.25s var(--mo-ease);
-}
-
-.tamyiz-btn-preview-trigger:hover {
-  color: #000;
 }
 
 /* ---------- "How we write": three cards; pinned and stepped on a laptop (motion.js adds .is-pinned) ---------- */
@@ -9892,69 +7931,6 @@ html.is-scrolled .tamyiz-header {
   margin-top: 3rem;
 }
 
-.tmz-steps.is-pinned {
-  padding: 0 0 4.5rem;
-}
-
-.tmz-steps.is-pinned .tmz-steps-track {
-  height: calc(100vh - 4rem + 170vh);
-}
-
-.tmz-steps.is-pinned .tmz-steps-pin {
-  position: sticky;
-  top: 4rem;
-  height: calc(100vh - 4rem);
-  display: flex;
-  align-items: center;
-}
-
-.tmz-steps.is-pinned .tmz-steps-pin>.container {
-  width: 100%;
-}
-
-.tmz-steps.is-pinned .tmz-steps-head {
-  max-width: none;
-  margin: 0 0 2rem;
-  text-align: left;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  column-gap: 5rem;
-  align-items: end;
-}
-
-.tmz-steps.is-pinned .tmz-steps-head .tmz-label {
-  grid-column: 1 / -1;
-  justify-self: start;
-}
-
-.tmz-steps.is-pinned .tmz-steps-head .tamyiz-section-sub {
-  margin: 0;
-  text-align: left;
-}
-
-.tmz-steps.is-pinned .tmz-steps-stage {
-  --meta-top: clamp(1.5rem, 8vh, 4.5rem);
-  position: relative;
-  height: min(52vh, 430px);
-}
-
-.tmz-steps.is-pinned .tmz-steps-meta {
-  position: absolute;
-  top: var(--meta-top);
-  left: calc(50% + 2.5rem);
-  right: 0;
-  z-index: 1;
-  display: flex;
-  justify-content: space-between;
-  padding-bottom: 0.9rem;
-  font-family: var(--font-sub);
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--tmz-graphite);
-}
-
 .tmz-steps-count b {
   color: #000;
   font-weight: 600;
@@ -9976,49 +7952,6 @@ html.is-scrolled .tamyiz-header {
   transform: scaleX(0.333);
   transform-origin: left center;
   transition: transform 0.25s ease-out;
-}
-
-.tmz-steps.is-pinned .tmz-steps-list {
-  display: block;
-  position: relative;
-  height: 100%;
-}
-
-.tmz-steps.is-pinned .tmz-step {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  column-gap: 5rem;
-  align-items: start;
-}
-
-.tmz-steps.is-pinned .tmz-step-art {
-  height: 100%;
-  aspect-ratio: auto;
-}
-
-.tmz-steps.is-pinned .tmz-step-art .tmz-il {
-  max-width: 19rem;
-}
-
-.tmz-steps.is-pinned .tmz-step-copy {
-  padding-top: calc(var(--meta-top) + 3.6rem);
-}
-
-.tmz-steps.is-pinned .tmz-step-num {
-  display: none;
-}
-
-.tmz-steps.is-pinned .tmz-step-title {
-  font-size: clamp(1.8rem, 3vw, 2.6rem);
-  font-weight: 500;
-  letter-spacing: -0.035em;
-  margin-bottom: 0.9rem;
-}
-
-.tmz-steps.is-pinned .tmz-step-desc {
-  font-size: 1.05rem;
 }
 
 /* ---------- "Read it anywhere" ---------- */
@@ -10102,11 +8035,6 @@ html.is-scrolled .tamyiz-header {
 }
 
 @media (hover: hover) {
-  .tamyiz-promise-item:hover .tamyiz-promise-icon {
-    background: var(--tmz-yellow);
-    border-color: #000;
-    transform: translateY(-2px);
-  }
 
   .tamyiz-product-card:hover {
     transform: translateY(-6px);
@@ -10341,22 +8269,6 @@ html.is-scrolled .tamyiz-header {
 @media (prefers-reduced-motion: no-preference) {
 
   /* The pinned steps: one shows, the others wait above or below. */
-  html.mo .tmz-steps.is-pinned .tmz-step {
-    opacity: 0;
-    transform: translateY(26px);
-    pointer-events: none;
-    transition: opacity 0.45s ease, transform 0.6s var(--mo-ease);
-  }
-
-  html.mo .tmz-steps.is-pinned .tmz-step.is-past {
-    transform: translateY(-26px);
-  }
-
-  html.mo .tmz-steps.is-pinned .tmz-step.is-active {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
-  }
 }
 
 @keyframes mo-page {
@@ -10416,8 +8328,7 @@ html.is-scrolled .tamyiz-header {
     transform: none !important;
   }
 
-  .tmz-progress,
-  .tmz-dots {
+  .tmz-progress {
     display: none;
   }
 }
@@ -10426,12 +8337,6 @@ html.is-scrolled .tamyiz-header {
 @media (max-width: 1099px) {
   .tmz-hero-inner {
     padding: 3.5rem 2rem 0;
-  }
-
-  .tmz-hero-top {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.75rem;
-    align-items: start;
   }
 
   .tmz-hero-title {
@@ -10569,7 +8474,6 @@ html.is-scrolled .tamyiz-header {
     margin-top: 2rem;
   }
 
-  .tamyiz-promise-icon,
   .matrix-icon {
     width: 38px;
     height: 38px;
@@ -11084,7 +8988,6 @@ html.is-scrolled .tamyiz-header {
 body[data-page="admin"] #tmz-announcement-banner,
 body[data-page="admin"] .tamyiz-header,
 body[data-page="admin"] .tamyiz-footer,
-body[data-page="admin"] .tamyiz-whatsapp-fab,
 body[data-page="admin"] khala-support-widget,
 body[data-page="admin"] .tmz-progress {
   display: none !important;

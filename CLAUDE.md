@@ -376,5 +376,10 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
   to the book page, the bag bump. All off under "reduce motion"; nothing loops.
 - Checked 25 Nov 2026 (local build, live catalogue): `npm test` 91 of 91, axe 0 violations on home, /editions, a book
   page, /philosophy, /atelier, /downloads, /checkout, /films and policy pages at 375px. Home went from 8 screens tall
-  (7 bands, 48 links/buttons) to about 4 (4 bands, 36). Not done: the stylesheet still has several redesign layers
-  stacked (11,000+ lines); clean it up on its own branch with before/after screenshots of every page.
+  (7 bands, 48 links/buttons) to about 4 (4 bands, 36).
+- Stylesheet tidy (25 Nov 2026): 342 selectors whose classes appear nowhere in the code were removed (11,600 → 9,500
+  lines; CSS 174 KB → 141 KB, gzip 30 → 25 KB). A map of the remaining layers is at the top of tamyiz-unified.css.
+  Proven unchanged: every element's computed style (incl. ::before/::after) on 20 pages/states (all public pages,
+  menu, bag, policy pop-up, sample open, sample pop-up, filled checkout, /admin login) at 1440px and 375px was
+  identical before and after. `npm run css:unused` lists any new dead rules; `-- write` removes them. The redesign
+  layers were NOT merged into one (that would change which rule wins); do that only with the same before/after check.
