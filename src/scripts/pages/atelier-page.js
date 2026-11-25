@@ -29,7 +29,7 @@ function founderCard(f, portrait) {
         <p class="tmz-person-bio">${f.bio}</p>
         <blockquote>${f.quote}</blockquote>
         <ul class="tmz-person-links">
-          ${links.map(([label, href]) => `<li><a href="${href}"${href.startsWith('mailto:') ? '' : ' target="_blank" rel="noopener noreferrer"'}>${label} <span aria-hidden="true">↗</span></a></li>`).join('')}
+          ${links.map(([label, href]) => `<li><a href="${href}"${href.startsWith('mailto:') ? '' : ' target="_blank" rel="noopener noreferrer"'} aria-label="${label === 'Email' ? `Email ${f.fullName}` : `${f.fullName} on ${label}`}">${label}</a></li>`).join('')}
         </ul>
       </div>
     </article>`;

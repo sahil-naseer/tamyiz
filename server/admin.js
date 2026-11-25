@@ -14,7 +14,6 @@ import {
 import { getStats } from './stats.js';
 import { getAdminReviews, approveReview, deleteReview } from './reviews.js';
 import { getAdminAbandonedCarts, sendAbandonedCartRecoveryEmail, deleteAbandonedCart } from './abandoned.js';
-import { handleAdminGetFilms, handleAdminSaveFilm, handleAdminDeleteFilm, handleAdminReorderFilms } from './films.js';
 
 const COOKIE = 'tmz_admin';
 const SESSION_SECONDS = 12 * 60 * 60;
@@ -729,7 +728,6 @@ async function readJsonKV(kv, key, fallback) {
 async function backupStore(env) {
   const kv = store(env);
   const products = await loadCatalog(env);
-  const films = await readJsonKV(kv, 'showcase:videos', []);
   const coupons = await readJsonKV(kv, 'store:coupons', {});
   const announcement = await readJsonKV(kv, 'store:announcement', null);
   const leads = await readJsonKV(kv, 'store:leads:index', []);
@@ -755,7 +753,6 @@ async function backupStore(env) {
     version: 1,
     exportedAt: new Date().toISOString(),
     products,
-    films: Array.isArray(films) ? films : [],
     coupons,
     announcement,
     orders,
@@ -831,12 +828,6 @@ export async function handleAdmin(request, env, rest, fetchImpl = fetch) {
     if (rest === 'abandoned/send' && method === 'POST') return await sendAbandonedCartRecoveryEmail(request, env);
     const abDel = rest.match(/^abandoned\/([A-Za-z0-9_-]{5,50})$/);
     if (abDel && method === 'DELETE') return await deleteAbandonedCart(env, abDel[1]);
-    if (rest === 'films' && method === 'GET') return await handleAdminGetFilms(request, env);
-    if (rest === 'films' && method === 'POST') return await handleAdminSaveFilm(request, env, null);
-    if (rest === 'films/reorder' && method === 'POST') return await handleAdminReorderFilms(request, env);
-    const flm = rest.match(/^films\/([a-z0-9_-]+)$/);
-    if (flm && method === 'POST') return await handleAdminSaveFilm(request, env, flm[1]);
-    if (flm && method === 'DELETE') return await handleAdminDeleteFilm(env, flm[1]);
     if (rest === 'customers' && method === 'GET') return await getCustomers(request, env);
     if (rest === 'settings' && method === 'GET') return getSettings(env);
     if (rest === 'backup' && method === 'GET') return await backupStore(env);

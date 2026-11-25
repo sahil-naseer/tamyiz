@@ -13,7 +13,7 @@
  *   on-sale  can be bought; needs a PDF. The payment server only sells "on-sale" ebooks.
  */
 
-import { parseVideoSource } from './films.js';
+import { parseVideoSource } from './video-source.js';
 
 export const STATUSES = ['draft', 'soon', 'on-sale'];
 export const MAX_PDF_BYTES = 25 * 1024 * 1024; // Cloudflare KV limit per value (25 MiB)
@@ -57,7 +57,7 @@ export const findBySlug = (list, slug) => list.find((p) => p.slug === String(slu
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 /** What the shop (and anyone) may see: no drafts, no file keys. Text is HTML-escaped (the shop draws with innerHTML). */
-export function publicProduct(p, filmsList = null) {
+export function publicProduct(p) {
   const cover = p.coverType ? `/api/cover/${p.id}?v=${p.updatedAt}` : '/og/tamyiz.jpg';
   // Cards and the bag use the small version when it exists (about a quarter of the bytes); the product page uses the full cover.
   const thumb = p.thumbType ? `/api/cover/${p.id}?s=sm&v=${p.thumbAt || p.updatedAt}` : cover;
@@ -77,20 +77,6 @@ export function publicProduct(p, filmsList = null) {
         videoId: parsed.videoId,
         embedUrl: parsed.embedUrl,
         thumbnailUrl: parsed.defaultThumbnail || '',
-      };
-    }
-  }
-  if (!video && filmsList && Array.isArray(filmsList)) {
-    const match = filmsList.find((f) => f.productId === p.id && f.published);
-    if (match) {
-      video = {
-        title: esc(match.title),
-        videoUrl: match.videoUrl,
-        provider: match.provider,
-        videoId: match.videoId,
-        embedUrl: match.embedUrl,
-        thumbnailUrl: match.thumbnailUrl || match.defaultThumbnail || '',
-        duration: match.duration || '',
       };
     }
   }
@@ -146,15 +132,8 @@ export function publicProduct(p, filmsList = null) {
 }
 
 export async function publicCatalog(env) {
-  let films = [];
-  if (env && env.TAMYIZ_STORE && env.TAMYIZ_STORE.get) {
-    try {
-      const raw = await env.TAMYIZ_STORE.get('showcase:videos');
-      if (raw) films = JSON.parse(raw);
-    } catch {}
-  }
   // Read live catalog without edge cacheTtl so newly added/updated books reflect immediately on Hero and About us.
-  return (await loadCatalog(env, { cached: false })).filter((p) => p.status !== 'draft').map((p) => publicProduct(p, films));
+  return (await loadCatalog(env, { cached: false })).filter((p) => p.status !== 'draft').map((p) => publicProduct(p));
 }
 
 // ---------------------------------------------------------------------------

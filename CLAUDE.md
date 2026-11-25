@@ -357,14 +357,14 @@ Design and motion (all in the "POLISH 14 Nov 2026 (second pass)" block at the en
 Rule: one message and one main action per screen, fewer boxes, one accent (yellow), calm motion. Styles are in the
 "CALM 25 Nov 2026" block at the end of tamyiz-unified.css (new rules go there; phone rules at its end).
 - Home is four bands: hero → latest e-books → About us (founders, one link) → closing line (one button). Keep it lean:
-  "How we write", "Read it anywhere" and the FAQ live only on /philosophy; films only on /films; the promise strip is gone.
+  "How we write", "Read it anywhere" and the FAQ live only on /philosophy; the promise strip is gone.
   Old links `/#philosophy`, `/#format-guide`, `/#formats` are forwarded to /philosophy in `parseRoute()`.
 - Hero: one column: meaning line, headline, the plain line "Short, practical e-books for beginners...", ONE black button
   (Browse the e-books) + a text link (How we write), one quiet fact line (`heroProof()`: count, authors, download), then
   the drawing. No canvas, no count-up, no boxes.
 - Header: Home · E-books · How we write · About us; the row shows from 900px and the Menu button only below that.
-  Films is out of the menu, footer and home until there are real films (the /films page still exists; put the links back
-  then). No public link to /admin anywhere (type the address). The footer trust strip was removed.
+  Films is gone everywhere (see "Films removed" below). No public link to /admin anywhere (type the address).
+  The footer trust strip was removed.
 - Book cards: cover and title open the book; one button (Add to bag); the wishlist heart shows on hover (mouse screens).
   No "E-BOOK" badge or category label (every book is an e-book); "COMING SOON" still shows.
 - Book page: no INSTANT DOWNLOAD tag, category label or "← All e-books" button (the breadcrumb does it); the price note
@@ -383,3 +383,16 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
   menu, bag, policy pop-up, sample open, sample pop-up, filled checkout, /admin login) at 1440px and 375px was
   identical before and after. `npm run css:unused` lists any new dead rules; `-- write` removes them. The redesign
   layers were NOT merged into one (that would change which rule wins); do that only with the same before/after check.
+- Films removed (25 Nov 2026, Sahil: "we are not gonna add films for now"): no /films page (old links 301 to /editions via
+  `public/_redirects`), no Films section on /admin (sections renumbered 01-11), no `/api/films` or `/api/admin/films`, no
+  films in the backup, `server/films.js` and its tests deleted. Book preview videos are NOT films and stay: the optional
+  video link per e-book on /admin, checked by `server/video-source.js`, played in `components/video-modal.js`. To bring
+  Films back, restore it from git history (commit before this change) rather than writing it again.
+- Layers merged (25 Nov 2026): 368 declarations that a later layer always overrode (same selector, same property, same or
+  no @media, not weaker !important) were removed with `npm run css:overridden -- write` (9,000 → 8,450 lines; CSS
+  133 KB → 124 KB). Fallbacks (a property set twice in one rule, dvh units, vendor prefixes) are kept on purpose.
+  Proven unchanged the same way as above, at 1440px, 677px and 375px: 60 of 60 page/state checks identical.
+  Keep running both checks (`css:unused`, `css:overridden`) after big style changes.
+- Book page on tablets (up to 1023px) now also shows a smaller cover and then title, price and Buy first (it was the
+  phone-only rule; at 768px the big cover used to fill the whole first screen).
+- About us: each founder's links are one quiet grey line (no arrows; screen readers hear "Basit Majeed on Instagram").

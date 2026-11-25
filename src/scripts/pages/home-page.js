@@ -121,8 +121,8 @@ export function renderHomePage(appInstance) {
         </div>
       </section>
 
-      <!-- (25 Nov 2026) "How we write", "Read it anywhere" and the films preview now live only on their own pages
-           (/philosophy, /films), so home is four bands: hero, latest e-books, about us, closing line. -->
+      <!-- (25 Nov 2026) "How we write", "Read it anywhere" and the FAQ live only on /philosophy
+           (Films was removed altogether on 25 Nov 2026), so home is four bands: hero, latest e-books, about us, closing line. -->
 
       <!-- 6. CLOSING LINE: one last, plain invitation. Honest about whether anything can be bought yet. -->
       <section class="tmz-closing">

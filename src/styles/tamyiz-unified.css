@@ -13,7 +13,7 @@
      1. Base components (header, buttons, shop grid, bag, footer, book page, checkout, toasts, print)
      2. PHONES (up to 639px), 24 Oct 2026
      3. REDESIGN 24 Oct 2026: black and white
-     4. TAMYIZ FILMS
+     4. VIDEO PLAYER (book preview videos)
      5. REDESIGN 14 Nov 2026 "paper and hairlines" (+ admin console look)
      6. POLISH 14 Nov 2026 (second pass)
      7. CALM 25 Nov 2026 (current look; put new rules at the end of this block)
@@ -24,16 +24,10 @@
 @import '@fontsource-variable/space-grotesk/wght.css';
 
 :root {
-  --color-black: #0B0B0B;
-  --color-red: #E1251B;
-  --color-red-hover: #c41e15;
-  --color-offwhite: #F4F4F2;
   --color-white: #FFFFFF;
   --color-grey: #6B6B6B;
   /* was #8A8A8A: too faint for small text (WCAG 4.5:1) */
-  --color-red-ink: #C41E15;
   /* red for small text on light backgrounds */
-  --color-red-on-dark: #FF5A50;
   /* red for small text on black */
   --color-grey-on-dark: #9A9A9A;
   --font-brand: 'Space Grotesk Variable', 'Space Grotesk', -apple-system, sans-serif;
@@ -143,15 +137,12 @@ img {
   height: 4rem;
   /* h-16 */
   z-index: 50;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.07);
   pointer-events: auto;
   padding: 0 1.5rem;
   display: flex;
   align-items: center;
-  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .tamyiz-header-inner {
@@ -290,7 +281,6 @@ img {
   background: var(--color-black);
   color: #FFFFFF;
   border: 1px solid var(--color-black);
-  border-radius: 9999px;
   padding: 0.55rem 1.25rem;
   display: flex;
   align-items: center;
@@ -340,10 +330,6 @@ img {
 
 @media (max-width: 768px) {
 
-  /* Floating WhatsApp Button on Mobile: Compact and safely clear */
-
-  /* Step aside while scrolling so it never sits on top of text being read */
-
   /* Keep the very end of every page clear of the button */
   .tamyiz-footer {
     padding-bottom: calc(env(safe-area-inset-bottom) + 72px) !important;
@@ -370,19 +356,12 @@ img {
 .tamyiz-promise-item strong {
   display: block;
   font-family: var(--font-sub);
-  font-size: 0.88rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   margin-bottom: 0.35rem;
   line-height: 1.3;
-  color: #FFFFFF;
   word-break: break-word;
 }
 
 .tamyiz-promise-item p {
-  font-size: 0.78rem;
-  color: #A3A3A3;
   line-height: 1.45;
   margin: 0;
   word-break: break-word;
@@ -423,13 +402,9 @@ img {
 }
 
 .tamyiz-shop-header h2 {
-  font-family: var(--font-display);
   font-size: clamp(2.2rem, 4.5vw, 3.6rem);
-  font-weight: 900;
   text-transform: uppercase;
 }
-
-/* No-scrollbar utility */
 
 /* Filter pills (Horizontal swipe on phone) */
 
@@ -484,17 +459,9 @@ img {
   }
 }
 
-@media (max-width: 639px) {
-  .tamyiz-product-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
-  }
-}
-
 .tamyiz-product-card {
   background: #FFFFFF;
   border: 1px solid var(--color-border);
-  border-radius: 4px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -512,10 +479,7 @@ img {
 
 .tamyiz-product-thumb {
   position: relative;
-  aspect-ratio: 1/1;
-  background: #EBEBE8;
   overflow: hidden;
-  cursor: pointer;
 }
 
 .tamyiz-img-primary,
@@ -550,8 +514,6 @@ img {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -639,31 +601,8 @@ img {
 }
 
 .tamyiz-size-pill-btn {
-  padding: 0.28rem 0.6rem;
-  font-family: var(--font-sub);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  border: 1px solid var(--color-border);
-  background: #FFFFFF;
-  color: var(--color-black);
-  border-radius: 2px;
-  cursor: pointer;
-  transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
-  transition-duration: 0.15s;
-  transition-timing-function: ease;
   min-width: 34px;
   text-align: center;
-}
-
-.tamyiz-size-pill-btn:hover {
-  border-color: var(--color-black);
-}
-
-.tamyiz-size-pill-btn.active {
-  background: var(--color-black);
-  color: #FFFFFF;
-  border-color: var(--color-black);
 }
 
 .tamyiz-btn-quick-add {
@@ -673,11 +612,6 @@ img {
   color: #FFFFFF;
   padding: 0.75rem;
   font-family: var(--font-sub);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border-radius: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -688,24 +622,12 @@ img {
   cursor: pointer;
 }
 
-.tamyiz-btn-quick-add:hover {
-  background: var(--color-red);
-}
-
 @media (max-width: 639px) {
   .tamyiz-size-pill-btn {
-    min-height: 44px;
     min-width: 44px;
-    padding: 0.5rem 0.85rem;
-    font-size: 0.8rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .tamyiz-btn-quick-add {
-    min-height: 44px;
-    font-size: 0.82rem;
     padding: 0.85rem;
   }
 }
@@ -716,8 +638,6 @@ img {
 .tamyiz-drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(11, 11, 11, 0.65);
-  backdrop-filter: blur(6px);
   z-index: 2000;
   opacity: 0;
   visibility: hidden;
@@ -747,7 +667,6 @@ img {
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (max-width: 639px) {
@@ -834,11 +753,6 @@ img {
 
   .tamyiz-drawer-items {
     padding: 1rem;
-  }
-
-  .tamyiz-drawer-foot {
-    padding: 1rem;
-    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
   }
 }
 
@@ -933,7 +847,6 @@ img {
   position: fixed;
   inset: 0;
   background: rgba(11, 11, 11, 0.7);
-  backdrop-filter: blur(8px);
   z-index: 3000;
   display: flex;
   align-items: center;
@@ -955,7 +868,6 @@ img {
 
 .tamyiz-modal-box {
   background: #FFFFFF;
-  border-radius: 1rem;
   /* rounded-2xl */
   width: 95vw;
   /* w-[95vw] */
@@ -972,14 +884,10 @@ img {
 }
 
 @media (max-width: 639px) {
-  .tamyiz-modal {
-    padding: 0.75rem;
-  }
 
   .tamyiz-modal-box {
     padding: 1.25rem 1rem;
     /* p-5 */
-    border-radius: 1rem;
     max-height: 88dvh;
     width: 95vw;
   }
@@ -1033,20 +941,17 @@ img {
   .tamyiz-footer-brand h2 {
     font-size: 1.2rem !important;
     margin-bottom: 0.3rem !important;
-    letter-spacing: 0.08em;
   }
 
   .tamyiz-footer-brand p {
     font-size: 0.76rem !important;
     line-height: 1.45 !important;
-    color: #999999;
   }
 
   .tamyiz-footer-col h3 {
     font-size: 0.72rem !important;
     margin-bottom: 0.55rem !important;
     letter-spacing: 0.08em;
-    color: #FFFFFF;
   }
 
   .tamyiz-footer-links {
@@ -1058,7 +963,6 @@ img {
   .tamyiz-footer-links button {
     font-size: 0.75rem !important;
     line-height: 1.35;
-    padding: 0.1rem 0;
   }
 
   .tamyiz-footer-col-full-mobile {
@@ -1176,7 +1080,6 @@ img {
   display: inline-flex;
   background: none;
   border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: 9999px;
   padding: 0.45rem 0.85rem;
   min-height: 38px;
   min-width: 38px;
@@ -1227,8 +1130,6 @@ img {
 .tamyiz-mobile-drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(11, 11, 11, 0.6);
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 2400;
   opacity: 0;
@@ -1256,7 +1157,6 @@ img {
   background: #FFFFFF;
   z-index: 2500;
   transform: translateX(-100%);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
   box-shadow: 20px 0 50px rgba(0, 0, 0, 0.25);
@@ -1305,11 +1205,8 @@ img {
 .tamyiz-mobile-nav-link {
   font-family: var(--font-display);
   font-size: 1.25rem;
-  font-weight: 900;
-  text-transform: uppercase;
   color: var(--color-black);
   text-decoration: none;
-  letter-spacing: -0.02em;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1475,25 +1372,12 @@ img {
 /* Gallery & Zoom-on-Hover */
 
 .tamyiz-pdp-main-img-wrap {
-  width: 100%;
-  aspect-ratio: 1/1;
-  background: #F5F5F3;
-  border-radius: 4px;
   overflow: hidden;
   position: relative;
-  cursor: crosshair;
-  border: 1px solid var(--color-border);
 }
 
 .tamyiz-pdp-main-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.tamyiz-pdp-main-img-wrap:hover .tamyiz-pdp-main-img {
-  transform: scale(1.15);
 }
 
 .tamyiz-pdp-thumbs {
@@ -1535,14 +1419,8 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.3rem 0.75rem;
-  background: var(--color-black);
-  color: #FFFFFF;
-  border-radius: 9999px;
   font-family: var(--font-sub);
   font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
   text-transform: uppercase;
   margin-bottom: 0.75rem;
   align-self: flex-start;
@@ -1551,20 +1429,13 @@ img {
 .tamyiz-pdp-cat {
   font-family: var(--font-sub);
   font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-grey);
   margin-bottom: 0.35rem;
 }
 
 .tamyiz-pdp-title {
   font-family: var(--font-display);
   font-size: clamp(1.6rem, 2.5vw, 2.2rem);
-  font-weight: 900;
-  text-transform: uppercase;
   line-height: 1.1;
-  letter-spacing: -0.02em;
   color: var(--color-black);
   margin: 0 0 0.85rem 0;
 }
@@ -1590,13 +1461,9 @@ img {
 }
 
 .tamyiz-pdp-tax-note {
-  background: #F8F8F6;
   border-left: 3px solid var(--color-red);
-  padding: 0.65rem 0.95rem;
   font-family: var(--font-sub);
-  font-size: 0.75rem;
   font-weight: 700;
-  color: #444444;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin-bottom: 1.5rem;
@@ -1703,7 +1570,6 @@ img {
   position: absolute;
   top: 0.75rem;
   left: 0.75rem;
-  background: #0B0B0B;
   color: #FFFFFF;
   border: 1px solid rgba(255, 255, 255, 0.15);
   font-family: var(--font-sub);
@@ -1712,8 +1578,6 @@ img {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 0.28rem 0.6rem;
-  border-radius: 2px;
-  backdrop-filter: blur(8px);
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -1728,9 +1592,6 @@ img {
   content: '';
   width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background: #3B82F6;
-  box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
 }
 
 .tamyiz-card-actions-row {
@@ -1739,8 +1600,6 @@ img {
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
-
-/* Editorial Monograph Reader Modal */
 
 /* Reader Layout: Left Table of Contents, Right Editorial Excerpt */
 
@@ -1869,7 +1728,6 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  color: #1E7B2E;
   font-family: var(--font-sub);
   font-size: 0.74rem;
   font-weight: 800;
@@ -1884,7 +1742,6 @@ img {
 @media (max-width: 768px) {
   #founders {
     padding-bottom: 7rem !important;
-    /* safe area pb-28 against floating WhatsApp button */
   }
 }
 
@@ -1929,21 +1786,12 @@ img {
   border-color: transparent !important;
 }
 
-/* Tailwind Live Animation Arbitrary Classes */
-
 /* ==========================================================================
    MOBILE-FIRST ARCHITECTURE: RESPONSIVE UTILITIES & SPACING
    ========================================================================== */
 .tamyiz-section {
   padding-top: 3.5rem;
   padding-bottom: 4rem;
-}
-
-@media (max-width: 639px) {
-  .tamyiz-section {
-    padding-top: 2.25rem;
-    padding-bottom: 3rem;
-  }
 }
 
 #editions-catalog {
@@ -2180,10 +2028,6 @@ img {
 
 /* Dedicated Page Headers */
 .tamyiz-page-header {
-  background: var(--color-black);
-  color: #FFFFFF;
-  padding: 4.5rem 0 3.5rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
 }
 
@@ -2192,7 +2036,6 @@ img {
 }
 
 .tamyiz-page-badge {
-  display: inline-block;
   font-family: var(--font-sub);
   font-size: 0.72rem;
   font-weight: 800;
@@ -2202,21 +2045,8 @@ img {
   margin-bottom: 0.85rem;
 }
 
-.tamyiz-page-title {
-  font-family: var(--font-display);
-  font-size: clamp(2.2rem, 5vw, 3.8rem);
-  font-weight: 900;
-  text-transform: uppercase;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.85rem;
-}
-
 .tamyiz-page-description {
-  font-size: 1.05rem;
-  color: #A0A0A0;
   line-height: 1.6;
-  max-width: 650px;
 }
 
 /* General Action Buttons */
@@ -2226,14 +2056,8 @@ img {
   gap: 0.5rem;
   padding: 0.65rem 1.35rem;
   border: 1px solid var(--color-black);
-  border-radius: 9999px;
-  background: transparent;
   color: var(--color-black);
   font-family: var(--font-sub);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   cursor: pointer;
   transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
   transition-duration: 0.2s;
@@ -2244,8 +2068,6 @@ img {
   background: var(--color-black);
   color: #FFFFFF;
 }
-
-/* Founders Teaser Card on Home */
 
 /* ==========================================================================
    PRODUCT DETAIL PAGE (PDP) ARCHITECTURE
@@ -2313,14 +2135,12 @@ img {
 @media (max-width: 1023px) {
   .tamyiz-pdp-full-grid {
     grid-template-columns: 1fr;
-    gap: 2.5rem;
   }
 }
 
 .tamyiz-pdp-details-card {
   background: #FFFFFF;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
   padding: 2.5rem;
 }
 
@@ -2332,11 +2152,8 @@ img {
 
 .tamyiz-tag-dispatch {
   font-family: var(--font-sub);
-  font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.1em;
-  color: #1E7B2E;
-  background: rgba(39, 136, 56, 0.1);
   padding: 0.25rem 0.6rem;
   border-radius: 9999px;
 }
@@ -2417,9 +2234,6 @@ img {
 .tamyiz-pdp-btn-add {
   width: 100%;
   padding: 1.1rem;
-  background: var(--color-red);
-  color: #FFFFFF;
-  border-radius: 4px;
   font-family: var(--font-sub);
   font-size: 0.9rem;
   font-weight: 800;
@@ -2433,20 +2247,11 @@ img {
   transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
   transition-duration: 0.2s;
   transition-timing-function: ease;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-}
-
-.tamyiz-pdp-btn-add:hover {
-  background: var(--color-red-hover);
-  transform: translateY(-1px);
 }
 
 .tamyiz-pdp-btn-buy-now {
   width: 100%;
   padding: 1rem;
-  background: var(--color-black);
-  color: #FFFFFF;
-  border-radius: 4px;
   font-family: var(--font-sub);
   font-size: 0.85rem;
   font-weight: 800;
@@ -2460,10 +2265,6 @@ img {
   transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
   transition-duration: 0.2s;
   transition-timing-function: ease;
-}
-
-.tamyiz-pdp-btn-buy-now:hover {
-  background: #222222;
 }
 
 .tamyiz-pdp-btn-sample {
@@ -2736,7 +2537,6 @@ img {
 .tamyiz-pdp-sample-box {
   background: #FFFFFF;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
   overflow: hidden;
 }
 
@@ -2879,7 +2679,6 @@ img {
 .tamyiz-matrix-card {
   background: #FFFFFF;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
   padding: 1.75rem;
   display: flex;
   flex-direction: column;
@@ -2916,7 +2715,6 @@ img {
 
 .matrix-sub {
   font-family: var(--font-sub);
-  font-size: 0.68rem;
   font-weight: 800;
   color: var(--color-red);
   letter-spacing: 0.08em;
@@ -2942,17 +2740,10 @@ img {
 
 .comp-tag {
   font-family: var(--font-sub);
-  font-size: 0.68rem;
   font-weight: 700;
   background: #F4F4F2;
   color: #333;
   padding: 0.25rem 0.55rem;
-  border-radius: 9999px;
-}
-
-.comp-tag.active {
-  background: rgba(39, 136, 56, 0.1);
-  color: #1E7B2E;
 }
 
 /* FAQ Accordion */
@@ -3038,7 +2829,6 @@ img {
 .tamyiz-form-input {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--color-border);
   border-radius: 4px;
   background: #FFFFFF;
   font-family: var(--font-body);
@@ -3067,7 +2857,6 @@ img {
 
 @media (max-width: 1023px) {
   .tamyiz-checkout-grid {
-    grid-template-columns: 1fr;
     gap: 2rem;
   }
 }
@@ -3075,7 +2864,6 @@ img {
 .tamyiz-checkout-card {
   background: #FFFFFF;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
   padding: 2rem;
 }
 
@@ -3102,10 +2890,7 @@ img {
 }
 
 .tamyiz-step-title {
-  font-family: var(--font-display);
   font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
   text-transform: uppercase;
   margin: 0;
 }
@@ -3147,7 +2932,6 @@ img {
 .tamyiz-checkout-summary-card {
   background: #FFFFFF;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
   padding: 1.75rem;
   position: sticky;
   top: 5.5rem;
@@ -3237,7 +3021,6 @@ img {
 
 .tamyiz-coupon-input {
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--color-border);
   border-radius: 3px;
   font-size: 16px !important;
   font-weight: 700;
@@ -3279,7 +3062,6 @@ img {
 .tamyiz-vault-card {
   background: #FFFFFF;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
   padding: 3rem 2.5rem;
   text-align: center;
 }
@@ -3715,7 +3497,6 @@ img {
   font-size: 0.84rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  pointer-events: auto;
   opacity: 0;
   transform: translateY(16px);
   transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
@@ -3949,15 +3730,11 @@ img {
 /* Bag Items: Format Pill & License Tag */
 
 .tamyiz-cart-del {
-  background: none;
-  border: none;
   font-family: monospace;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #888888;
-  cursor: pointer;
   padding: 0.3rem 0.4rem;
   transition: color 0.15s ease;
 }
@@ -4172,8 +3949,6 @@ img {
 /* Instant Unlock Modal */
 .tamyiz-unlock-modal {
   background: #F8F7F4;
-  border: 2px solid #000000;
-  padding: 2rem;
   max-width: 680px;
   width: 100%;
   margin: 0 auto;
@@ -4285,99 +4060,28 @@ img {
 
 /* Legal & Compliance Modal */
 .tamyiz-legal-modal-box {
-  background: #FFFFFF;
-  border: 2px solid #000000;
-  padding: 1.75rem;
   max-width: 760px;
-  width: 100%;
-  max-height: 85vh;
   overflow-y: auto;
   margin: 0 auto;
   box-sizing: border-box;
-  text-align: left;
 }
 
 .tamyiz-legal-modal-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  border-bottom: 2px solid #000000;
   padding-bottom: 0.85rem;
-  margin-bottom: 1rem;
-}
-
-.tamyiz-legal-tabs-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-  padding-bottom: 0.65rem;
-  margin-bottom: 1.25rem;
 }
 
 .tamyiz-legal-tab-btn {
-  font-family: monospace;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 0.45rem 0.8rem;
-  border: 1px solid rgba(0, 0, 0, 0.25);
-  background: #FFFFFF;
-  color: #333333;
-  cursor: pointer;
   transition-property: color, background-color, border-color, opacity, transform, box-shadow, visibility;
   transition-duration: 0.15s;
   transition-timing-function: ease;
 }
 
-.tamyiz-legal-tab-btn:hover {
-  border-color: #000000;
-  background: #F4F4F2;
-}
-
-.tamyiz-legal-tab-btn.active {
-  background: #000000 !important;
-  color: #FFFFFF !important;
-  border-color: #000000 !important;
-}
-
-.tamyiz-legal-section-item {
-  margin-bottom: 1.25rem;
-}
-
 .tamyiz-legal-section-title {
-  font-family: monospace;
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #000000;
   margin-bottom: 0.35rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  padding-bottom: 0.2rem;
-}
-
-.tamyiz-legal-section-text {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 0.84rem;
-  line-height: 1.65;
-  color: #333333;
 }
 
 .tamyiz-legal-section-text p {
   margin-bottom: 0.6rem;
-}
-
-.tamyiz-legal-contact-footer {
-  margin-top: 1.5rem;
-  padding: 0.85rem 1rem;
-  background: #F8F7F4;
-  border-left: 3px solid #000000;
-  font-family: monospace;
-  font-size: 0.74rem;
-  color: #444444;
-  line-height: 1.5;
 }
 
 /* ==========================================================================
@@ -4419,7 +4123,6 @@ img {
 
   .tamyiz-btn-quick-add {
     min-height: 46px;
-    font-size: 0.82rem;
   }
 
   /* Streamlined mobile modal dialogs */
@@ -4462,18 +4165,11 @@ img {
 
   /* Legal tabs smooth horizontal scroll on mobile */
   .tamyiz-legal-tabs-row {
-    flex-wrap: nowrap;
-    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 0.5rem;
-    gap: 0.4rem;
   }
 
   .tamyiz-legal-tab-btn {
-    white-space: nowrap;
     flex-shrink: 0;
-    padding: 0.45rem 0.7rem;
-    font-size: 0.68rem;
   }
 
   /* Atelier bag drawer footer spacing */
@@ -4482,8 +4178,6 @@ img {
     padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
   }
 }
-
-
 
 .sr-only {
   position: absolute;
@@ -4535,8 +4229,6 @@ img {
   color: #3A3A3A;
 }
 
-/* The card's second button is a link to the product page. */
-
 /* ==========================================================================
    SECTION HEADINGS (shared sections: sections.js)
    ========================================================================== */
@@ -4547,9 +4239,6 @@ img {
 }
 
 .tamyiz-section-title {
-  font-family: var(--font-display);
-  font-size: clamp(1.75rem, 4vw, 3rem);
-  font-weight: 900;
   text-transform: uppercase;
   line-height: 1.1;
   margin: 0;
@@ -4591,21 +4280,10 @@ img {
 }
 
 .tamyiz-pdp-main-img-wrap {
-  aspect-ratio: auto;
-  background: #111;
   display: flex;
   justify-content: center;
   cursor: default;
 }
-
-.tamyiz-pdp-main-img {
-  width: 100%;
-  height: auto;
-  max-height: 720px;
-  object-fit: contain;
-}
-
-/* Founder names under the photos sit on a white card: dark text. */
 
 /* Policy pages: space between sections; tabs wrap instead of running off screen. */
 .legal-section+.legal-section {
@@ -4649,10 +4327,6 @@ img {
     margin-bottom: 1.25rem !important;
   }
 
-  .tamyiz-page-header {
-    padding: 2.25rem 0 1.75rem 0;
-  }
-
   .tamyiz-page-description {
     margin-bottom: 0;
   }
@@ -4677,12 +4351,7 @@ img {
   }
 
   .tamyiz-promise-item strong {
-    font-size: 0.78rem;
     margin-bottom: 0.2rem;
-  }
-
-  .tamyiz-promise-item p {
-    font-size: 0.75rem;
   }
 
   /* Cards and grids */
@@ -4821,15 +4490,7 @@ img {
     padding-bottom: 1.5rem !important;
   }
 
-  .tamyiz-pdp-main-img-wrap {
-    background: transparent;
-    border: 0;
-  }
-
   .tamyiz-pdp-main-img {
-    max-height: 380px;
-    width: auto;
-    max-width: 100%;
     border-radius: 4px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
   }
@@ -4865,11 +4526,6 @@ img {
     white-space: normal !important;
     overflow: visible !important;
     gap: 0.4rem !important;
-  }
-
-  .tamyiz-legal-tab-btn {
-    padding: 0.4rem 0.65rem !important;
-    font-size: 0.66rem !important;
   }
 
   .legal-section+.legal-section {
@@ -4961,13 +4617,10 @@ img {
     background: #F1F1EF;
     color: #3A3A3A;
     font-family: var(--font-sub);
-    font-size: 0.68rem;
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
-
-  /* Promise cards: tinted, tight */
 
   /* Product page: cover centred, no floating badge, softer note, closer "more e-books" */
   .tamyiz-pdp-main-img {
@@ -4995,7 +4648,6 @@ img {
     margin-bottom: 1rem !important;
   }
 
-  /* About page: founder photos no taller than about half a screen */
 }
 
 @media (max-width: 639px) {
@@ -5032,34 +4684,7 @@ img {
   width: 100%;
 }
 
-/* Readable red on light backgrounds */
-
 /* Product page cover: space reserved before the image loads (no jump). Covers are portrait. */
-.tamyiz-pdp-main-img-wrap {
-  aspect-ratio: 2 / 3;
-  max-height: 720px;
-}
-
-.tamyiz-pdp-main-img {
-  width: 100%;
-  height: 100%;
-  max-height: none;
-  object-fit: contain;
-}
-
-@media (max-width: 639px) {
-  .tamyiz-pdp-main-img-wrap {
-    aspect-ratio: auto;
-    height: 380px;
-    max-height: none;
-  }
-
-  .tamyiz-pdp-main-img {
-    height: 100%;
-    width: auto;
-    max-width: 100%;
-  }
-}
 
 /* ==========================================================================
    REDESIGN 24 Oct 2026: black and white; colour comes only from the book covers (and the logo).
@@ -5073,7 +4698,6 @@ img {
   --color-red-hover: #2E2E2C;
   --color-red-ink: #000000;
   --color-red-on-dark: #FFFFFF;
-  --color-offwhite: #EDEDEA;
   --tmz-graphite: #55554F;
   /* secondary text, 7:1 on white */
   --tmz-glass: rgba(255, 255, 255, 0.56);
@@ -5083,9 +4707,7 @@ img {
 /* Frosted glass: used only for things that float over the covers and for the header. */
 
 .tamyiz-header {
-  background: rgba(255, 255, 255, 0.62);
   -webkit-backdrop-filter: blur(18px) saturate(160%);
-  backdrop-filter: blur(18px) saturate(160%);
 }
 
 /* Off-screen menu and bag panels: no shadow and hidden until opened (their shadows used to leak onto the page edges). */
@@ -5107,26 +4729,11 @@ img {
 }
 
 /* ---------- Hero: headline (the name's meaning) + About us card ---------- */
-.tmz-hero {
-  position: relative;
-  background: linear-gradient(180deg, #FFFFFF 0%, #F4F4F2 100%);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
 
 .tmz-hero-inner {
-  max-width: 80rem;
-  margin: 0 auto;
-  padding: 5rem 3.5rem 5.5rem;
-  display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 34rem);
   gap: 4.5rem;
   align-items: center;
-}
-
-.tmz-hero-meaning {
-  margin: 0 0 1.4rem;
-  font-size: 0.95rem;
-  color: var(--tmz-graphite);
 }
 
 .tmz-hero-meaning strong {
@@ -5137,41 +4744,16 @@ img {
 .tmz-hero-title {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 300;
-  font-size: clamp(2.6rem, 5.6vw, 5.4rem);
-  line-height: 0.98;
-  letter-spacing: -0.05em;
   text-transform: none;
-  color: #000;
-}
-
-.tmz-hero-lede {
-  margin: 1.9rem 0 0;
-  max-width: 32rem;
-  font-size: 1.2rem;
-  line-height: 1.5;
-  color: #2B2B29;
-}
-
-.tmz-hero-ctas {
-  margin-top: 2.3rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.85rem;
 }
 
 .tmz-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  min-height: 52px;
-  padding: 0 1.8rem;
-  border-radius: 999px;
   font-family: var(--font-sub);
   font-weight: 600;
-  font-size: 1rem;
   text-decoration: none;
-  transition: transform 0.15s ease, background 0.15s ease;
 }
 
 .tmz-btn-solid {
@@ -5179,17 +4761,8 @@ img {
   color: #fff;
 }
 
-.tmz-btn-solid:hover {
-  background: #2E2E2C;
-}
-
 .tmz-btn-line {
-  border: 1.5px solid #000;
   color: #000;
-}
-
-.tmz-btn-line:hover {
-  background: rgba(0, 0, 0, 0.05);
 }
 
 .tmz-btn:active {
@@ -5201,14 +4774,8 @@ img {
 }
 
 .tmz-hero-proof {
-  margin: 2.8rem 0 0;
-  padding: 0;
   list-style: none;
-  display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem 1.25rem;
-  font-size: 0.9rem;
-  color: var(--tmz-graphite);
 }
 
 .tmz-hero-proof li {
@@ -5219,10 +4786,6 @@ img {
 
 .tmz-hero-proof li::before {
   content: '';
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #000;
 }
 
 .tmz-about-people {
@@ -5243,8 +4806,6 @@ img {
   height: auto;
   aspect-ratio: 4 / 5;
   object-fit: cover;
-  border-radius: 16px;
-  background: #E8E8E5;
 }
 
 .tmz-about-people figcaption {
@@ -5303,43 +4864,18 @@ img {
   .tmz-hero-inner {
     grid-template-columns: minmax(0, 1fr);
     gap: 3rem;
-    padding: 3.5rem 2rem 4rem;
   }
 }
 
 /* PHONES (up to 639px) */
 @media (max-width: 639px) {
   .tmz-hero-inner {
-    padding: 2.25rem 1rem 2.75rem;
     gap: 2.25rem;
-  }
-
-  .tmz-hero-meaning {
-    font-size: 0.88rem;
-    margin-bottom: 1rem;
-  }
-
-  .tmz-hero-title {
-    font-size: 2.65rem;
-  }
-
-  .tmz-hero-lede {
-    margin-top: 1.25rem;
-    font-size: 1.05rem;
-  }
-
-  .tmz-hero-ctas {
-    margin-top: 1.6rem;
   }
 
   .tmz-hero-ctas .tmz-btn {
     flex: 1 1 auto;
     justify-content: center;
-  }
-
-  .tmz-hero-proof {
-    margin-top: 1.75rem;
-    font-size: 0.85rem;
   }
 
   .tmz-about-people {
@@ -5366,10 +4902,6 @@ img {
 
 .tamyiz-digital-delivery-badge {
   color: #000;
-}
-
-.tamyiz-footer .tamyiz-trust-bar-dot {
-  color: rgba(255, 255, 255, 0.5);
 }
 
 /* Header logo (dome + wordmark), on every screen size. Older rules hid this link below 1024px with !important. */
@@ -5654,7 +5186,6 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
   min-height: 44px;
   font-size: 0.88rem;
   font-weight: 500;
-  color: #000;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -5844,10 +5375,8 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
 /* ---------- Calm type everywhere (24 Oct 2026): sentence-case headings, light page banners ---------- */
 /* Page banners (E-books, How we write, policies, checkout, 404) match the About page intro. */
 .tamyiz-page-header {
-  background: linear-gradient(180deg, #FFFFFF 0%, #F4F4F2 100%);
   color: #000;
   padding: 4.5rem 0 3rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .tamyiz-page-badge {
@@ -5855,11 +5384,9 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
 }
 
 .tamyiz-page-title {
-  font-weight: 300;
   text-transform: none;
   font-size: clamp(2.6rem, 5.6vw, 4.6rem);
   line-height: 1;
-  letter-spacing: -0.05em;
   color: #000;
   margin-bottom: 1.1rem;
 }
@@ -5974,12 +5501,6 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
     justify-content: center;
   }
 
-  .tamyiz-legal-tab-btn {
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-  }
-
   .summary-item-remove {
     min-width: 44px;
     min-height: 44px;
@@ -6002,10 +5523,6 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
   font-size: 0.75rem !important;
 }
 
-.tamyiz-legal-tab-btn {
-  font-size: 0.75rem !important;
-}
-
 @media (max-width: 1023px),
 (pointer: coarse) {
   .tamyiz-page-legal .border-t a {
@@ -6021,10 +5538,6 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
   border: 0 !important;
   padding: 0 !important;
   box-shadow: none !important;
-}
-
-.tamyiz-legal-modal-head {
-  align-items: flex-start;
 }
 
 .tmz-modal-close,
@@ -6054,23 +5567,9 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
   background: rgba(0, 0, 0, 0.06);
 }
 
-.tamyiz-legal-section-title {
-  margin: 0;
-  font-family: var(--font-sub) !important;
-  font-size: 1rem !important;
-  font-weight: 600 !important;
-  letter-spacing: -0.01em !important;
-  text-transform: none !important;
-  color: #000;
-}
-
 .tamyiz-legal-modal-head {
   border-bottom-width: 1px !important;
   border-bottom-color: rgba(0, 0, 0, 0.12) !important;
-}
-
-.tamyiz-legal-tab-btn {
-  gap: 0.4rem;
 }
 
 /* ---------- Start-up placeholder (index.html) and shop empty/error states (24 Oct 2026) ---------- */
@@ -6186,8 +5685,6 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
   display: none !important;
 }
 
-/* the hidden attribute must win over utility classes like .flex */
-
 /* ---------- Smoothness pass (24 Oct 2026): no full-screen blur, no blur on cards ---------- */
 /* Blurring the whole page behind the menu/bag/pop-ups made phones stutter (100 ms frames when the menu opened).
    A plain dim looks the same at a glance and costs almost nothing. */
@@ -6233,8 +5730,6 @@ header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
 @media (pointer: coarse) {
   .tamyiz-header {
     -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.78);
   }
 }
 
@@ -6451,7 +5946,7 @@ body:has(#cart-drawer.active) .tamyiz-toast-container {
 }
 
 /* ==========================================================================
-   TAMYIZ FILMS: Video Discovery, Modal Player & Showcase Styles
+   VIDEO PLAYER: the pop-up that plays a book's preview video (Films itself was removed 25 Nov 2026)
    ========================================================================== */
 
 body.tmz-modal-open {
@@ -6597,14 +6092,6 @@ body.tmz-modal-open {
   color: #AAAAAA;
 }
 
-.tmz-pill-brand {
-  font-family: var(--font-head);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  color: var(--color-red-on-dark, #FF4D4D);
-}
-
 .tmz-video-modal-title {
   font-family: var(--font-head);
   font-size: clamp(1.25rem, 2.5vw, 1.75rem);
@@ -6708,515 +6195,8 @@ body.tmz-modal-open {
   transform: scale(1.03);
 }
 
-/* Dedicated Films Page (/films) */
-
-.tmz-films-hero {
-  padding: 4.5rem 1.5rem 2.5rem;
-  text-align: center;
-}
-
-.tmz-films-eyebrow {
-  font-family: var(--font-head);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--color-red-ink, #B3261E);
-  display: inline-block;
-  margin-bottom: 0.6rem;
-}
-
-.tmz-films-hero-title {
-  font-family: var(--font-head);
-  font-size: clamp(2.2rem, 5vw, 3.6rem);
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  margin: 0 0 0.8rem;
-  color: #0B0B0B;
-}
-
-.tmz-films-hero-sub {
-  font-size: clamp(1rem, 1.8vw, 1.2rem);
-  color: var(--color-muted, #5E5E59);
-  max-width: 640px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
-/* Featured Film Section */
-.tmz-film-featured-section {
-  margin: 2rem 0 3rem;
-}
-
-.tmz-film-featured-banner {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  background: #0B0B0B;
-  color: #FFFFFF;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -20px rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-@media (max-width: 899px) {
-  .tmz-film-featured-banner {
-    grid-template-columns: 1fr;
-  }
-}
-
-.tmz-featured-thumb-wrap {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  cursor: pointer;
-  overflow: hidden;
-  background: #000;
-}
-
-.tmz-featured-thumb-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.tmz-featured-thumb-wrap:hover .tmz-featured-thumb-img {
-  transform: scale(1.03);
-}
-
-.tmz-featured-play-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: rgba(0, 0, 0, 0.28);
-  transition: background 0.2s ease;
-}
-
-.tmz-featured-thumb-wrap:hover .tmz-featured-play-overlay {
-  background: rgba(0, 0, 0, 0.45);
-}
-
-.tmz-featured-play-btn {
-  width: 66px;
-  height: 66px;
-  border-radius: 999px;
-  background: #FFFFFF;
-  color: #0B0B0B;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s ease;
-}
-
-.tmz-featured-thumb-wrap:hover .tmz-featured-play-btn {
-  transform: scale(1.08);
-}
-
-.tmz-featured-play-label {
-  font-family: var(--font-head);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  color: #FFFFFF;
-}
-
-.tmz-featured-details {
-  padding: 2.2rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.tmz-featured-badges {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
-  align-items: center;
-}
-
-.tmz-pill-featured {
-  font-family: var(--font-head);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  background: var(--color-red, #B3261E);
-  color: #FFF;
-  padding: 3px 8px;
-  border-radius: 999px;
-}
-
-.tmz-featured-title {
-  font-family: var(--font-head);
-  font-size: clamp(1.4rem, 2.2vw, 2rem);
-  font-weight: 800;
-  margin: 0 0 0.8rem;
-  line-height: 1.25;
-}
-
-.tmz-featured-desc {
-  font-size: 14px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.72);
-  margin: 0 0 1.5rem;
-}
-
-.tmz-featured-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.tmz-btn-watch {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #FFFFFF;
-  color: #0B0B0B;
-  border: 1.5px solid #FFFFFF;
-  font-family: var(--font-head);
-  font-size: 14px;
-  font-weight: 700;
-  padding: 11px 22px;
-  border-radius: 999px;
-  cursor: pointer;
-  min-height: 44px;
-}
-
-.tmz-btn-read {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  color: #FFFFFF;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  font-family: var(--font-head);
-  font-size: 14px;
-  font-weight: 600;
-  padding: 11px 18px;
-  border-radius: 999px;
-  text-decoration: none;
-  min-height: 44px;
-}
-
-/* Category Filter Bar */
-.tmz-films-filter-bar {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 0.5rem 0 1.5rem;
-  margin-bottom: 1.5rem;
-  scrollbar-width: none;
-}
-
-.tmz-cat-pill {
-  font-family: var(--font-head);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 18px;
-  border-radius: 999px;
-  border: 1.5px solid rgba(11, 11, 11, 0.15);
-  background: #FFFFFF;
-  color: #5E5E59;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-  min-height: 44px;
-}
-
-.tmz-cat-pill:hover {
-  border-color: #0B0B0B;
-  color: #0B0B0B;
-}
-
-.tmz-cat-pill.is-active {
-  background: #0B0B0B;
-  border-color: #0B0B0B;
-  color: #FFFFFF;
-}
-
-/* Films Grid */
-.tmz-films-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.8rem;
-  margin-bottom: 4rem;
-}
-
-.tmz-film-card {
-  display: flex;
-  flex-direction: column;
-  background: #FFFFFF;
-  border: 1px solid rgba(11, 11, 11, 0.08);
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px -5px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.tmz-film-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1);
-}
-
-.tmz-film-thumb-wrap {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  background: #000;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.tmz-film-thumb-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.35s ease;
-}
-
-.tmz-film-thumb-wrap:hover .tmz-film-thumb-img {
-  transform: scale(1.04);
-}
-
-.tmz-film-play-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.2);
-  transition: background 0.2s ease;
-}
-
-.tmz-film-thumb-wrap:hover .tmz-film-play-overlay {
-  background: rgba(0, 0, 0, 0.38);
-}
-
-.tmz-film-play-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.95);
-  color: #0B0B0B;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease;
-}
-
-.tmz-film-thumb-wrap:hover .tmz-film-play-btn {
-  transform: scale(1.1);
-}
-
-.tmz-film-meta-bar {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  right: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  pointer-events: none;
-}
-
-.tmz-film-badge-cat {
-  font-family: var(--font-head);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  padding: 2px 7px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.75);
-  color: #FFF;
-}
-
-.tmz-film-badge-dur {
-  font-family: monospace;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.8);
-  color: #FFF;
-}
-
-.tmz-film-card-body {
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  justify-content: space-between;
-}
-
-.tmz-film-card-title {
-  font-family: var(--font-head);
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem;
-  line-height: 1.3;
-}
-
-.tmz-film-card-title a {
-  color: #0B0B0B;
-  text-decoration: none;
-}
-
-.tmz-film-card-desc {
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--color-muted, #5E5E59);
-  margin: 0 0 1rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.tmz-film-card-book {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  background: var(--color-soft, #F7F7F5);
-  border: 1px solid rgba(11, 11, 11, 0.06);
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #0B0B0B;
-  text-decoration: none;
-  margin-top: auto;
-  transition: background 0.15s ease;
-}
-
-.tmz-film-card-book:hover {
-  background: rgba(11, 11, 11, 0.08);
-}
-
-.tmz-film-book-thumb {
-  width: 20px;
-  height: 30px;
-  object-fit: cover;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.tmz-film-book-arrow {
-  margin-left: auto;
-  color: var(--color-muted, #5E5E59);
-}
-
-/* Empty state */
-.tmz-films-empty {
-  text-align: center;
-  padding: 5rem 1.5rem;
-  background: #FFFFFF;
-  border-radius: 20px;
-  border: 1px solid rgba(11, 11, 11, 0.08);
-  max-width: 580px;
-  margin: 2rem auto;
-}
-
-.tmz-films-empty-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 999px;
-  background: var(--color-soft, #F7F7F5);
-  color: #0B0B0B;
-  display: grid;
-  place-items: center;
-  margin: 0 auto 1.25rem;
-}
-
-.tmz-films-empty h2,
-.tmz-films-empty h3 {
-  font-family: var(--font-head);
-  font-size: 22px;
-  font-weight: 800;
-  margin: 0 0 8px;
-}
-
-.tmz-films-empty p {
-  color: var(--color-muted, #5E5E59);
-  font-size: 15px;
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* From Screen to Page Bridge Banner */
-.tmz-films-books-bridge {
-  background: #0B0B0B;
-  color: #FFFFFF;
-  border-radius: 24px;
-  padding: 3.5rem 2rem;
-  text-align: center;
-  margin: 3rem 0;
-}
-
-.tmz-bridge-eyebrow {
-  font-family: var(--font-head);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--color-red-on-dark, #FF4D4D);
-  display: inline-block;
-  margin-bottom: 0.75rem;
-}
-
-.tmz-bridge-title {
-  font-family: var(--font-head);
-  font-size: clamp(1.5rem, 3vw, 2.2rem);
-  font-weight: 800;
-  margin: 0 0 0.75rem;
-}
-
-.tmz-bridge-text {
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.72);
-  max-width: 580px;
-  margin: 0 auto 1.75rem;
-  line-height: 1.6;
-}
-
-/* Homepage Films Showcase Section */
-
-.tmz-home-film-lead {
-  display: flex;
-  flex-direction: column;
-  background: #0B0B0B;
-  color: #FFFFFF;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
-}
-
-.tmz-home-film-side-card {
-  display: flex;
-  gap: 14px;
-  background: var(--color-offwhite, #F9F9F7);
-  border: 1px solid rgba(11, 11, 11, 0.08);
-  border-radius: 14px;
-  padding: 12px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.tmz-home-film-side-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.08);
-}
-
 @media (prefers-reduced-motion: reduce) {
 
-  .tmz-film-card,
-  .tmz-featured-thumb-img,
-  .tmz-film-thumb-img,
   .tmz-video-modal-overlay {
     transition: none !important;
     animation: none !important;
@@ -7643,33 +6623,14 @@ html.is-scrolled .tamyiz-header {
 
 .tmz-hero-lede {
   margin: 0;
-  max-width: 27rem;
-  font-size: 1.05rem;
   line-height: 1.55;
   color: #2B2B29;
 }
 
-.tmz-hero-ctas {
-  margin-top: 1.6rem;
-}
-
-.tmz-hero-art {
-  max-width: 64rem;
-  margin: 3.5rem auto 0;
-}
-
 .tmz-hero-proof {
-  margin: 3rem 0 0;
-  padding: 1.1rem 0 1.2rem;
   border-top: 1px solid var(--tmz-hair);
   justify-content: space-between;
   gap: 0.6rem 2rem;
-  font-family: var(--font-sub);
-  font-size: 0.74rem;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--tmz-graphite);
 }
 
 .tmz-hero-proof li::before {
@@ -8119,17 +7080,14 @@ html.is-scrolled .tamyiz-header {
 
   html.mo .tmz-hero-lede {
     animation: mo-up 0.7s var(--mo-ease) backwards;
-    animation-delay: calc(260ms - var(--mo-t, 0ms));
   }
 
   html.mo .tmz-hero-ctas {
     animation: mo-up 0.7s var(--mo-ease) backwards;
-    animation-delay: calc(340ms - var(--mo-t, 0ms));
   }
 
   html.mo .tmz-hero-proof {
     animation: mo-up 0.7s var(--mo-ease) backwards;
-    animation-delay: calc(500ms - var(--mo-t, 0ms));
   }
 
   .tmz-btn:hover .tmz-btn-arrow {
@@ -8266,11 +7224,6 @@ html.is-scrolled .tamyiz-header {
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-
-  /* The pinned steps: one shows, the others wait above or below. */
-}
-
 @keyframes mo-page {
   from {
     opacity: 0;
@@ -8343,10 +7296,6 @@ html.is-scrolled .tamyiz-header {
     font-size: clamp(2.7rem, 8vw, 4.6rem);
   }
 
-  .tmz-hero-lede {
-    max-width: 34rem;
-  }
-
   .tmz-founders-inner {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto;
@@ -8399,22 +7348,6 @@ html.is-scrolled .tamyiz-header {
     font-size: 0.85rem;
   }
 
-  .tmz-hero-title {
-    font-size: 2.6rem;
-  }
-
-  .tmz-hero-lede {
-    font-size: 1.02rem;
-  }
-
-  .tmz-hero-ctas {
-    margin-top: 1.4rem;
-  }
-
-  .tmz-hero-art {
-    margin-top: 2.25rem;
-  }
-
   .tmz-il-hero .ln {
     stroke-width: 2.4;
   }
@@ -8433,10 +7366,8 @@ html.is-scrolled .tamyiz-header {
   }
 
   .tmz-hero-proof {
-    margin-top: 2rem;
     justify-content: flex-start;
     gap: 0.5rem 1.25rem;
-    font-size: 0.7rem;
   }
 
   .tmz-founders-inner {
@@ -9089,7 +8020,6 @@ body[data-page="admin"] .tmz-progress {
 
 @media (max-width: 639px) {
   .tamyiz-pdp-main-img-wrap {
-    width: min(100%, 19rem);
     height: auto;
     aspect-ratio: 2 / 3;
   }
@@ -9112,7 +8042,6 @@ body[data-page="admin"] .tmz-progress {
 }
 
 .tamyiz-pdp-cat {
-  display: inline-flex;
   gap: 0.6em;
   font-weight: 500;
   letter-spacing: 0.14em;
@@ -9400,6 +8329,17 @@ body[data-page="admin"] .tmz-progress {
   }
 }
 
+/* --- About us: each founder's own links as one quiet grey line --- */
+.tmz-person-links a {
+  color: var(--tmz-graphite);
+  text-decoration-color: rgba(0, 0, 0, 0.25);
+}
+
+.tmz-person-links a:hover {
+  color: #000;
+  text-decoration-color: currentColor;
+}
+
 /* --- Book page: the breadcrumb already links back to E-books, and every book is an e-book: no extra labels --- */
 .tamyiz-pdp-breadcrumb-bar .tamyiz-btn-back-link,
 .tamyiz-pdp-cat {
@@ -9414,6 +8354,34 @@ body[data-page="admin"] .tmz-progress {
   margin-top: 0.4rem;
   font-size: 0.85rem;
   color: var(--tmz-graphite);
+}
+
+/* PHONES AND TABLETS (up to 1023px, where the book page is one column):
+   a smaller cover, then title, price and Buy straight away; the free pages and extras follow. */
+@media (max-width: 1023px) {
+  .tamyiz-pdp-full-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .tamyiz-pdp-col-left {
+    display: contents;
+  }
+
+  .tamyiz-pdp-main-img-wrap {
+    order: 1;
+    width: min(42%, 15rem);
+  }
+
+  .tamyiz-pdp-col-right {
+    order: 2;
+  }
+
+  .tamyiz-pdp-col-left> :not(.tamyiz-pdp-main-img-wrap) {
+    order: 3;
+    margin-top: 0 !important;
+  }
 }
 
 /* PHONES (up to 639px) */
@@ -9448,29 +8416,13 @@ body[data-page="admin"] .tmz-progress {
     padding-bottom: 1.5rem;
   }
 
-  /* Book page: a smaller cover, then title, price and Buy straight away; the free pages and extras follow. */
+  /* Book page on phones: an even smaller cover (the order is set in the tablet block above). */
   .tamyiz-pdp-full-grid {
-    display: flex;
-    flex-direction: column;
     gap: 1rem;
   }
 
-  .tamyiz-pdp-col-left {
-    display: contents;
-  }
-
   .tamyiz-pdp-main-img-wrap {
-    order: 1;
     width: min(50%, 10.5rem);
-  }
-
-  .tamyiz-pdp-col-right {
-    order: 2;
-  }
-
-  .tamyiz-pdp-col-left> :not(.tamyiz-pdp-main-img-wrap) {
-    order: 3;
-    margin-top: 0 !important;
   }
 
   /* Policy pages: the five tabs sit in one row you can swipe, instead of a block of buttons. */

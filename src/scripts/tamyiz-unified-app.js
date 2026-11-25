@@ -19,7 +19,6 @@ import { store, hasCoupons } from './store.js';
 
 import { renderHomePage } from './pages/home-page.js';
 import { renderEditionsPage } from './pages/editions-page.js';
-import { renderFilmsPage } from './pages/films-page.js';
 import { renderProductDetailPage } from './pages/product-detail-page.js';
 import { renderPhilosophyPage } from './pages/philosophy-page.js';
 import { renderAtelierPage } from './pages/atelier-page.js';
@@ -210,9 +209,6 @@ class TamyizUnifiedApp {
     if (cleanPath === '/editions') {
       return { page: 'editions', slug: null, anchor: hash };
     }
-    if (cleanPath === '/films') {
-      return { page: 'films', slug: null, anchor: hash };
-    }
     if (cleanPath.startsWith('/edition/')) {
       const slug = cleanPath.replace('/edition/', '').split('/')[0];
       return { page: 'edition', slug, anchor: hash };
@@ -330,8 +326,8 @@ class TamyizUnifiedApp {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
-    // Render if template changed or if on editions, films, legal tabs, or edition detail
-    if (previousPage !== this.currentPage || this.currentPage === 'editions' || this.currentPage === 'films' || this.currentPage === 'legal' || this.currentPage === 'edition') {
+    // Render if template changed or if on editions, legal tabs, or edition detail
+    if (previousPage !== this.currentPage || this.currentPage === 'editions' || this.currentPage === 'legal' || this.currentPage === 'edition') {
       this.renderCurrentPage();
     } else {
       this.updateActiveNavIndicators();
@@ -511,10 +507,6 @@ class TamyizUnifiedApp {
           return window.closeTamyizVideoModal && window.closeTamyizVideoModal();
         case 'clear-search':
           return this.clearSearch();
-        case 'play-film':
-          return window.playFilmById && window.playFilmById(arg);
-        case 'filter-films':
-          return window.filterFilmsCategory && window.filterFilmsCategory(arg);
         case 'toggle-faq':
           return this.toggleFaq(arg);
         case 'set-pdp-image':
@@ -549,8 +541,6 @@ class TamyizUnifiedApp {
           return this.resetOrderAndReturnHome();
         case 'retry-products':
           return this.retryProducts();
-        case 'play-home-film':
-          return window.playHomeFilm && window.playHomeFilm(arg);
         case 'toggle-wishlist':
           return this.toggleWishlist(id);
         default:
@@ -943,9 +933,6 @@ class TamyizUnifiedApp {
         mainEl.innerHTML = renderEditionsPage(this);
         break;
 
-      case 'films':
-        mainEl.innerHTML = renderFilmsPage(this);
-        break;
 
       case 'edition': {
         mainEl.innerHTML = renderProductDetailPage(this.currentSlug, this);

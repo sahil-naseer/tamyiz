@@ -1,5 +1,5 @@
 /**
- * TAMYIZ FILMS: Video Modal Player
+ * Book preview video player (the optional video set per e-book on /admin).
  *
  * Cinematic modal player supporting YouTube (privacy-enhanced), Vimeo, and MP4.
  * Includes accessibility controls (ARIA, focus restore, ESC key trap, scroll lock)
@@ -136,9 +136,8 @@ export function openVideoModal(video) {
       <div class="tmz-video-modal-details">
         <div class="tmz-video-modal-meta">
           <div class="tmz-video-modal-tags">
-            <span class="tmz-pill-cat">${escapeText(video.category || 'Film')}</span>
+            <span class="tmz-pill-cat">${escapeText(video.category || 'Book preview')}</span>
             ${video.duration ? `<span class="tmz-pill-dur">${escapeText(video.duration)}</span>` : ''}
-            <span class="tmz-pill-brand">TAMYIZ FILMS</span>
           </div>
           <h3 id="tmz-video-dialog-title" class="tmz-video-modal-title">${escapeText(video.title)}</h3>
           ${video.description ? `<p class="tmz-video-modal-desc">${escapeText(video.description)}</p>` : ''}

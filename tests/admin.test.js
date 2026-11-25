@@ -275,24 +275,9 @@ test('e-book preview video: attach videoUrl to book, validate invalid video, and
   }), product.id);
   assert.equal(updateRes.status, 200);
 
-  // 5. Fallback test: add a published film in showcase:videos linked to this product ID
-  await call(e, '/api/admin/films', {
-    method: 'POST',
-    headers: authed(cookie),
-    body: JSON.stringify({
-      title: 'Distinction Cinematic Trailer',
-      videoUrl: 'https://vimeo.com/76979871',
-      category: 'Book Trailers',
-      productId: product.id,
-      published: true,
-    }),
-  });
-
-  const shopAfterFilm = (await (await call(e, '/api/products')).json()).products;
-  const itemAfterFilm = shopAfterFilm.find((x) => x.id === product.id);
-  assert.ok(itemAfterFilm.video);
-  assert.equal(itemAfterFilm.video.provider, 'vimeo');
-  assert.equal(itemAfterFilm.video.title, 'Distinction Cinematic Trailer');
+  // 5. Without a video link the book has no video (the Films fallback was removed 25 Nov 2026)
+  const shopAfter = (await (await call(e, '/api/products')).json()).products;
+  assert.equal(shopAfter.find((x) => x.id === product.id).video, null);
 });
 
 test('backup routes: require login, export full KV JSON snapshot, and stream stored PDF', async () => {
@@ -321,7 +306,7 @@ test('backup routes: require login, export full KV JSON snapshot, and stream sto
   const snapshot = JSON.parse(await backupRes.text());
   assert.equal(snapshot.version, 1);
   assert.equal(snapshot.products.length, 2);
-  assert.ok(Array.isArray(snapshot.films));
+  assert.equal(snapshot.films, undefined);
   assert.ok(Array.isArray(snapshot.orders));
   assert.ok(Array.isArray(snapshot.leads));
   assert.ok(snapshot.reviews && Array.isArray(snapshot.reviews.approved));
