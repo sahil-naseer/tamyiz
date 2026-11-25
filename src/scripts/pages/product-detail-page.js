@@ -69,7 +69,7 @@ export function renderProductDetailPage(slug, appInstance) {
                   loading="eager"
                   fetchpriority="high"
                 />
-                <span class="tamyiz-pdp-badge-pill">${isAvailable(product) ? product.badge : `COMING SOON • ${product.badge}`}</span>
+                ${isAvailable(product) ? '' : `<span class="tamyiz-pdp-badge-pill">COMING SOON</span>`}
               </div>
 
               <!-- Thumbnail Gallery / Toggle -->
@@ -130,7 +130,7 @@ export function renderProductDetailPage(slug, appInstance) {
                   <div class="tamyiz-pdp-sample-head">
                     <div>
                       <span class="tamyiz-sample-kicker">${product.sampleExcerpt ? 'Free sample' : 'Inside the book'}</span>
-                      <h3 class="tamyiz-sample-title">${product.sampleExcerpt ? 'Read Sample Chapter &amp; Excerpt' : 'Chapters'}</h3>
+                      <h3 class="tamyiz-sample-title">${product.sampleExcerpt ? 'Read the first pages here' : 'Chapters'}</h3>
                     </div>
                     <button
                       type="button"
@@ -140,7 +140,7 @@ export function renderProductDetailPage(slug, appInstance) {
                       aria-controls="pdp-sample-content"
                       data-action="toggle-sample-viewer"
                     >
-                      <span id="sample-toggle-text">Expand Preview</span>
+                      <span id="sample-toggle-text">Read</span>
                       <span id="sample-toggle-icon">↓</span>
                     </button>
                   </div>
@@ -209,12 +209,7 @@ export function renderProductDetailPage(slug, appInstance) {
               <div class="tamyiz-pdp-details-card">
                 <div class="flex items-center justify-between gap-3 mb-2">
                   <span class="tamyiz-pdp-cat">${product.category}</span>
-                  ${isAvailable(product) ? `<span class="tamyiz-tag-dispatch" style="display:inline-flex; align-items:center; gap:0.35rem;">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                    </svg>
-                    INSTANT DOWNLOAD
-                  </span>` : `<span class="tamyiz-tag-dispatch tamyiz-tag-soon">COMING SOON</span>`}
+                  ${isAvailable(product) ? '' : `<span class="tamyiz-tag-dispatch tamyiz-tag-soon">COMING SOON</span>`}
                 </div>
 
                 <h1 class="tamyiz-pdp-title">${product.name}</h1>
@@ -230,7 +225,7 @@ export function renderProductDetailPage(slug, appInstance) {
                   ` : ''}
                 </div>
                 <div class="tamyiz-pdp-tax-note">
-                  ${isAvailable(product) ? 'Final price, no extra charges • Instant download after payment' : 'Coming soon • Pre-order on WhatsApp and we will message you the day it is ready. Details may change before release.'}
+                  ${isAvailable(product) ? 'Final price, no extra charges · instant download after payment' : 'Coming soon • Pre-order on WhatsApp and we will message you the day it is ready. Details may change before release.'}
                 </div>
 
                 <!-- Format Selection Pills -->

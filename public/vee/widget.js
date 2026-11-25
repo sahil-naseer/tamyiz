@@ -2416,6 +2416,7 @@ if (!customElements.get('khala-support-widget')) {
     const agentNote = current.getAttribute('data-agent-note');
     if (agentNote) el.setAttribute('agent-note', agentNote);
     if (current.hasAttribute('data-hide-tagline')) el.setAttribute('hide-tagline', '');
+    if (current.hasAttribute('data-tour-no-offer')) el.setAttribute('tour-no-offer', '');
     for (const key of ['tour', 'tour-label', 'tour-home']) {
       const v = current.getAttribute(`data-${key}`);
       if (v) el.setAttribute(key, v);

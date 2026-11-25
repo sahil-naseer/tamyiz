@@ -197,6 +197,14 @@ class TamyizUnifiedApp {
     }
 
     if (cleanPath === '' || cleanPath === '/') {
+      // "How we write" and "Read it anywhere" moved off home on 25 Nov 2026: old /#philosophy and /#format-guide
+      // links (shared, bookmarked, the Vee tour) now open those sections on /philosophy.
+      const h = (hash || '').toLowerCase();
+      if (h === '#philosophy' || h === '#format-guide' || h === '#formats') {
+        const to = h === '#philosophy' ? '/philosophy' : '/philosophy#formats';
+        try { window.history.replaceState(window.history.state, '', to); } catch {}
+        return { page: 'philosophy', slug: null, anchor: h === '#philosophy' ? '' : '#formats' };
+      }
       return { page: 'home', slug: null, anchor: hash };
     }
     if (cleanPath === '/editions') {
@@ -666,10 +674,8 @@ class TamyizUnifiedApp {
           <nav class="tamyiz-header-nav" id="desktop-nav" aria-label="Primary Navigation">
             <a href="/" class="tamyiz-header-nav-link" id="nav-link-home" data-nav="/">Home</a>
             <a href="/editions" class="tamyiz-header-nav-link" id="nav-link-editions" data-nav="/editions">E-books</a>
-            <a href="/films" class="tamyiz-header-nav-link" id="nav-link-films" data-nav="/films">Films</a>
-            <a href="/#philosophy" class="tamyiz-header-nav-link" id="nav-link-philosophy" data-nav="/#philosophy">How we write</a>
+            <a href="/philosophy" class="tamyiz-header-nav-link" id="nav-link-philosophy" data-nav="/philosophy">How we write</a>
             <a href="/atelier" class="tamyiz-header-nav-link" id="nav-link-atelier" data-nav="/atelier">About us</a>
-            <a href="/#format-guide" class="tamyiz-header-nav-link" id="nav-link-formats" data-nav="/#format-guide">Read anywhere</a>
           </nav>
 
           <div class="tamyiz-header-right">
@@ -699,34 +705,23 @@ class TamyizUnifiedApp {
             <ul class="tamyiz-mobile-nav-list">
               <li><a href="/" class="tamyiz-mobile-nav-link" data-nav="/" data-close-menu>Home <span>→</span></a></li>
               <li><a href="/editions" class="tamyiz-mobile-nav-link" data-nav="/editions" data-close-menu>All e-books <span>→</span></a></li>
-              <li><a href="/films" class="tamyiz-mobile-nav-link" data-nav="/films" data-close-menu>Films <span>→</span></a></li>
-              <li><a href="/#philosophy" class="tamyiz-mobile-nav-link" data-nav="/#philosophy" data-close-menu>How we write <span>→</span></a></li>
+              <li><a href="/philosophy" class="tamyiz-mobile-nav-link" data-nav="/philosophy" data-close-menu>How we write <span>→</span></a></li>
               <li><a href="/atelier" class="tamyiz-mobile-nav-link" data-nav="/atelier" data-close-menu>About us <span>→</span></a></li>
-              <li><a href="/#format-guide" class="tamyiz-mobile-nav-link" data-action="scroll-format-guide" data-close-menu>How to read our e-books <span>→</span></a></li>
               <li>${anyAvailable() ? `<a href="#cart" class="tamyiz-mobile-nav-link" data-action="instant-checkout-nav" style="color: var(--color-red-on-dark); font-weight: 700;">Checkout <span>→</span></a>` : `<a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tamyiz-mobile-nav-link" style="color: var(--color-red-on-dark); font-weight: 700;">Pre-order on WhatsApp <span>↗</span></a>`}</li>
             </ul>
           </div>
 
           <div>
-            <div class="tamyiz-mobile-nav-group-title">Shop</div>
-            <div class="tamyiz-mobile-cat-grid">
-              <a href="/editions" class="tamyiz-mobile-cat-btn" data-nav="/editions" data-close-menu>
-                <span>All e-books${products.length ? ` (${products.length})` : ''}</span> <span>→</span>
-              </a>
-            </div>
-          </div>
-
-          <div>
             <div class="tamyiz-mobile-nav-group-title">Help and policies</div>
             <ul class="tamyiz-footer-links">
-              <li><a href="/#format-guide" class="tamyiz-footer-link" data-action="scroll-format-guide" data-close-menu>How to read our e-books</a></li>
+              <li><a href="/philosophy#formats" class="tamyiz-footer-link" data-action="scroll-format-guide" data-close-menu>How to read our e-books</a></li>
+              <li><a href="/downloads" class="tamyiz-footer-link" data-nav="/downloads" data-close-menu>Get my download links again</a></li>
               <li><a href="/legal/delivery-protocol" class="tamyiz-footer-link" data-action="open-legal-modal" data-arg="delivery-protocol" data-close-menu>Shipping &amp; Delivery Policy</a></li>
               <li><a href="/legal/license" class="tamyiz-footer-link" data-action="open-legal-modal" data-arg="license" data-close-menu>Refund &amp; Cancellation Policy</a></li>
               <li><a href="/legal/privacy" class="tamyiz-footer-link" data-action="open-legal-modal" data-arg="privacy" data-close-menu>Privacy &amp; Data Security</a></li>
               <li><a href="/legal/terms" class="tamyiz-footer-link" data-action="open-legal-modal" data-arg="terms" data-close-menu>Terms of Service</a></li>
               <li><a href="/legal/contact" class="tamyiz-footer-link" data-action="open-legal-modal" data-arg="contact" data-close-menu>Contact Us</a></li>
               <li><a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="color: #1E7B2E; font-weight: 700;">WhatsApp us (<span style="white-space: nowrap;">${siteConfig.phone}</span>) ↗</a></li>
-              <li><a href="/admin" class="tamyiz-footer-link" data-nav="/admin" data-close-menu style="font-size: 0.85em;">Admin Portal ↗</a></li>
             </ul>
           </div>
         </div>
@@ -844,14 +839,7 @@ class TamyizUnifiedApp {
       <!-- 3. GLOBAL FOOTER -->
       <footer class="tamyiz-footer" id="contact">
         <div class="container">
-          <div class="tamyiz-trust-bar tamyiz-footer-trust-bar">
-            <span>Instant PDF download</span>
-            <span class="tamyiz-trust-bar-dot">•</span>
-            <span>Reads on any device</span>
-            <span class="tamyiz-trust-bar-dot">•</span>
-            <span>WhatsApp support</span>
-          </div>
-
+          <h2 class="sr-only">About TAMYIZ, pages and policies</h2>
           <div class="tamyiz-footer-grid">
             <div class="tamyiz-footer-brand">
               <p>
@@ -866,8 +854,7 @@ class TamyizUnifiedApp {
               <ul class="tamyiz-footer-links">
                 <li><a href="/" data-nav="/">Home</a></li>
                 <li><a href="/editions" data-nav="/editions">All e-books</a></li>
-                <li><a href="/films" data-nav="/films">Films</a></li>
-                <li><a href="/#philosophy" data-nav="/#philosophy">How we write</a></li>
+                <li><a href="/philosophy" data-nav="/philosophy">How we write</a></li>
                 <li><a href="/atelier" data-nav="/atelier">About us</a></li>
                 <li>${anyAvailable() ? `<a href="#cart" data-action="instant-checkout-nav" style="color: var(--color-red-on-dark); font-weight: 700;">Checkout →</a>` : `<a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--color-red-on-dark); font-weight: 700;">Pre-order on WhatsApp ↗</a>`}</li>
               </ul>
@@ -884,14 +871,13 @@ class TamyizUnifiedApp {
             <div class="tamyiz-footer-col tamyiz-footer-col-full-mobile">
               <h3>Help and policies</h3>
               <ul class="tamyiz-footer-links">
-                <li><a href="/#format-guide" data-action="scroll-format-guide">How to read our e-books</a></li>
+                <li><a href="/philosophy#formats" data-action="scroll-format-guide">How to read our e-books</a></li>
                 <li><a href="/legal/delivery-protocol" data-action="open-legal-modal" data-arg="delivery-protocol">Shipping &amp; Delivery Policy</a></li>
                 <li><a href="/legal/license" data-action="open-legal-modal" data-arg="license">Refund &amp; Cancellation Policy</a></li>
                 <li><a href="/legal/privacy" data-action="open-legal-modal" data-arg="privacy">Privacy &amp; Data Security</a></li>
                 <li><a href="/legal/terms" data-action="open-legal-modal" data-arg="terms">Terms of Service</a></li>
                 <li><a href="/legal/contact" data-action="open-legal-modal" data-arg="contact">Contact Us</a></li>
                 <li><a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="color: #FFFFFF; font-weight: 700;">WhatsApp us ↗</a></li>
-                <li><a href="/admin" data-nav="/admin" style="font-size: 0.85em;">Admin Portal ↗</a></li>
               </ul>
             </div>
           </div>
@@ -1069,38 +1055,25 @@ class TamyizUnifiedApp {
     const links = {
       'home': document.getElementById('nav-link-home'),
       'editions': document.getElementById('nav-link-editions'),
-      'films': document.getElementById('nav-link-films'),
       'philosophy': document.getElementById('nav-link-philosophy'),
       'atelier': document.getElementById('nav-link-atelier'),
-      'formats': document.getElementById('nav-link-formats')
     };
 
     // Remove active from all
     Object.values(links).forEach(el => el && el.classList.remove('active'));
 
     const hash = (window.location.hash || '').toLowerCase();
-    const isFormatsHash = hash === '#formats' || hash === '#format-guide';
 
     if (this.currentPage === 'home') {
-      if (hash === '#philosophy') {
-        links.philosophy && links.philosophy.classList.add('active');
-      } else if (isFormatsHash) {
-        links.formats && links.formats.classList.add('active');
-      } else if (hash === '#editions') {
+      if (hash === '#editions') {
         links.editions && links.editions.classList.add('active');
       } else {
         links.home && links.home.classList.add('active');
       }
     } else if (this.currentPage === 'editions' || this.currentPage === 'edition') {
       links.editions && links.editions.classList.add('active');
-    } else if (this.currentPage === 'films') {
-      links.films && links.films.classList.add('active');
     } else if (this.currentPage === 'philosophy') {
-      if (isFormatsHash) {
-        links.formats && links.formats.classList.add('active');
-      } else {
-        links.philosophy && links.philosophy.classList.add('active');
-      }
+      links.philosophy && links.philosophy.classList.add('active');
     } else if (this.currentPage === 'atelier') {
       links.atelier && links.atelier.classList.add('active');
     }
@@ -1905,7 +1878,7 @@ class TamyizUnifiedApp {
       const nextOpen = !isOpen;
       content.classList.toggle('open', nextOpen);
       if (btn) btn.setAttribute('aria-expanded', String(nextOpen));
-      if (text) text.textContent = nextOpen ? 'Collapse Preview' : 'Expand Preview';
+      if (text) text.textContent = nextOpen ? 'Close' : 'Read';
       if (icon) icon.textContent = nextOpen ? '↑' : '↓';
       if (nextOpen) {
         content.scrollIntoView({ behavior: this.getScrollBehavior(), block: 'nearest' });
@@ -2794,10 +2767,10 @@ class TamyizUnifiedApp {
 
   scrollToFormatGuide() {
     this.closeMobileMenu();
-    if (this.currentPage !== 'home') {
-      this.navigateTo('/#format-guide');
+    if (this.currentPage !== 'philosophy') {
+      this.navigateTo('/philosophy#formats');
     } else {
-      const el = document.getElementById('format-guide');
+      const el = document.getElementById('formats');
       if (el) {
         el.scrollIntoView({ behavior: this.getScrollBehavior() });
       }

@@ -71,7 +71,6 @@ export function renderAtelierPage(appInstance) {
               <div><dt>Founded</dt><dd>${siteConfig.founded}</dd></div>
               <div><dt>Founders</dt><dd>Basit Majeed and Sahil Naseer</dd></div>
               <div><dt>What we make</dt><dd>${count ? `${count} practical e-book${count === 1 ? '' : 's'} (PDF)` : 'Practical e-books (PDF)'}</dd></div>
-              <div><dt>Talk to us</dt><dd><a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer">WhatsApp ${siteConfig.phone}</a></dd></div>
             </dl>
           </aside>
         </div>
@@ -111,7 +110,6 @@ export function renderAtelierPage(appInstance) {
             </div>
             <div class="tmz-contact-actions">
               <button type="submit" class="tmz-btn tmz-btn-solid" id="contact-submit-btn">Send on WhatsApp</button>
-              <a href="${siteConfig.whatsappUrl}" target="_blank" rel="noopener noreferrer" class="tmz-btn tmz-btn-line">Open WhatsApp chat</a>
             </div>
           </form>
         </div>

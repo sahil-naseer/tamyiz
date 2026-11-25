@@ -136,7 +136,7 @@ The contact form has no mail server: it opens WhatsApp with the message filled i
   photo changes. No logo or book covers in the hero (Sahil's calls).
 - About page `/atelier` (24 Oct 2026): plain words ("About us", why we started, what the name means, founders, contact).
   No "atelier/architects/studio/concierge/editions/protocol" wording anywhere visible; the old studio photo is gone
-  (it wasn't theirs). Nav: Home · E-books · How we write · About us (→ /atelier) · Read anywhere. Footer: Pages · Shop ·
+  (it wasn't theirs). Nav (25 Nov 2026): Home · E-books · How we write (→ /philosophy) · About us (→ /atelier). Footer: Pages · Shop ·
   Help and policies. The home page's old "Who makes TAMYIZ" section was removed (the hero card covers it).
   Keep URLs and the legal page titles as they are (Razorpay has them on file).
 - Headings are sentence case everywhere; page banners are light like the About intro (CSS "Calm type everywhere" block).
@@ -163,7 +163,7 @@ words, the one thing that matters in each drawing, button and icon hovers, the p
 footer links). Never yellow text on a light background (unreadable). The logo's red and the covers stay as they are. All of it is in the "REDESIGN 14 Nov 2026" block at the end of tamyiz-unified.css (new rules
 go there; its phone rules are at the end of that block).
 
-- Home, top to bottom: hero (meaning line, headline "Learn to tell ⌜the difference.⌟", lede + two buttons on the
+- (Superseded by "Calm pass 25 Nov 2026" below.) Home, top to bottom: hero (meaning line, headline "Learn to tell ⌜the difference.⌟", lede + two buttons on the
   right, a line drawing of loose pages passing through a lens into one tidy stack, proof line) → "About us" panel
   with both founders (moved out of the hero; same portraits, quotes and links) → promise strip (now light) → latest
   e-books → "How we write" → "Read it anywhere" → closing line (wording depends on `anyAvailable()`) → footer with
@@ -171,7 +171,7 @@ go there; its phone rules are at the end of that block).
   and still has no logo or book covers in it.
 - `src/scripts/illustrations.js`: the line drawings, made in code (no image files). Original drawings; do not copy
   the reference's artwork.
-- `src/scripts/motion.js` (started from `startApp()` in tamyiz-unified-app.js): scroll reveals, drawings that draw
+- (Mouse dot grid, leaning covers, count-up and the pinned section were removed 25 Nov 2026, see "Calm pass".) `src/scripts/motion.js` (started from `startApp()` in tamyiz-unified-app.js): scroll reveals, drawings that draw
   themselves, the dot grid behind the hero (reacts to the mouse), numbers that count up, book covers that lean
   toward the mouse, the yellow progress line at the top, and the pinned "How we write" section (on screens at least
   1024 x 640 it stays put and steps 01 → 03 as you scroll; otherwise three plain cards).
@@ -346,6 +346,35 @@ Design and motion (all in the "POLISH 14 Nov 2026 (second pass)" block at the en
   link is visible, a second Vee glides to it, highlights it yellow and points, then returns. Reduced motion: no movement.
 - Tour guide (16 Nov 2026): the stops are the JSON in `<script type="application/json" id="vee-tour">` in index.html
   (`target` = CSS selector or "launcher", `text`, `gesture`: hello, point, read, love, bye, nod, done, shrug). Stops whose
-  target is hidden are skipped. Offered once per browser (localStorage `khala-tour-seen`), from the chat chip "Give me a
+  target is hidden are skipped. The "New here? Show me" pop-up is OFF since 25 Nov 2026 (`data-tour-no-offer` on the
+  script tag; our copy of widget.js maps it to the `tour-no-offer` attribute: re-apply that line if the widget is
+  copied again from khala-ai-agents). The tour still starts from the chat chip "Give me a
   tour", or by typing "tour"; on other pages it opens `/?tour=1`. Keep the words true (honesty rules): if prices,
   discounts or the sample change, update the tour text too.
+
+## Calm pass 25 Nov 2026 (asked for by Sahil: modern, minimal, animation only where it helps)
+
+Rule: one message and one main action per screen, fewer boxes, one accent (yellow), calm motion. Styles are in the
+"CALM 25 Nov 2026" block at the end of tamyiz-unified.css (new rules go there; phone rules at its end).
+- Home is four bands: hero → latest e-books → About us (founders, one link) → closing line (one button). Keep it lean:
+  "How we write", "Read it anywhere" and the FAQ live only on /philosophy; films only on /films; the promise strip is gone.
+  Old links `/#philosophy`, `/#format-guide`, `/#formats` are forwarded to /philosophy in `parseRoute()`.
+- Hero: one column: meaning line, headline, the plain line "Short, practical e-books for beginners...", ONE black button
+  (Browse the e-books) + a text link (How we write), one quiet fact line (`heroProof()`: count, authors, download), then
+  the drawing. No canvas, no count-up, no boxes.
+- Header: Home · E-books · How we write · About us; the row shows from 900px and the Menu button only below that.
+  Films is out of the menu, footer and home until there are real films (the /films page still exists; put the links back
+  then). No public link to /admin anywhere (type the address). The footer trust strip was removed.
+- Book cards: cover and title open the book; one button (Add to bag); the wishlist heart shows on hover (mouse screens).
+  No "E-BOOK" badge or category label (every book is an e-book); "COMING SOON" still shows.
+- Book page: no INSTANT DOWNLOAD tag, category label or "← All e-books" button (the breadcrumb does it); the price note
+  is a plain line. On phones (<640px) the cover is small and title, price, Add to bag and Buy come before the free
+  pages (CSS `order` with `display: contents` on the left column).
+- About us: one WhatsApp button (the form); policy pages on phones: the five tabs are one swipeable row, current tab first.
+- Motion now: the hero's staggered entrance (CSS), the hero drawing drawing itself, a gentle CSS parallax on the hero
+  drawing (`animation-timeline: scroll(root)`, only where supported), scroll fade-ins, the progress line, the cover glide
+  to the book page, the bag bump. All off under "reduce motion"; nothing loops.
+- Checked 25 Nov 2026 (local build, live catalogue): `npm test` 91 of 91, axe 0 violations on home, /editions, a book
+  page, /philosophy, /atelier, /downloads, /checkout, /films and policy pages at 375px. Home went from 8 screens tall
+  (7 bands, 48 links/buttons) to about 4 (4 bands, 36). Not done: the stylesheet still has several redesign layers
+  stacked (11,000+ lines); clean it up on its own branch with before/after screenshots of every page.
