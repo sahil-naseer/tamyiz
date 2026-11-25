@@ -396,3 +396,6 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
 - Book page on tablets (up to 1023px) now also shows a smaller cover and then title, price and Buy first (it was the
   phone-only rule; at 768px the big cover used to fill the whole first screen).
 - About us: each founder's links are one quiet grey line (no arrows; screen readers hear "Basit Majeed on Instagram").
+- Lighthouse mobile on the LIVE site after all of the above (25 Nov 2026): home perf 97, /editions 91, a book page 95,
+  /atelier 95, /philosophy 96; accessibility, best practices and SEO 100 on all five; layout shift 0 everywhere.
+  (Home was 92 on 14 Nov.) Don't ship below this.
