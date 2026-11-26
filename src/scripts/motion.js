@@ -46,6 +46,7 @@ let drawIo = null;    // line drawings
 let navPath = null;   // the address the current page-arrival animation belongs to
 let navStart = 0;
 const sinceNav = () => performance.now() - navStart;
+let firstPreScan = false; // true during the first scan of home's ready-made page (index.html, html.pre)
 const inView = (el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; };
 
 function tag(root) {
@@ -53,8 +54,9 @@ function tag(root) {
     const counters = new Map();
     root.querySelectorAll(selector).forEach((el) => {
       if (el.dataset.mo !== undefined || el.dataset.moDone !== undefined) return;
-      // The same page drawn again (bag changed, coupon applied...): what is already on screen stays put.
-      if (sinceNav() > 1500 && inView(el)) { el.dataset.moDone = ''; return; }
+      // The same page drawn again (bag changed, coupon applied...), or home's ready-made first screen
+      // (html.pre, already painted before this ran): what is already on screen stays put.
+      if ((sinceNav() > 1500 || firstPreScan) && inView(el)) { el.dataset.moDone = ''; return; }
       let i = 0;
       if (group) {
         i = counters.get(el.parentElement) || 0;
@@ -152,6 +154,8 @@ export function initMotion() {
       for (const e of entries) if (e.isIntersecting) { drawIo.unobserve(e.target); e.target.classList.add('is-drawn'); }
     }, { rootMargin: '0px 0px -12% 0px', threshold: 0.15 });
     document.documentElement.classList.add('mo');
+  } else {
+    document.documentElement.classList.remove('mo'); // home's index.html arrives with it
   }
   // Runs right after every draw, before the browser paints it (so nothing flashes in and then hides).
   const scan = () => {
@@ -160,7 +164,9 @@ export function initMotion() {
     askScroll();
     if (still) return;
     tag(app);
+    firstPreScan = false;
   };
+  firstPreScan = document.documentElement.classList.contains('pre');
   new MutationObserver(scan).observe(app, { childList: true, subtree: true });
   scan();
 }

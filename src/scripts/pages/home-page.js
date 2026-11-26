@@ -81,6 +81,7 @@ function showCard(img) {
 
 /** Called after home is drawn: swaps in each waiting cover once it comes within ~600px of the screen. */
 function watchDeferredCovers() {
+  if (globalThis.__TAMYIZ_BUILD__) return;
   const imgs = document.querySelectorAll('#editions img.tamyiz-img-primary[data-src]');
   if (!imgs.length) return;
   if (!('IntersectionObserver' in window)) { imgs.forEach(showCard); return; }
@@ -176,8 +177,13 @@ export function renderHomePage(appInstance) {
       <!-- 6. CLOSING LINE: one last, plain invitation. Honest about whether anything can be bought yet. -->
       <section class="tmz-closing">
         <div class="container">
-          <span class="tmz-label">${anyAvailable() ? 'Start here' : 'Coming soon'}</span>
-          ${anyAvailable()
+          <span class="tmz-label">${loadState.loading || anyAvailable() ? 'Start here' : 'Coming soon'}</span>
+          ${loadState.loading
+            ? `<h2 class="tmz-closing-title">Pick an e-book and <span class="tmz-mark tmz-nowrap">start reading</span>.</h2>
+          <div class="tmz-hero-ctas">
+            <a href="/editions" class="tmz-btn tmz-btn-solid" data-nav="/editions">See all the e-books <span aria-hidden="true">→</span></a>
+          </div>`
+            : anyAvailable()
             ? `<h2 class="tmz-closing-title">Pick an e-book and <span class="tmz-mark tmz-nowrap">start reading</span> in a minute.</h2>
           <div class="tmz-hero-ctas">
             <a href="/editions" class="tmz-btn tmz-btn-solid" data-nav="/editions">See all the e-books <span aria-hidden="true">→</span></a>

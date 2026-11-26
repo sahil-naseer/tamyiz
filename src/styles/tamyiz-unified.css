@@ -8377,6 +8377,17 @@ body[data-page="admin"] .tmz-progress {
   visibility: hidden;
 }
 
+/* Home's ready-made first screen (index.html arrives with html.mo.pre, 26 Nov 2026): the hero's entrance starts at the
+   first paint and keeps its own clock (motion.js later sets --mo-t on <html>, which would make it jump), and the
+   page-arrival fade is skipped because the page is already there. html.pre goes when the visitor leaves home. */
+html.pre .tmz-hero {
+  --mo-t: 0ms;
+}
+
+html.pre #main-content > * {
+  animation: none;
+}
+
 /* PHONES AND TABLETS (up to 1023px, where the book page is one column):
    a smaller cover, then title, price and Buy straight away; the free pages and extras follow. */
 @media (max-width: 1023px) {

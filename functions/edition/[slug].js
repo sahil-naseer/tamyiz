@@ -14,12 +14,12 @@ export async function onRequestGet({ request, env, params }) {
     const nf = await env.ASSETS.fetch(new URL('/__not-found__', request.url));
     return withSecurityHeaders(new Response(await nf.text(), { status: 404, headers: HTML }));
   }
-  const shell = await (await env.ASSETS.fetch(new URL('/', request.url))).text();
+  // Shell: /editions, not /, since home's file holds home's ready-made first screen (scripts/build-pages.js).
+  const shell = await (await env.ASSETS.fetch(new URL('/editions', request.url))).text();
   const pub = publicProduct(rec);
   // Start downloading the cover right away (it is the biggest thing on the page), instead of after the app's code runs.
   const cover = pub.images && pub.images[0] ? `\n  <link rel="preload" as="image" href="${pub.images[0]}" fetchpriority="high" />` : '';
-  // The shell is home's file, which leaves out the early /api/products fetch (scripts/build-pages.js); a book page
-  // needs the list before it can draw, so start it here.
+  // A book page needs the e-book list before it can draw; make sure it is fetched early.
   const list = shell.includes('href="/api/products"') ? '' : `\n  <link rel="preload" href="/api/products" as="fetch" crossorigin="anonymous" />`;
   const html = shell.replace(SEO_BLOCK, `<!-- seo: per page -->\n${headTags(productMeta(pub))}${cover}${list}\n  <!-- /seo -->`);
   return withSecurityHeaders(new Response(html, { headers: { ...HTML, 'Cache-Control': 'public, max-age=60' } }));

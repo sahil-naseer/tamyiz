@@ -70,8 +70,13 @@ class TamyizUnifiedApp {
       ? new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0))).then(() => loadProducts())
       : loadProducts();
 
+    // Home's first screen comes ready-made in index.html (scripts/build-pages.js, prerenderHomeHtml) so it paints before
+    // any script runs. Keep it: the frame is rebuilt around it and <main> is left alone (26 Nov 2026).
+    this.keepPrerendered = location.pathname === '/' && document.documentElement.classList.contains('pre')
+      && !!document.querySelector('#main-content .tamyiz-page-home');
+
     // 1. Initial shell render (Header, Drawer, Shell, Footer, Modals)
-    this.renderShell();
+    this.renderShell({ keepMain: this.keepPrerendered });
 
     // 2. Parse initial route from URL
     this.handleLocationChange(false);
@@ -263,6 +268,7 @@ class TamyizUnifiedApp {
     this.currentPage = route.page;
     this.currentSlug = route.slug;
     this.activePdpImageIndex = 0;
+    if (route.page !== 'home') document.documentElement.classList.remove('pre'); // see keepPrerendered
 
     const anchor = route.anchor ? route.anchor.replace(/^#/, '') : null;
 
@@ -332,6 +338,7 @@ class TamyizUnifiedApp {
     this.currentPage = route.page;
     this.currentSlug = route.slug;
     this.activePdpImageIndex = 0;
+    if (route.page !== 'home') document.documentElement.classList.remove('pre'); // see keepPrerendered
 
     // Only auto-scroll to top if not navigating to a specific hash anchor
     if (!anchor) {
@@ -648,11 +655,9 @@ class TamyizUnifiedApp {
    * keepMain: rebuild header, footer, drawers and pop-ups around the page that is already on screen, without
    * touching or moving <main> (used when the e-book list arrives on home, see init()).
    */
-  renderShell({ keepMain = false } = {}) {
-    const app = document.getElementById('app');
-    if (!app) return;
-
-    const html = `
+  /** The page frame (header, empty <main>, footer, drawers, pop-ups) as HTML. Also used at build time (prerenderHomeHtml). */
+  shellHtml() {
+    return `
       <!-- TOP ANNOUNCEMENT BANNER MOUNT -->
       <div id="tmz-announcement-banner" style="display: none; background: #0B0B0B; color: #FFFFFF; font-size: 13px; font-weight: 500; text-align: center; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.12); position: relative; z-index: 100;"></div>
 
@@ -908,6 +913,13 @@ class TamyizUnifiedApp {
         <div class="tamyiz-preview-modal" id="preview-modal-container" role="dialog" aria-modal="true"></div>
       </div>
     `;
+  }
+
+  renderShell({ keepMain = false } = {}) {
+    const app = document.getElementById('app');
+    if (!app) return;
+
+    const html = this.shellHtml();
 
     const oldMain = keepMain ? document.getElementById('main-content') : null;
     if (oldMain && oldMain.parentElement === app) {
@@ -974,7 +986,8 @@ class TamyizUnifiedApp {
     // Render corresponding page
     switch (this.currentPage) {
       case 'home':
-        mainEl.innerHTML = renderHomePage(this);
+        if (this.keepPrerendered) this.keepPrerendered = false; // already on screen, drawn by the build
+        else mainEl.innerHTML = renderHomePage(this);
         break;
 
       case 'editions':
@@ -3489,8 +3502,23 @@ function startApp() {
   if (!window.tamyizApp) window.tamyizApp = new TamyizUnifiedApp();
   try { initMotion(); } catch (err) { console.warn('Motion layer off:', err); document.documentElement.classList.remove('mo'); }
 }
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', startApp);
-} else {
-  startApp();
+/**
+ * Build time only (scripts/build-pages.js, in Node): home's first draw as HTML, exactly what the app draws while the
+ * e-book list is still loading. index.html carries it so the first screen paints before any script (26 Nov 2026).
+ */
+export function prerenderHomeHtml() {
+  const app = Object.create(TamyizUnifiedApp.prototype);
+  Object.assign(app, { currentPage: 'home', currentSlug: null, searchQuery: '', sortBy: 'featured', selectedSizes: {}, activeCategory: 'all' });
+  const main = '<main id="main-content" class="tamyiz-main-content"></main>';
+  const shell = app.shellHtml();
+  if (!shell.includes(main)) throw new Error('prerenderHomeHtml: <main> not found in the shell');
+  return shell.replace(main, `<main id="main-content" class="tamyiz-main-content">${renderHomePage(app)}</main>`);
+}
+
+if (!globalThis.__TAMYIZ_BUILD__) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startApp);
+  } else {
+    startApp();
+  }
 }

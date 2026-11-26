@@ -19,7 +19,27 @@ const fileFor = (urlPath) => (urlPath === '/' ? 'index.html' : urlPath.slice(1) 
 // functions/edition/[slug].js uses this same file as its shell and adds the preload back for book pages.
 const PRODUCTS_PRELOAD = /\n?[ \t]*<link rel="preload" href="\/api\/products"[^>]*>/;
 if (!PRODUCTS_PRELOAD.test(template)) throw new Error('index.html is missing the /api/products preload');
-const forFile = (file, html) => (path.basename(file) === 'index.html' && path.dirname(file) === dist ? html.replace(PRODUCTS_PRELOAD, '') : html);
+
+// Home's first screen as plain HTML (26 Nov 2026): the app's own first draw (header, hero, About us, the e-books band
+// still loading), rendered here in Node, replaces the loading placeholder in index.html. It paints before any script,
+// so Lighthouse's LCP no longer depends on when scripts, fonts or Cloudflare's analytics beacon run. <html> gets
+// "mo pre": the motion layer's starting state from the first paint (the hero's entrance runs on its own) and the sign
+// for the app to keep this page instead of drawing it again (keepPrerendered in tamyiz-unified-app.js).
+globalThis.__TAMYIZ_BUILD__ = true;
+Object.defineProperty(globalThis, 'localStorage', { value: { getItem: () => null, setItem() {}, removeItem() {} }, configurable: true });
+globalThis.window ??= globalThis;
+globalThis.document ??= { readyState: 'complete', addEventListener() {}, getElementById: () => null, querySelector: () => null, querySelectorAll: () => [] };
+const { prerenderHomeHtml } = await import('../src/scripts/tamyiz-unified-app.js');
+const APP_OPEN = '<div id="app">';
+const homeFile = (html) => {
+  const start = html.indexOf(APP_OPEN);
+  const end = html.lastIndexOf('</div>', html.indexOf('<!-- Unified TAMYIZ Script Entrypoint -->'));
+  if (start < 0 || end < start) throw new Error('index.html: #app placeholder not found');
+  return html.slice(0, start) + APP_OPEN + prerenderHomeHtml() + html.slice(end);
+};
+const withHome = (html) => homeFile(html).replace(/<html lang="en">/, '<html lang="en" class="mo pre">');
+
+const forFile = (file, html) => (path.basename(file) === 'index.html' && path.dirname(file) === dist ? withHome(html.replace(PRODUCTS_PRELOAD, '')) : html);
 
 const written = [];
 for (const { page, slug } of allPages()) {
