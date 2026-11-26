@@ -370,8 +370,11 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
   `functions/edition/[slug].js`, which uses that file as its shell, adds it back for book pages); (2) when it arrives,
   `renderShell({ keepMain: true })` + `refreshHomeInPlace()` swap only the fact line, the e-books band and the closing
   line, never the hero or About us; (3) the fact line is drawn invisibly at full length until the count is known
-  (`.tmz-proof-wait`), so nothing moves; (4) index.html preloads Space Grotesk's latin-ext file (it holds ₹; every page
-  needs it for prices and the bag total), which made runs steadier. Do not go back to a full redraw on home.
+  (`.tmz-proof-wait`), so nothing moves; (4) index.html preloads the three font files every page uses (Inter latin, Space
+  Grotesk latin and latin-ext, which holds ₹). On live, the first screen's text waited for those fonts, which were
+  only requested after the app ran; that pushed the paint past the load event and after Cloudflare's analytics report
+  (cloudflareinsights.com/cdn-cgi/rum, another site), and Lighthouse then put LCP at ~3 s. Do not go back to a full
+  redraw on home.
 - Hero: one column: meaning line, headline, the plain line "Short, practical e-books for beginners...", ONE black button
   (Browse the e-books) + a text link (How we write), one quiet fact line (`heroProof()`: count, authors, download), then
   the drawing. No canvas, no count-up, no boxes.

@@ -17,8 +17,11 @@
   <!-- The shop's e-books: start fetching while the app code downloads -->
   <link rel="preload" href="/api/products" as="fetch" crossorigin="anonymous" />
 
-  <!-- Space Grotesk's extended file holds the ₹ sign (prices, the bag total), so every page needs it. Found only via the
-       stylesheet it started late; preloading it made Lighthouse runs on home steadier (26 Nov 2026). -->
+  <!-- The three font files every page uses (26 Nov 2026). Without these the browser only asks for them once the app has
+       drawn text, and the first screen's text waited for them: on the live site that pushed it past the page's load
+       event, after Cloudflare's analytics report, and Lighthouse's LCP to ~3 s. Space Grotesk's extended file holds ₹. -->
+  <link rel="preload" href="/node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="/node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-ext-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
 
   <!-- Stylesheets -->
