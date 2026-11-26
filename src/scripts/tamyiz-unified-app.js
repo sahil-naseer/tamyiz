@@ -63,14 +63,6 @@ class TamyizUnifiedApp {
 
     // Ebooks come from /admin (Cloudflare storage). Start loading them now, but draw the page first:
     // waiting for them used to leave the screen blank for seconds on a cold visit (27 Oct 2026).
-    // On a ready-made page the list is asked for only after the first screen has painted (26 Nov 2026): when it arrived
-    // before the paint, Lighthouse made the first paint wait for it. Ready-made pages have no preload for it for the
-    // same reason (server/prerender.js). Every other page fetches at once.
-    // Two frames: the first one's paint must be on screen before the request goes out (one frame was not enough live).
-    const productsReady = this.keepPrerendered
-      ? new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0)))).then(() => loadProducts())
-      : loadProducts();
-
     // Ready-made pages (26 Nov 2026): home comes drawn in index.html (scripts/build-pages.js), /editions and book pages
     // are drawn by their Pages Functions (server/prerender.js). <main data-pre="/path"> + html.pre mark them. They
     // paint before any script runs; the app keeps them (no redraw of <main>) and only reacts to the e-book list.
@@ -78,6 +70,24 @@ class TamyizUnifiedApp {
     this.keepPrerendered = !!preMain && document.documentElement.classList.contains('pre')
       && preMain.dataset.pre === location.pathname && !location.search;
     if (!this.keepPrerendered && preMain) this.leavePrerendered('');
+
+    // On a ready-made page the list is asked for only after the first screen has painted (26 Nov 2026): when it arrived
+    // before the paint, Lighthouse made the first paint wait for it. Ready-made pages have no preload for it for the
+    // same reason (server/prerender.js). Every other page fetches at once.
+    // "Painted" = the browser's own first-contentful-paint entry (counting frames was not enough on the live site);
+    // at most 1.5 s, so the bag and the hearts never wait long.
+    const afterFirstPaint = () => new Promise((resolve) => {
+      let done = false;
+      const go = () => { if (!done) { done = true; setTimeout(resolve, 0); } };
+      setTimeout(go, 1500);
+      try {
+        const po = new PerformanceObserver((list) => {
+          if (list.getEntries().some((e) => e.name === 'first-contentful-paint')) { po.disconnect(); go(); }
+        });
+        po.observe({ type: 'paint', buffered: true });
+      } catch { requestAnimationFrame(() => requestAnimationFrame(go)); }
+    });
+    const productsReady = this.keepPrerendered ? afterFirstPaint().then(() => loadProducts()) : loadProducts();
 
     // 1. Initial shell render (Header, Drawer, Shell, Footer, Modals)
     // A ready-made page already has its frame: reuse it as is (only wire up the drawers and the banner).
