@@ -63,7 +63,12 @@ class TamyizUnifiedApp {
 
     // Ebooks come from /admin (Cloudflare storage). Start loading them now, but draw the page first:
     // waiting for them used to leave the screen blank for seconds on a cold visit (27 Oct 2026).
-    const productsReady = loadProducts();
+    // On home the e-books are below the first screen, so the list is asked for only after that screen has painted
+    // (26 Nov 2026): when it arrived before the paint, Lighthouse made the first paint wait for it (LCP ~2.2 s vs ~2.8 s).
+    // Home's HTML has no preload for it for the same reason (scripts/build-pages.js). Every other page fetches at once.
+    const productsReady = location.pathname === '/'
+      ? new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0))).then(() => loadProducts())
+      : loadProducts();
 
     // 1. Initial shell render (Header, Drawer, Shell, Footer, Modals)
     this.renderShell();
@@ -76,7 +81,14 @@ class TamyizUnifiedApp {
     productsReady.then(() => {
       if (!loadState.failed) store.pruneUnavailable(); // a failed load must not empty the bag
       const y = window.scrollY;
-      if (this.currentPage !== 'admin') {
+      if (this.currentPage === 'home' && document.querySelector('#main-content .tamyiz-page-home')) {
+        this.renderShell({ keepMain: true });
+        this.refreshHomeInPlace();
+        this.updateCartBadge();
+        this.updateActiveNavIndicators();
+        this.renderDrawerItems();
+        // No scroll restore here: the page stayed in place, and restoring would stop a smooth scroll to /#editions.
+      } else if (this.currentPage !== 'admin') {
         this.renderShell();
         this.updateCartBadge();
         this.renderCurrentPage();
@@ -632,11 +644,15 @@ class TamyizUnifiedApp {
   }
 
   // Render Shell once (Header, Bag Drawer, Mobile Drawer, Main Container, Footer, Modals)
-  renderShell() {
+  /**
+   * keepMain: rebuild header, footer, drawers and pop-ups around the page that is already on screen, without
+   * touching or moving <main> (used when the e-book list arrives on home, see init()).
+   */
+  renderShell({ keepMain = false } = {}) {
     const app = document.getElementById('app');
     if (!app) return;
 
-    app.innerHTML = `
+    const html = `
       <!-- TOP ANNOUNCEMENT BANNER MOUNT -->
       <div id="tmz-announcement-banner" style="display: none; background: #0B0B0B; color: #FFFFFF; font-size: 13px; font-weight: 500; text-align: center; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.12); position: relative; z-index: 100;"></div>
 
@@ -893,9 +909,41 @@ class TamyizUnifiedApp {
       </div>
     `;
 
+    const oldMain = keepMain ? document.getElementById('main-content') : null;
+    if (oldMain && oldMain.parentElement === app) {
+      const tpl = document.createElement('template');
+      tpl.innerHTML = html;
+      const kids = [...tpl.content.childNodes];
+      const at = kids.indexOf(tpl.content.getElementById('main-content'));
+      for (const n of [...app.childNodes]) if (n !== oldMain) n.remove();
+      oldMain.before(...kids.slice(0, at));
+      oldMain.after(...kids.slice(at + 1));
+    } else {
+      app.innerHTML = html;
+    }
+
     this.renderDrawerItems();
     this.applyAnnouncement();
     if (this._updateScrollHeader) this._updateScrollHeader();
+  }
+
+  /**
+   * Home, once the e-book list has arrived: swap in only the parts that depend on it (the fact line, the e-books
+   * band, the closing line). Redrawing the whole page made the hero and About us text count as new, later paints,
+   * which moved Largest Contentful Paint to whenever the list arrived (26 Nov 2026).
+   */
+  refreshHomeInPlace() {
+    const mainEl = document.getElementById('main-content');
+    if (!mainEl || !mainEl.querySelector('.tamyiz-page-home')) return false;
+    const tpl = document.createElement('template');
+    tpl.innerHTML = renderHomePage(this);
+    for (const sel of ['.tmz-hero-proof', '#editions', '.tmz-closing']) {
+      const now = mainEl.querySelector(sel);
+      const next = tpl.content.querySelector(sel);
+      if (!now || !next) { mainEl.innerHTML = tpl.innerHTML; return true; }
+      now.replaceWith(next);
+    }
+    return true;
   }
 
   // Render active page inside #main-content

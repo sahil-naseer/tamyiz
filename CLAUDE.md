@@ -363,6 +363,15 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
   ("All e-books", link "Search and sort" → /editions). Covers from the 4th card on load only when scrolled within 600px
   (`watchDeferredCovers()` in home-page.js): native lazy loading fetched all 9 at once and cost Lighthouse a point.
   Phones show the cards 2 per row (cover on top), not "cover left" as the 24 Oct phone notes say.
+- Home start-up (26 Nov 2026, live Lighthouse was 94: LCP flipped between ~2.2 s and ~2.9 s from run to run). Cause: when
+  /api/products arrived, the app redrew the whole page and shell; if that came before the first screen painted (or the
+  redraw counted as a new paint), LCP waited for the e-book list. Now on home: (1) the list is fetched just after the
+  first paint (`init()`), and home's index.html has no /api/products preload (`scripts/build-pages.js` strips it;
+  `functions/edition/[slug].js`, which uses that file as its shell, adds it back for book pages); (2) when it arrives,
+  `renderShell({ keepMain: true })` + `refreshHomeInPlace()` swap only the fact line, the e-books band and the closing
+  line, never the hero or About us; (3) the fact line is drawn invisibly at full length until the count is known
+  (`.tmz-proof-wait`), so nothing moves; (4) index.html preloads Space Grotesk's latin-ext file (it holds ₹; every page
+  needs it for prices and the bag total), which made runs steadier. Do not go back to a full redraw on home.
 - Hero: one column: meaning line, headline, the plain line "Short, practical e-books for beginners...", ONE black button
   (Browse the e-books) + a text link (How we write), one quiet fact line (`heroProof()`: count, authors, download), then
   the drawing. No canvas, no count-up, no boxes.

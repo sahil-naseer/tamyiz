@@ -14,12 +14,19 @@ if (!SEO_BLOCK.test(template)) throw new Error('index.html is missing the <!-- s
 const render = (meta) => template.replace(SEO_BLOCK, `<!-- seo: per page -->\n${headTags(meta)}\n  <!-- /seo -->`);
 const fileFor = (urlPath) => (urlPath === '/' ? 'index.html' : urlPath.slice(1) + '.html');
 
+// Home asks for the e-book list only after its first screen has painted (tamyiz-unified-app.js, init), so its file
+// drops the early fetch of /api/products: Lighthouse otherwise sometimes made the first paint wait for that download.
+// functions/edition/[slug].js uses this same file as its shell and adds the preload back for book pages.
+const PRODUCTS_PRELOAD = /\n?[ \t]*<link rel="preload" href="\/api\/products"[^>]*>/;
+if (!PRODUCTS_PRELOAD.test(template)) throw new Error('index.html is missing the /api/products preload');
+const forFile = (file, html) => (path.basename(file) === 'index.html' && path.dirname(file) === dist ? html.replace(PRODUCTS_PRELOAD, '') : html);
+
 const written = [];
 for (const { page, slug } of allPages()) {
   const meta = pageMeta(page, slug);
   const file = path.join(dist, fileFor(meta.path));
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, render(meta));
+  fs.writeFileSync(file, forFile(file, render(meta)));
   written.push(meta);
 }
 // /legal on its own opens the first policy.

@@ -8372,6 +8372,11 @@ body[data-page="admin"] .tmz-progress {
   color: var(--tmz-graphite);
 }
 
+/* Home's fact line before the e-book count is known: same words, not shown (see heroProof() in home-page.js). */
+.tmz-proof-wait {
+  visibility: hidden;
+}
+
 /* PHONES AND TABLETS (up to 1023px, where the book page is one column):
    a smaller cover, then title, price and Buy straight away; the free pages and extras follow. */
 @media (max-width: 1023px) {

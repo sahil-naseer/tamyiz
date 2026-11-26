@@ -12,6 +12,9 @@ import { openVideoModal } from '../components/video-modal.js';
 
 /** One quiet line of true facts, counted from the catalogue on /admin (no boxes, no counters). */
 function heroProof() {
+  // Home asks for the list just after its first paint, so this line is often drawn before the count is known.
+  // Draw the full line invisibly until then, so it takes the same room (no jump on phones, where it wraps).
+  if (loadState.loading) return '<span class="tmz-proof-wait">0 e-books <span aria-hidden="true">·</span> Written by Sahil &amp; Basit <span aria-hidden="true">·</span> Instant PDF download</span>';
   const items = [];
   if (!loadState.loading && products.length) items.push(`${products.length} e-book${products.length === 1 ? '' : 's'}`);
   items.push('Written by Sahil &amp; Basit');
@@ -48,18 +51,18 @@ export function emptyShopBlock() {
 }
 
 /*
- * Covers past the first row on home wait until the visitor scrolls near them (26 Nov 2026).
- * With all e-books on home, every cover started downloading the moment the page drew (native lazy loading
- * fetches far ahead), and Lighthouse counted those downloads against the first screen's paint.
- * The <img> keeps its width/height (no layout shift); a cover once shown is drawn with its real src on every
+ * Covers on home wait until the visitor scrolls near them (26 Nov 2026). The e-books band is never on the first
+ * screen when home opens, but native lazy loading fetched the covers far ahead, at the same moment the first
+ * screen painted, and Lighthouse counted those downloads against that paint (LCP ~2.1 s vs ~2.7 s simulated).
+ * The <img> has no src until then and keeps its width/height (no layout shift); a cover once shown is drawn with its real src on every
  * later redraw (the app redraws with innerHTML), so it never flashes empty.
  */
-const BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 const shownCovers = new Set();
 let coverIo = null;
 
 function coverSrcAttrs(src, defer) {
-  return defer && !shownCovers.has(src) ? `src="${BLANK_IMG}" data-src="${src}"` : `src="${src}"`;
+  // No placeholder src at all (a data: pixel showed up in Lighthouse as one more request before the first paint).
+  return defer && !shownCovers.has(src) ? `data-src="${src}"` : `src="${src}"`;
 }
 
 function showCover(img) {
@@ -126,7 +129,7 @@ export function renderHomePage(appInstance) {
           </div>
           <div class="tmz-frame tmz-about-people">
             <figure>
-              <img src="/assets/images/founders/basit-portrait.webp" alt="Basit Majeed" width="480" height="600" loading="eager" decoding="async" />
+              <img src="/assets/images/founders/basit-portrait.webp" alt="Basit Majeed" width="480" height="600" loading="lazy" decoding="async" />
               <figcaption>
                 <strong>Basit Majeed</strong>
                 <span>Co-founder · Security &amp; Research</span>
@@ -134,7 +137,7 @@ export function renderHomePage(appInstance) {
               </figcaption>
             </figure>
             <figure>
-              <img src="/assets/images/founders/sahil-portrait.webp" alt="Sahil Naseer" width="480" height="600" loading="eager" decoding="async" />
+              <img src="/assets/images/founders/sahil-portrait.webp" alt="Sahil Naseer" width="480" height="600" loading="lazy" decoding="async" />
               <figcaption>
                 <strong>Sahil Naseer</strong>
                 <span>Co-founder · AI/ML &amp; Build</span>
@@ -161,7 +164,7 @@ export function renderHomePage(appInstance) {
 
           <!-- Equal-height grid: 1 / 2 / 3 columns -->
           <div class="tamyiz-product-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
-            ${featuredProducts.length ? featuredProducts.map((p, i) => renderProductCardHtml(p, appInstance, { deferCover: i >= 3 })).join('') : emptyShopBlock()}
+            ${featuredProducts.length ? featuredProducts.map(p => renderProductCardHtml(p, appInstance, { deferCover: true })).join('') : emptyShopBlock()}
           </div>
 
         </div>

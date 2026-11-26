@@ -18,6 +18,9 @@ export async function onRequestGet({ request, env, params }) {
   const pub = publicProduct(rec);
   // Start downloading the cover right away (it is the biggest thing on the page), instead of after the app's code runs.
   const cover = pub.images && pub.images[0] ? `\n  <link rel="preload" as="image" href="${pub.images[0]}" fetchpriority="high" />` : '';
-  const html = shell.replace(SEO_BLOCK, `<!-- seo: per page -->\n${headTags(productMeta(pub))}${cover}\n  <!-- /seo -->`);
+  // The shell is home's file, which leaves out the early /api/products fetch (scripts/build-pages.js); a book page
+  // needs the list before it can draw, so start it here.
+  const list = shell.includes('href="/api/products"') ? '' : `\n  <link rel="preload" href="/api/products" as="fetch" crossorigin="anonymous" />`;
+  const html = shell.replace(SEO_BLOCK, `<!-- seo: per page -->\n${headTags(productMeta(pub))}${cover}${list}\n  <!-- /seo -->`);
   return withSecurityHeaders(new Response(html, { headers: { ...HTML, 'Cache-Control': 'public, max-age=60' } }));
 }

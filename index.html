@@ -17,6 +17,10 @@
   <!-- The shop's e-books: start fetching while the app code downloads -->
   <link rel="preload" href="/api/products" as="fetch" crossorigin="anonymous" />
 
+  <!-- Space Grotesk's extended file holds the ₹ sign (prices, the bag total), so every page needs it. Found only via the
+       stylesheet it started late; preloading it made Lighthouse runs on home steadier (26 Nov 2026). -->
+  <link rel="preload" href="/node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-ext-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/src/styles/tamyiz-unified.css" />
 </head>
