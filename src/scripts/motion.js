@@ -41,6 +41,7 @@ const REVEAL = [
 ];
 
 let io = null;        // scroll reveals
+const fresh = new WeakSet(); // reveals whose first IntersectionObserver report has not come in yet
 let drawIo = null;    // line drawings
 let navPath = null;   // the address the current page-arrival animation belongs to
 let navStart = 0;
@@ -61,6 +62,7 @@ function tag(root) {
       }
       el.style.setProperty('--mo-i', Math.min(i, 6));
       el.dataset.mo = '';
+      fresh.add(el);
       io.observe(el);
     });
   }
@@ -76,6 +78,21 @@ function tag(root) {
     }
     drawIo.observe(el);
   });
+}
+
+/**
+ * Already on the first screen when the page opens: shown at once, no fade (26 Nov 2026). On phones the
+ * "About us" paragraph peeks in under the hero, and Chrome counts a faded-in element as painted only when its
+ * fade ends, so the fade made it the page's late Largest Contentful Paint (about 0.9 s later, Lighthouse).
+ * Decided from the IntersectionObserver's first report, so no layout is read here.
+ */
+function showNow(els) {
+  for (const el of els) {
+    io.unobserve(el);
+    delete el.dataset.mo;
+    el.dataset.moDone = '';
+    el.style.removeProperty('--mo-i');
+  }
 }
 
 /** Everything that came into view together is revealed together, and tidied up together (one timer, one restyle). */
@@ -122,8 +139,14 @@ export function initMotion() {
   const still = reduce();
   if (!still) {
     io = new IntersectionObserver((entries) => {
-      const seen = entries.filter((e) => e.isIntersecting).map((e) => e.target);
-      if (seen.length) reveal(seen);
+      const arriving = sinceNav() < 1500;
+      const now = [], later = [];
+      for (const e of entries) {
+        const first = fresh.delete(e.target);
+        if (e.isIntersecting) (first && arriving ? now : later).push(e.target);
+      }
+      if (now.length) showNow(now);
+      if (later.length) reveal(later);
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
     drawIo = new IntersectionObserver((entries) => {
       for (const e of entries) if (e.isIntersecting) { drawIo.unobserve(e.target); e.target.classList.add('is-drawn'); }

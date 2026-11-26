@@ -377,6 +377,9 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
 - About us: one WhatsApp button (the form); policy pages on phones: the five tabs are one swipeable row, current tab first.
 - Motion now: the hero's staggered entrance (CSS), the hero drawing drawing itself (on arrival), scroll fade-ins, the progress line, the cover glide
   to the book page, the bag bump. All off under "reduce motion"; nothing loops.
+  Scroll fade-ins skip anything already on the first screen when the page opens (26 Nov 2026, `showNow()` in motion.js):
+  Chrome counts a faded-in element as painted only when its fade ends, so the About us paragraph peeking in under the
+  phone hero was the late Largest Contentful Paint (2.15 s → 1.07 s, throttled). Don't fade first-screen content.
 - Checked 25 Nov 2026 (local build, live catalogue): `npm test` 91 of 91, axe 0 violations on home, /editions, a book
   page, /philosophy, /atelier, /downloads, /checkout, /films and policy pages at 375px. Home went from 8 screens tall
   (7 bands, 48 links/buttons) to about 4 (4 bands, 36).
