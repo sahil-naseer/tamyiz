@@ -138,9 +138,12 @@ export class AdminController {
     toast.appendChild(closeBtn);
     region.appendChild(toast);
 
-    setTimeout(() => {
-      if (toast.isConnected) remove();
-    }, 4200);
+    // Errors stay until dismissed (they may need reading or passing on); the rest fade after a few seconds.
+    if (type !== 'error') {
+      setTimeout(() => {
+        if (toast.isConnected) remove();
+      }, 4200);
+    }
   }
 
   /** Show an accessible inline confirmation dialog instead of blocking browser confirmation dialogs. */
@@ -1019,24 +1022,43 @@ export class AdminController {
   async backfillSmallCovers() {
     if (this._xsBackfill) return;
     this._xsBackfill = true;
+    let step = 'reading the e-book list';
     try {
       const res = await this.api('products');
-      const missing = (res.ok ? res.data.products || [] : []).filter((p) => p.coverType && !p.xsType && p.coverUrl);
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${res.data.error || ''}`);
+      const missing = (res.data.products || []).filter((p) => p.coverType && !p.xsType && p.coverUrl);
+      if (!missing.length) return;
+      this.notify(`Making small phone covers for ${missing.length} e-book${missing.length === 1 ? '' : 's'}… keep this page open a few seconds.`, 'info');
       let made = 0;
+      const failed = [];
       for (const p of missing) {
         try {
-          const img = await fetch(p.coverUrl, { credentials: 'same-origin' });
-          if (!img.ok) continue;
+          step = 'downloading the cover';
+          const img = await fetch(p.coverUrl, { credentials: 'same-origin', cache: 'no-store' });
+          if (!img.ok) throw new Error(`HTTP ${img.status}`);
+          step = 'shrinking the cover';
           const bmp = await createImageBitmap(await img.blob());
           const { blob } = await this.shrinkBitmap(bmp, 360, 0.8);
+          if (!blob) throw new Error('this browser could not make the image');
+          step = 'saving it';
           const form = new FormData();
           form.append('xs', blob, 'xs.jpg');
           const up = await this.api(`products/${p.id}/thumb`, { method: 'POST', body: form });
-          if (up.ok) made++;
-        } catch { /* try again next visit */ }
+          if (!up.ok) throw new Error(`HTTP ${up.status} ${up.data.error || ''}`.trim());
+          made++;
+        } catch (err) {
+          failed.push(`${p.name}: ${step} failed (${err && err.message ? err.message : err})`);
+        }
       }
       if (made) this.notify(`Made the small phone covers for ${made} e-book${made === 1 ? '' : 's'}.`, 'success');
-    } catch { /* not important enough to bother the admin */ }
+      if (failed.length) {
+        console.warn('Small phone covers:', failed);
+        this.notify(`Small phone covers: ${failed.length} failed. First: ${failed[0]}`, 'error');
+      }
+    } catch (err) {
+      console.warn('Small phone covers:', step, err);
+      this.notify(`Small phone covers: ${step} failed (${err && err.message ? err.message : err}).`, 'error');
+    }
   }
 
   async shrinkBitmap(bmp, maxSide, quality) {
