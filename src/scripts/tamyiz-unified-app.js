@@ -63,11 +63,12 @@ class TamyizUnifiedApp {
 
     // Ebooks come from /admin (Cloudflare storage). Start loading them now, but draw the page first:
     // waiting for them used to leave the screen blank for seconds on a cold visit (27 Oct 2026).
-    // On home the e-books are below the first screen, so the list is asked for only after that screen has painted
-    // (26 Nov 2026): when it arrived before the paint, Lighthouse made the first paint wait for it (LCP ~2.2 s vs ~2.8 s).
-    // Home's HTML has no preload for it for the same reason (scripts/build-pages.js). Every other page fetches at once.
+    // On a ready-made page the list is asked for only after the first screen has painted (26 Nov 2026): when it arrived
+    // before the paint, Lighthouse made the first paint wait for it. Ready-made pages have no preload for it for the
+    // same reason (server/prerender.js). Every other page fetches at once.
+    // Two frames: the first one's paint must be on screen before the request goes out (one frame was not enough live).
     const productsReady = this.keepPrerendered
-      ? new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0))).then(() => loadProducts())
+      ? new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0)))).then(() => loadProducts())
       : loadProducts();
 
     // Ready-made pages (26 Nov 2026): home comes drawn in index.html (scripts/build-pages.js), /editions and book pages
