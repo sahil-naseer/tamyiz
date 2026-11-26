@@ -8483,3 +8483,61 @@ html.pre #main-content > * {
     order: -1;
   }
 }
+
+/* ==========================================================================
+   ALIGN 27 Nov 2026: one left edge for the whole page, and the hero's dot effect is back.
+   Before: the logo sat at 40px, the e-books and footer at 88px, and the hero and About us at 136px
+   (on a 1440px screen). Now the header, hero and About us use the same box as `.container`
+   (max 1360px; side padding 1rem / 1.5rem from 640px / 3rem from 1024px), so they all line up.
+   ========================================================================== */
+.tmz-dots {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+@media print {
+  .tmz-dots {
+    display: none;
+  }
+}
+
+.tamyiz-header {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.tamyiz-header-inner,
+.tmz-hero-inner,
+.tmz-founders-inner {
+  max-width: 1360px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .tamyiz-header-inner,
+  .tmz-hero-inner,
+  .tmz-founders-inner {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tamyiz-header-inner,
+  .tmz-hero-inner,
+  .tmz-founders-inner {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+/* The yellow highlight hangs into the margin, so "the difference." starts exactly under "Learn to tell"
+   (its padding used to push the words 0.22em to the right). */
+.tmz-hero .tmz-mark {
+  margin-left: -0.22em;
+}

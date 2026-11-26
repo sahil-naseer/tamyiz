@@ -120,6 +120,7 @@ export function renderHomePage(appInstance) {
       <!-- 1. HERO (25 Nov 2026, calm pass): one message, one main button, one quiet fact line, then the drawing.
            The headline is the name's meaning; the line under it says plainly what we sell. Not tied to one product. -->
       <section class="tmz-hero" id="hero">
+        <canvas class="tmz-dots" aria-hidden="true"></canvas>
         <div class="tmz-hero-inner">
           <div class="tmz-hero-copy">
             <p class="tmz-hero-meaning"><strong>Tamyiz</strong> (<span lang="ar">تمييز</span>): the ability to tell things apart.</p>
