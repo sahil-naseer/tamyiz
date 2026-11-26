@@ -362,6 +362,10 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
 - Hero: one column: meaning line, headline, the plain line "Short, practical e-books for beginners...", ONE black button
   (Browse the e-books) + a text link (How we write), one quiet fact line (`heroProof()`: count, authors, download), then
   the drawing. No canvas, no count-up, no boxes.
+  Hero fix 26 Nov 2026 (Sahil: "Fix A, side by side"): from 1024px the words are on the left and the drawing on the
+  right, so the whole hero fits the first screen on laptops (in one column the drawing fell below the fold and, at
+  1280x720, never drew). Phones and tablets keep one column. The hero drawing starts on arrival (motion.js), not on
+  scroll. The parallax was removed (it slid the drawing into the hero's clipped bottom edge).
 - Header: Home · E-books · How we write · About us; the row shows from 900px and the Menu button only below that.
   Films is gone everywhere (see "Films removed" below). No public link to /admin anywhere (type the address).
   The footer trust strip was removed.
@@ -371,8 +375,7 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
   is a plain line. On phones (<640px) the cover is small and title, price, Add to bag and Buy come before the free
   pages (CSS `order` with `display: contents` on the left column).
 - About us: one WhatsApp button (the form); policy pages on phones: the five tabs are one swipeable row, current tab first.
-- Motion now: the hero's staggered entrance (CSS), the hero drawing drawing itself, a gentle CSS parallax on the hero
-  drawing (`animation-timeline: scroll(root)`, only where supported), scroll fade-ins, the progress line, the cover glide
+- Motion now: the hero's staggered entrance (CSS), the hero drawing drawing itself (on arrival), scroll fade-ins, the progress line, the cover glide
   to the book page, the bag bump. All off under "reduce motion"; nothing loops.
 - Checked 25 Nov 2026 (local build, live catalogue): `npm test` 91 of 91, axe 0 violations on home, /editions, a book
   page, /philosophy, /atelier, /downloads, /checkout, /films and policy pages at 375px. Home went from 8 screens tall

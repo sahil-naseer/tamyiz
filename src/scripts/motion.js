@@ -9,7 +9,8 @@
  *  - The app draws pages with innerHTML, so one MutationObserver re-scans after every draw.
  *
  * Parts: scroll reveals · line drawings that draw themselves · the progress line. The hero's staggered
- * entrance and the hero drawing's gentle parallax are pure CSS (tamyiz-unified.css, "CALM 25 Nov 2026").
+ * entrance is pure CSS (tamyiz-unified.css, "CALM 25 Nov 2026"). The hero drawing's scroll parallax was
+ * removed 26 Nov 2026 (it pushed the drawing into the hero's clipped edge).
  * Removed 25 Nov 2026 to keep the site calm: the mouse-following dot grid, covers leaning toward the
  * mouse, count-up numbers and the pinned "How we write" scroll section.
  *
@@ -67,6 +68,12 @@ function tag(root) {
   root.querySelectorAll('[data-draw]:not([data-draw-seen])').forEach((el) => {
     el.dataset.drawSeen = '';
     if (sinceNav() > 1500 && inView(el)) { el.classList.add('is-drawn', 'is-instant'); return; }
+    // The hero's drawing belongs to the first screen: it starts on arrival instead of waiting to be scrolled to
+    // (26 Nov 2026: on short laptop screens it used to stay blank). Two frames, so its starting state is painted first.
+    if (el.closest('.tmz-hero')) {
+      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('is-drawn')));
+      return;
+    }
     drawIo.observe(el);
   });
 }

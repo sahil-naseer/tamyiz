@@ -7161,8 +7161,8 @@ html.is-scrolled .tamyiz-header {
     transition: none;
   }
 
+  /* --il-wait for the hero is set in the CALM 25 Nov 2026 block (hero fix 26 Nov 2026). */
   .tmz-hero-art {
-    --il-wait: 200ms;
     --il-step: 7ms;
   }
 }
@@ -8266,21 +8266,37 @@ body[data-page="admin"] .tmz-progress {
   padding-bottom: 2.5rem;
 }
 
-/* Gentle parallax: the drawing scrolls a little slower than the page. Pure CSS (no script), only where the
-   browser supports scroll-linked animation, and never when the visitor asked for less motion. */
-@supports (animation-timeline: scroll()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .tmz-hero-art {
-      animation: tmz-drift linear both;
-      animation-timeline: scroll(root);
-      animation-range: 0 100vh;
-    }
+/* Hero fix 26 Nov 2026 (Sahil chose "side by side"): on laptops the one-column hero pushed the drawing below
+   the fold (at 1280x720 it never drew; at 1440x900 it was cut off). From 1024px the words sit on the left and
+   the drawing on the right, so the whole hero fits on the first screen. Phones and tablets keep one column.
+   The scroll parallax was removed: it slid the drawing into the hero's clipped bottom edge. The drawing now
+   starts on arrival (motion.js), after the headline has begun. */
+.tmz-hero-art {
+  --il-wait: 450ms;
+}
+
+@media (min-width: 1024px) {
+  .tmz-hero-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    align-items: center;
+    gap: 3rem;
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+    min-height: min(44rem, calc(100svh - 64px));
+  }
+
+  .tmz-hero-art {
+    max-width: none;
+    margin: 0;
+    padding: 0;
   }
 }
 
-@keyframes tmz-drift {
-  to {
-    transform: translateY(70px);
+/* Small laptops: the stacked-hero headline size (8vw, from the 1099px rule above) is too big for a half; this keeps "the difference." inside it. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .tmz-hero-title {
+    font-size: 5.4vw;
   }
 }
 
