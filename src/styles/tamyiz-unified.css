@@ -8487,7 +8487,7 @@ html.pre #main-content > * {
 /* ==========================================================================
    ALIGN 27 Nov 2026: one left edge for the whole page, and the hero's dot effect is back.
    Before: the logo sat at 40px, the e-books and footer at 88px, and the hero and About us at 136px
-   (on a 1440px screen). Now the header, hero and About us use the same box as `.container`
+   (on a 1440px screen). Now the header, hero, About us on home and the /atelier page (`.tmz-wrap`) use the same box as `.container`
    (max 1360px; side padding 1rem / 1.5rem from 640px / 3rem from 1024px), so they all line up.
    ========================================================================== */
 .tmz-dots {
@@ -8512,7 +8512,8 @@ html.pre #main-content > * {
 
 .tamyiz-header-inner,
 .tmz-hero-inner,
-.tmz-founders-inner {
+.tmz-founders-inner,
+.tmz-wrap {
   max-width: 1360px;
   padding-left: 1rem;
   padding-right: 1rem;
@@ -8521,7 +8522,8 @@ html.pre #main-content > * {
 @media (min-width: 640px) {
   .tamyiz-header-inner,
   .tmz-hero-inner,
-  .tmz-founders-inner {
+  .tmz-founders-inner,
+  .tmz-wrap {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
@@ -8530,7 +8532,8 @@ html.pre #main-content > * {
 @media (min-width: 1024px) {
   .tamyiz-header-inner,
   .tmz-hero-inner,
-  .tmz-founders-inner {
+  .tmz-founders-inner,
+  .tmz-wrap {
     padding-left: 3rem;
     padding-right: 3rem;
   }
