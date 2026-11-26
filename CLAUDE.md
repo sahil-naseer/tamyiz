@@ -417,12 +417,13 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
   is a plain line. On phones (<640px) the cover is small and title, price, Add to bag and Buy come before the free
   pages (CSS `order` with `display: contents` on the left column).
 - About us: one WhatsApp button (the form); policy pages on phones: the five tabs are one swipeable row, current tab first.
-- Dot grid back + one left edge (27 Nov 2026, Sahil asked): the hero's mouse-following dots are back
+- Hero dot grid back (27 Nov 2026, Sahil asked): the hero's mouse-following dots are back
   (`<canvas class="tmz-dots">` in home-page.js, `dotGrid()` in motion.js, the same code as 14 Nov: mouse screens only,
-  draws only while the mouse moves, off under "reduce motion"). The header, hero, About us (home) and the /atelier page (`.tmz-wrap`) now use the same box
-  as `.container` (max 1360px; side padding 1rem / 1.5rem from 640px / 3rem from 1024px), so the logo, hero text,
-  About us, e-books and footer share one left edge (before: 40, 136 and 88px at 1440px). The hero's yellow highlight
-  hangs 0.22em left so "the difference." starts under "Learn to tell". All in the "ALIGN 27 Nov 2026" block at the
+  draws only while the mouse moves, off under "reduce motion"). The hero uses the same box as `.container`
+  (max 1360px; side padding 1rem / 1.5rem from 640px / 3rem from 1024px), so its text lines up with the e-books
+  section, and its yellow highlight hangs 0.22em left so "the difference." starts under "Learn to tell".
+  Only the hero changed: the header, About us and /atelier keep their earlier spacing (a first version moved them
+  too; Sahil asked for everything except the hero to stay as before). All in the "HERO 27 Nov 2026" block at the
   very end of tamyiz-unified.css.
 - Motion now: the hero's staggered entrance (CSS), the hero drawing drawing itself (on arrival), scroll fade-ins, the progress line, the cover glide
   to the book page, the bag bump. All off under "reduce motion"; nothing loops.

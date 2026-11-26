@@ -8485,10 +8485,10 @@ html.pre #main-content > * {
 }
 
 /* ==========================================================================
-   ALIGN 27 Nov 2026: one left edge for the whole page, and the hero's dot effect is back.
-   Before: the logo sat at 40px, the e-books and footer at 88px, and the hero and About us at 136px
-   (on a 1440px screen). Now the header, hero, About us on home and the /atelier page (`.tmz-wrap`) use the same box as `.container`
-   (max 1360px; side padding 1rem / 1.5rem from 640px / 3rem from 1024px), so they all line up.
+   HERO 27 Nov 2026: the hero's dot effect is back and the hero lines up with the e-books section.
+   Only the hero changed: the header, About us and the /atelier page keep their earlier spacing (Sahil's call,
+   27 Nov 2026: a first version moved them too and was undone). The hero uses the same box as `.container`
+   (max 1360px; side padding 1rem / 1.5rem from 640px / 3rem from 1024px).
    ========================================================================== */
 .tmz-dots {
   position: absolute;
@@ -8505,35 +8505,21 @@ html.pre #main-content > * {
   }
 }
 
-.tamyiz-header {
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.tamyiz-header-inner,
-.tmz-hero-inner,
-.tmz-founders-inner,
-.tmz-wrap {
+.tmz-hero-inner {
   max-width: 1360px;
   padding-left: 1rem;
   padding-right: 1rem;
 }
 
 @media (min-width: 640px) {
-  .tamyiz-header-inner,
-  .tmz-hero-inner,
-  .tmz-founders-inner,
-  .tmz-wrap {
+  .tmz-hero-inner {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
 }
 
 @media (min-width: 1024px) {
-  .tamyiz-header-inner,
-  .tmz-hero-inner,
-  .tmz-founders-inner,
-  .tmz-wrap {
+  .tmz-hero-inner {
     padding-left: 3rem;
     padding-right: 3rem;
   }
