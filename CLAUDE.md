@@ -356,9 +356,13 @@ Design and motion (all in the "POLISH 14 Nov 2026 (second pass)" block at the en
 
 Rule: one message and one main action per screen, fewer boxes, one accent (yellow), calm motion. Styles are in the
 "CALM 25 Nov 2026" block at the end of tamyiz-unified.css (new rules go there; phone rules at its end).
-- Home is four bands: hero → latest e-books → About us (founders, one link) → closing line (one button). Keep it lean:
+- Home is four bands: hero → About us (founders, one link) → all e-books → closing line (one button). Keep it lean:
   "How we write", "Read it anywhere" and the FAQ live only on /philosophy; the promise strip is gone.
   Old links `/#philosophy`, `/#format-guide`, `/#formats` are forwarded to /philosophy in `parseRoute()`.
+  All e-books on home (26 Nov 2026, Sahil: "showcase all the books not three"): the band shows every book, newest first
+  ("All e-books", link "Search and sort" → /editions). Covers from the 4th card on load only when scrolled within 600px
+  (`watchDeferredCovers()` in home-page.js): native lazy loading fetched all 9 at once and cost Lighthouse a point.
+  Phones show the cards 2 per row (cover on top), not "cover left" as the 24 Oct phone notes say.
 - Hero: one column: meaning line, headline, the plain line "Short, practical e-books for beginners...", ONE black button
   (Browse the e-books) + a text link (How we write), one quiet fact line (`heroProof()`: count, authors, download), then
   the drawing. No canvas, no count-up, no boxes.

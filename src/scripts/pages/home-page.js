@@ -47,9 +47,55 @@ export function emptyShopBlock() {
               </div>`;
 }
 
+/*
+ * Covers past the first row on home wait until the visitor scrolls near them (26 Nov 2026).
+ * With all e-books on home, every cover started downloading the moment the page drew (native lazy loading
+ * fetches far ahead), and Lighthouse counted those downloads against the first screen's paint.
+ * The <img> keeps its width/height (no layout shift); a cover once shown is drawn with its real src on every
+ * later redraw (the app redraws with innerHTML), so it never flashes empty.
+ */
+const BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+const shownCovers = new Set();
+let coverIo = null;
+
+function coverSrcAttrs(src, defer) {
+  return defer && !shownCovers.has(src) ? `src="${BLANK_IMG}" data-src="${src}"` : `src="${src}"`;
+}
+
+function showCover(img) {
+  const src = img.dataset.src;
+  if (!src) return;
+  shownCovers.add(src);
+  img.src = src;
+  img.removeAttribute('data-src');
+}
+
+/** A card's cover and its hover picture come in together (the hover one is hidden on touch screens, so it never "intersects"). */
+function showCard(img) {
+  const thumb = img.closest('.tamyiz-product-thumb') || img.parentElement;
+  thumb.querySelectorAll('img[data-src]').forEach((i) => { coverIo?.unobserve(i); showCover(i); });
+}
+
+/** Called after home is drawn: swaps in each waiting cover once it comes within ~600px of the screen. */
+function watchDeferredCovers() {
+  const imgs = document.querySelectorAll('#editions img.tamyiz-img-primary[data-src]');
+  if (!imgs.length) return;
+  if (!('IntersectionObserver' in window)) { imgs.forEach(showCard); return; }
+  if (!coverIo) {
+    coverIo = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        coverIo.unobserve(e.target);
+        showCard(e.target);
+      }
+    }, { rootMargin: '600px 0px' });
+  }
+  imgs.forEach((img) => coverIo.observe(img));
+}
+
 export function renderHomePage(appInstance) {
-  // Newest 3 ebooks (the list from /admin is newest first)
-  const featuredProducts = products.slice(0, 3);
+  // Every e-book in the catalogue (26 Nov 2026, Sahil: "showcase all the books not three"), newest first as on /admin.
+  const featuredProducts = products;
 
   const html = `
     <div class="tamyiz-page-home">
@@ -102,27 +148,27 @@ export function renderHomePage(appInstance) {
         </div>
       </section>
 
-      <!-- 3. LATEST E-BOOKS -->
+      <!-- 3. ALL E-BOOKS (every book; /editions adds search and sorting) -->
       <section id="editions" class="tamyiz-section py-14 md:py-24 scroll-mt-24" style="background: var(--color-offwhite);">
         <div class="container">
           <div class="tamyiz-shop-header" style="align-items: flex-end; margin-bottom: 2.5rem;">
             <div>
               <span class="tmz-label">The shop</span>
-              <h2 style="font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; text-transform: uppercase;">Latest e-books</h2>
+              <h2 style="font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; text-transform: uppercase;">All e-books</h2>
             </div>
-            ${products.length > 3 ? `<a href="/editions" class="tmz-hero-link" data-nav="/editions">See all ${products.length} e-books <span aria-hidden="true">→</span></a>` : ''}
+            ${products.length > 3 ? `<a href="/editions" class="tmz-hero-link" data-nav="/editions">Search and sort <span aria-hidden="true">→</span></a>` : ''}
           </div>
 
-          <!-- 3-Card Equal-Height Grid -->
+          <!-- Equal-height grid: 1 / 2 / 3 columns -->
           <div class="tamyiz-product-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
-            ${featuredProducts.length ? featuredProducts.map(p => renderProductCardHtml(p, appInstance)).join('') : emptyShopBlock()}
+            ${featuredProducts.length ? featuredProducts.map((p, i) => renderProductCardHtml(p, appInstance, { deferCover: i >= 3 })).join('') : emptyShopBlock()}
           </div>
 
         </div>
       </section>
 
       <!-- (25 Nov 2026) "How we write", "Read it anywhere" and the FAQ live only on /philosophy
-           (Films was removed altogether on 25 Nov 2026), so home is four bands: hero, latest e-books, about us, closing line. -->
+           (Films was removed altogether on 25 Nov 2026), so home is four bands: hero, about us, all e-books, closing line. -->
 
       <!-- 6. CLOSING LINE: one last, plain invitation. Honest about whether anything can be bought yet. -->
       <section class="tmz-closing">
@@ -143,13 +189,15 @@ export function renderHomePage(appInstance) {
     </div>
   `;
 
+  // The app inserts this HTML right after we return; look for waiting covers once it is in the page.
+  queueMicrotask(watchDeferredCovers);
   return html;
 }
 
 /**
  * Reusable Equal-Height Product Card Renderer (Rule 4)
  */
-export function renderProductCardHtml(p, appInstance) {
+export function renderProductCardHtml(p, appInstance, { deferCover = false } = {}) {
   const slug = p.slug || p.id;
   const hasVariants = p.variants && p.variants.options && p.variants.options.length > 0;
   const currentSelectedOption = appInstance.selectedSizes[p.id] || (hasVariants ? p.variants.options[0] : "Standard");
@@ -165,8 +213,8 @@ export function renderProductCardHtml(p, appInstance) {
   return `
     <div class="tamyiz-product-card flex flex-col h-full" id="card-${p.id}" data-product-card="${p.id}">
       <div class="tamyiz-product-thumb" data-nav="/edition/${slug}">
-        <img src="${p.thumb || p.images[0]}" alt="${p.name}" class="tamyiz-img-primary" width="480" height="720" loading="lazy" decoding="async" />
-        <img src="${p.images[1] || p.thumb || p.images[0]}" alt="" aria-hidden="true" class="tamyiz-img-hover" width="480" height="720" loading="lazy" decoding="async" />
+        <img ${coverSrcAttrs(p.thumb || p.images[0], deferCover)} alt="${p.name}" class="tamyiz-img-primary" width="480" height="720" loading="lazy" decoding="async" />
+        <img ${coverSrcAttrs(p.images[1] || p.thumb || p.images[0], deferCover)} alt="" aria-hidden="true" class="tamyiz-img-hover" width="480" height="720" loading="lazy" decoding="async" />
 
         ${isAvailable(p) ? '' : '<span class="tamyiz-badge-digital">COMING SOON</span>'}
 
