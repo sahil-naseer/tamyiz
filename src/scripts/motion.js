@@ -11,14 +11,16 @@
  * Parts: scroll reveals · line drawings that draw themselves · the progress line. The hero's staggered
  * entrance is pure CSS (tamyiz-unified.css, "CALM 25 Nov 2026"). The hero drawing's scroll parallax was
  * removed 26 Nov 2026 (it pushed the drawing into the hero's clipped edge).
- * Removed 25 Nov 2026 to keep the site calm: the mouse-following dot grid, covers leaning toward the
- * mouse, count-up numbers and the pinned "How we write" scroll section.
+ * Removed 25 Nov 2026 to keep the site calm: covers leaning toward the mouse, count-up numbers and the
+ * pinned "How we write" scroll section. The mouse-following dot grid behind the hero was removed then too and
+ * brought back 27 Nov 2026 (Sahil asked for it); it runs only on mouse screens and only while the mouse moves.
  *
  * Smoothness rule (measured 14 Nov 2026): NOTHING loops forever. Every animation here runs once and stops,
  * or runs only while the visitor is scrolling or moving the mouse. An idle page must do no work at all.
  */
 
 const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fine = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 /** What slides in on scroll. `group` = the children arrive one after another. */
 const REVEAL = [
@@ -115,6 +117,85 @@ function reveal(els) {
   }, 1400);
 }
 
+/**
+ * The dot grid behind the hero. The grid itself is a still CSS background (free). This canvas only adds
+ * the dots that swell near the mouse, and only draws while the mouse is moving: nothing here runs on
+ * touch screens, when the pointer rests, or once the hero is off screen. (An earlier version redrew
+ * every dot on every frame; it cost more than half the frame budget on a slow machine.)
+ */
+let dotsStop = null;
+function dotGrid() {
+  const canvas = document.querySelector('.tmz-dots');
+  if (!canvas) {
+    if (dotsStop) dotsStop();
+    return;
+  }
+  if (canvas.dataset.on) return;
+  canvas.dataset.on = '1';
+  if (dotsStop) dotsStop();
+  if (!fine() || reduce()) return;
+  const host = canvas.parentElement;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const GAP = 22;      // must match the CSS grid (background-size on .tmz-hero)
+  const REACH = 170;
+  let w = 0, h = 0, raf = 0, dirty = null;
+  const pointer = { x: -9999, y: -9999, tx: -9999, ty: -9999, on: false };
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  const size = () => {
+    w = host.clientWidth; h = host.clientHeight;
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    dirty = null;
+  };
+  const draw = () => {
+    raf = 0;
+    if (dirty) ctx.clearRect(dirty[0], dirty[1], dirty[2], dirty[3]);
+    dirty = null;
+    if (!pointer.on) return;
+    pointer.x += (pointer.tx - pointer.x) * 0.22;
+    pointer.y += (pointer.ty - pointer.y) * 0.22;
+    const x0 = Math.max(0, Math.floor((pointer.x - REACH) / GAP)), x1 = Math.min(Math.ceil(w / GAP), Math.ceil((pointer.x + REACH) / GAP));
+    const y0 = Math.max(0, Math.floor((pointer.y - REACH) / GAP)), y1 = Math.min(Math.ceil(h / GAP), Math.ceil((pointer.y + REACH) / GAP));
+    ctx.fillStyle = '#000';
+    for (let gy = y0; gy < y1; gy += 1) {
+      for (let gx = x0; gx < x1; gx += 1) {
+        const x = gx * GAP + GAP / 2, y = gy * GAP + GAP / 2;
+        const near = 1 - Math.hypot(x - pointer.x, y - pointer.y) / REACH;
+        if (near <= 0) continue;
+        const s = 1.6 + near * near * 3.4;
+        ctx.globalAlpha = near * 0.6;
+        ctx.fillRect(x - s / 2, y - s / 2, s, s);
+      }
+    }
+    dirty = [x0 * GAP - 4, y0 * GAP - 4, (x1 - x0) * GAP + 8, (y1 - y0) * GAP + 8];
+    // keep going only while the dots are still catching up with the mouse
+    if (Math.abs(pointer.tx - pointer.x) > 0.5 || Math.abs(pointer.ty - pointer.y) > 0.5) raf = requestAnimationFrame(draw);
+  };
+  const kick = () => { if (!raf) raf = requestAnimationFrame(draw); };
+
+  size();
+  const ro = new ResizeObserver(size);
+  ro.observe(host);
+  const onMove = (e) => {
+    const r = host.getBoundingClientRect();
+    pointer.tx = e.clientX - r.left; pointer.ty = e.clientY - r.top;
+    if (!pointer.on) { pointer.on = true; pointer.x = pointer.tx; pointer.y = pointer.ty; }
+    kick();
+  };
+  const onLeave = () => { pointer.on = false; kick(); };
+  host.addEventListener('pointermove', onMove, { passive: true });
+  host.addEventListener('pointerleave', onLeave);
+  dotsStop = () => {
+    cancelAnimationFrame(raf);
+    ro.disconnect();
+    host.removeEventListener('pointermove', onMove);
+    host.removeEventListener('pointerleave', onLeave);
+    dotsStop = null;
+  };
+}
+
 /** Thin reading-progress line at the top, and a soft header shadow once the page is scrolled. */
 function scrollChrome() {
   const bar = document.createElement('div');
@@ -162,6 +243,7 @@ export function initMotion() {
     if (window.location.pathname !== navPath) { navPath = window.location.pathname; navStart = performance.now(); }
     document.documentElement.style.setProperty('--mo-t', `${Math.round(Math.min(sinceNav(), 20000))}ms`);
     askScroll();
+    dotGrid();
     if (still) return;
     tag(app);
     firstPreScan = false;
