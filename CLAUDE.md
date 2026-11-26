@@ -30,6 +30,12 @@ sold with Razorpay and delivered as private signed download links.
   `srcset="xs 240w, sm 480w" sizes="(max-width: 1023px) 124px, 180px"` (home-page.js `cardSrcset`), and the /editions
   function's preload matches. Opening /admin makes the xs cover for books that lack one (`backfillSmallCovers()`,
   2 KV writes per book, once). Same upload route as thumbs: `POST /api/admin/products/<id>/thumb` with `xs`.
+  Open issue (27 Nov 2026): on live, opening /admin did NOT make the xs covers although it worked in a local test
+  (wrangler pages dev, real login) and the server route is correct; the live server log showed no /admin requests from
+  that visit, so the cause is on the browser side and is unknown. The 9 existing xs covers were made from the live
+  covers (sips -Z 360, quality 80) and stored with `wrangler kv key put --remote` (namespace tamyiz-store), plus
+  xsType/xsAt on each book (list backed up in .backups/products-before-xs-2026-11-27.json). New covers uploaded on
+  /admin include xs through the save form; check one after the next upload.
 - Storage: Cloudflare KV, binding `TAMYIZ_STORE` (free; 1 GB, 25 MiB per value, 1,000 writes/day). Keys: `products`
   (JSON list), `cover:<id>`, `file:<id>`. See `server/catalog.js`. Locally: `.local-store/` (`server/dev-kv.js`).
 - Status per e-book: `draft` (admin only) · `soon` (shop, "Pre-order on WhatsApp") · `on-sale` (buyable; needs the PDF).
