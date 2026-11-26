@@ -5,6 +5,7 @@
  *   products        JSON list of every ebook record (one key, so the shop needs one read per visit)
  *   cover:<id>      cover image bytes  (metadata: { type })
  *   thumb:<id>      small cover for cards and the bag, made in the browser on /admin (metadata: { type })
+ *   xs:<id>         extra-small cover (240px wide) for cards on phones, made on /admin too (metadata: { type })
  *   file:<id>       the PDF bytes      (metadata: { type, name, size })
  *
  * Status of an ebook
@@ -61,6 +62,8 @@ export function publicProduct(p) {
   const cover = p.coverType ? `/api/cover/${p.id}?v=${p.updatedAt}` : '/og/tamyiz.jpg';
   // Cards and the bag use the small version when it exists (about a quarter of the bytes); the product page uses the full cover.
   const thumb = p.thumbType ? `/api/cover/${p.id}?s=sm&v=${p.thumbAt || p.updatedAt}` : cover;
+  // Cards on phones show the cover ~110px wide: the 240px version is a quarter of the bytes (26 Nov 2026). null = none yet.
+  const thumbXs = p.xsType ? `/api/cover/${p.id}?s=xs&v=${p.xsAt || p.updatedAt}` : null;
   const specs = [{ label: 'Format', value: 'PDF e-book, instant download after payment' }];
   if (p.pages) specs.push({ label: 'Pages', value: `${p.pages}` });
   specs.push({ label: 'Reads on', value: 'Phone, tablet, laptop, Kindle (send-to-Kindle), Apple Books' });
@@ -120,6 +123,7 @@ export function publicProduct(p) {
     status: p.status,
     images: [cover],
     thumb,
+    thumbXs,
     video,
     tableOfContents: Array.isArray(p.contents) ? p.contents.map(esc) : [],
     sampleExcerpt,

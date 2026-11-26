@@ -323,6 +323,7 @@ export class AdminController {
   async renderDashboardView() {
     const mount = document.getElementById('tmz-admin-content');
     if (!mount) return;
+    this.backfillSmallCovers();
 
     const navGroups = [
       {
@@ -874,8 +875,10 @@ export class AdminController {
         const trimmed = bmp !== raw;
         const { blob: bigBlob, canvas } = await this.shrinkBitmap(bmp, 1200, 0.86);
         const { blob: smBlob } = await this.shrinkBitmap(bmp, 720, 0.8);
+        const { blob: xsBlob } = await this.shrinkBitmap(bmp, 360, 0.8); // 240px wide: cards on phones
         this.coverBlob = bigBlob;
         this.thumbBlob = smBlob;
+        this.xsBlob = xsBlob;
 
         const prev = document.getElementById('tmz-cover-preview');
         const img = document.getElementById('tmz-cover-img');
@@ -966,6 +969,7 @@ export class AdminController {
 
       if (this.coverBlob) formData.append('cover', this.coverBlob, 'cover.jpg');
       if (this.coverBlob && this.thumbBlob) formData.append('thumb', this.thumbBlob, 'thumb.jpg');
+      if (this.coverBlob && this.xsBlob) formData.append('xs', this.xsBlob, 'xs.jpg');
       if (pdfFile) formData.append('pdf', pdfFile);
 
       const xhr = new XMLHttpRequest();
@@ -1006,6 +1010,33 @@ export class AdminController {
 
       xhr.send(formData);
     });
+  }
+
+  /**
+   * Once per visit to /admin: books whose cover has no extra-small (240px) version get one, made here from the full
+   * cover (26 Nov 2026; the shop's cards use it on phones). Quiet; two storage writes per book, only once per book.
+   */
+  async backfillSmallCovers() {
+    if (this._xsBackfill) return;
+    this._xsBackfill = true;
+    try {
+      const res = await this.api('products');
+      const missing = (res.ok ? res.data.products || [] : []).filter((p) => p.coverType && !p.xsType && p.coverUrl);
+      let made = 0;
+      for (const p of missing) {
+        try {
+          const img = await fetch(p.coverUrl, { credentials: 'same-origin' });
+          if (!img.ok) continue;
+          const bmp = await createImageBitmap(await img.blob());
+          const { blob } = await this.shrinkBitmap(bmp, 360, 0.8);
+          const form = new FormData();
+          form.append('xs', blob, 'xs.jpg');
+          const up = await this.api(`products/${p.id}/thumb`, { method: 'POST', body: form });
+          if (up.ok) made++;
+        } catch { /* try again next visit */ }
+      }
+      if (made) this.notify(`Made the small phone covers for ${made} e-book${made === 1 ? '' : 's'}.`, 'success');
+    } catch { /* not important enough to bother the admin */ }
   }
 
   async shrinkBitmap(bmp, maxSide, quality) {

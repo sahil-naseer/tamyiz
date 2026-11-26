@@ -13,8 +13,9 @@ export async function onRequestGet({ request, env }) {
     const catalog = (await loadCatalog(env, { cached: true })).filter((p) => p.status !== 'draft').map((p) => publicProduct(p));
     html = withReadyMadePage(shell, { page: 'editions', path: '/editions', catalog });
     // The first card's cover is the biggest thing on the first screen: start it with the page.
-    const first = html.match(/<img src="([^"]+)" alt="[^"]*" class="tamyiz-img-primary"/);
-    if (first) html = html.replace('<!-- /seo -->', `<link rel="preload" as="image" href="${first[1]}" fetchpriority="high" />\n  <!-- /seo -->`);
+    const first = html.match(/<img src="([^"]+)"(?: srcset="([^"]+)" sizes="([^"]+)")? alt="[^"]*" class="tamyiz-img-primary"/);
+    const set = first && first[2] ? ` imagesrcset="${first[2]}" imagesizes="${first[3]}"` : '';
+    if (first) html = html.replace('<!-- /seo -->', `<link rel="preload" as="image" href="${first[1]}"${set} fetchpriority="high" />\n  <!-- /seo -->`);
   } catch (err) {
     console.error('/editions: ready-made HTML failed, sending the plain page', err); // the app draws it as before
   }

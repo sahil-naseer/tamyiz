@@ -263,11 +263,12 @@ async function saveProduct(request, env, id) {
   let form;
   try { form = await request.formData(); } catch { return json({ error: 'Could not read the upload. Try again.' }, 400); }
 
-  let fields, cover, thumb, pdf;
+  let fields, cover, thumb, xs, pdf;
   try {
     fields = readFields(form);
     cover = await fileFrom(form, 'cover', MAX_COVER_BYTES, ['image/jpeg', 'image/png', 'image/webp'], 'The cover');
     thumb = await fileFrom(form, 'thumb', MAX_THUMB_BYTES, ['image/jpeg', 'image/png', 'image/webp'], 'The small cover');
+    xs = await fileFrom(form, 'xs', MAX_THUMB_BYTES, ['image/jpeg', 'image/png', 'image/webp'], 'The extra-small cover');
     pdf = await fileFrom(form, 'pdf', MAX_PDF_BYTES, ['application/pdf'], 'The ebook file');
   } catch (err) {
     return json({ error: err.message }, 400);
@@ -293,6 +294,13 @@ async function saveProduct(request, env, id) {
       await kv.delete(`thumb:${rec.id}`);
       rec.thumbType = null;
     }
+    if (xs) {
+      await kv.put(`xs:${rec.id}`, xs.bytes, { metadata: { type: xs.type } });
+      Object.assign(rec, { xsType: xs.type, xsAt: now });
+    } else if (rec.xsType) {
+      await kv.delete(`xs:${rec.id}`);
+      rec.xsType = null;
+    }
   }
   if (pdf) {
     await kv.put(`file:${rec.id}`, pdf.bytes, { metadata: { type: pdf.type, name: pdf.name, size: pdf.size } });
@@ -310,21 +318,34 @@ async function saveProduct(request, env, id) {
 const statusName = (s) => ({ draft: 'Draft', soon: 'Coming soon', 'on-sale': 'On sale' })[s] || s;
 const upsert = (list, rec) => [rec, ...list.filter((p) => p.id !== rec.id)].sort((a, b) => b.createdAt - a.createdAt);
 
-/** Store a small cover for an existing book (/admin makes these for books added before thumbnails existed). */
+/**
+ * Store a small (`thumb`) and/or extra-small (`xs`) cover for an existing book: /admin makes these for books added
+ * before those sizes existed.
+ */
 async function saveThumb(request, env, id) {
   const kv = store(env);
   let form;
   try { form = await request.formData(); } catch { return json({ error: 'Could not read the upload.' }, 400); }
-  let thumb;
-  try { thumb = await fileFrom(form, 'thumb', MAX_THUMB_BYTES, ['image/jpeg', 'image/png', 'image/webp'], 'The small cover'); }
-  catch (err) { return json({ error: err.message }, 400); }
-  if (!thumb) return json({ error: 'No image.' }, 400);
+  let thumb, xs;
+  try {
+    thumb = await fileFrom(form, 'thumb', MAX_THUMB_BYTES, ['image/jpeg', 'image/png', 'image/webp'], 'The small cover');
+    xs = await fileFrom(form, 'xs', MAX_THUMB_BYTES, ['image/jpeg', 'image/png', 'image/webp'], 'The extra-small cover');
+  } catch (err) { return json({ error: err.message }, 400); }
+  if (!thumb && !xs) return json({ error: 'No image.' }, 400);
   const list = await loadCatalog(env);
   const rec = findById(list, id);
   if (!rec) return json({ error: 'That ebook no longer exists.' }, 404);
   if (!rec.coverType) return json({ error: 'This e-book has no cover.' }, 409);
-  await kv.put(`thumb:${id}`, thumb.bytes, { metadata: { type: thumb.type } });
-  const updated = { ...rec, thumbType: thumb.type, thumbAt: Date.now() };
+  const now = Date.now();
+  const updated = { ...rec };
+  if (thumb) {
+    await kv.put(`thumb:${id}`, thumb.bytes, { metadata: { type: thumb.type } });
+    Object.assign(updated, { thumbType: thumb.type, thumbAt: now });
+  }
+  if (xs) {
+    await kv.put(`xs:${id}`, xs.bytes, { metadata: { type: xs.type } });
+    Object.assign(updated, { xsType: xs.type, xsAt: now });
+  }
   await saveCatalog(env, list.map((p) => (p.id === id ? updated : p)));
   return json({ ok: true, product: adminView(updated) });
 }
@@ -334,7 +355,7 @@ async function deleteProduct(env, id) {
   const list = await loadCatalog(env);
   if (!findById(list, id)) return json({ error: 'That ebook no longer exists.' }, 404);
   await saveCatalog(env, list.filter((p) => p.id !== id));
-  await Promise.all([kv.delete(`cover:${id}`), kv.delete(`thumb:${id}`), kv.delete(`file:${id}`)]);
+  await Promise.all([kv.delete(`cover:${id}`), kv.delete(`thumb:${id}`), kv.delete(`xs:${id}`), kv.delete(`file:${id}`)]);
   return json({ ok: true });
 }
 

@@ -176,6 +176,36 @@ test('small covers: saved with a new cover, served with ?s=sm, made later for ol
   assert.equal(await e.TAMYIZ_STORE.get(`thumb:${product.id}`), null);
 });
 
+test('extra-small covers (240px, cards on phones): saved with a cover, served with ?s=xs, made later, removed', async () => {
+  const e = env(); const cookie = await session(e);
+  const THUMB = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70, 0, 2]);
+  const XS = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70, 0, 3]);
+  const byte11 = async (url) => new Uint8Array(await (await call(e, url)).arrayBuffer())[11];
+  // A book saved with all three sizes.
+  const { product } = await (await save(e, cookie, form({ status: 'soon' }, { cover: [JPEG, 'c.jpg'], thumb: [THUMB, 't.jpg'], xs: [XS, 'x.jpg'] }))).json();
+  let shop = (await (await call(e, '/api/products')).json()).products[0];
+  assert.match(shop.thumbXs, /s=xs/);
+  assert.equal(await byte11(shop.thumbXs), 3);
+  // ?s=xs falls back to the small cover, then the full one, for books that have no extra-small version yet.
+  await e.TAMYIZ_STORE.delete(`xs:${product.id}`);
+  assert.equal(await byte11(`/api/cover/${product.id}?s=xs`), 2);
+  // A new cover without an xs drops the old one; the shop then has no thumbXs (cards use the small cover).
+  await save(e, cookie, form({ status: 'soon' }, { cover: [JPEG, 'c2.jpg'], thumb: [THUMB, 't.jpg'] }), product.id);
+  shop = (await (await call(e, '/api/products')).json()).products[0];
+  assert.equal(shop.thumbXs, null);
+  assert.equal(await byte11(`/api/cover/${product.id}?s=xs`), 2);
+  // /admin makes it later through the same route as the small cover (xs only is fine), login required.
+  const f = new FormData(); f.append('xs', new Blob([XS]), 'x.jpg');
+  assert.equal((await call(e, `/api/admin/products/${product.id}/thumb`, { method: 'POST', body: f })).status, 401);
+  assert.equal((await call(e, `/api/admin/products/${product.id}/thumb`, { method: 'POST', headers: authed(cookie), body: f })).status, 200);
+  shop = (await (await call(e, '/api/products')).json()).products[0];
+  assert.equal(await byte11(shop.thumbXs), 3);
+  assert.match(shop.thumb, /s=sm/); // the small cover stayed
+  // Delete removes it too.
+  await call(e, `/api/admin/products/${product.id}`, { method: 'DELETE', headers: authed(cookie) });
+  assert.equal(await e.TAMYIZ_STORE.get(`xs:${product.id}`), null);
+});
+
 // ---------------------------------------------------------------- visitor numbers
 import { getStats, shapeStats, sourceName } from '../server/stats.js';
 

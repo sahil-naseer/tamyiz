@@ -60,15 +60,21 @@ export function emptyShopBlock() {
 const shownCovers = new Set();
 let coverIo = null;
 
-function coverSrcAttrs(src, defer) {
+function coverSrcAttrs(src, defer, srcset = '') {
   // No placeholder src at all (a data: pixel showed up in Lighthouse as one more request before the first paint).
-  return defer && !shownCovers.has(src) ? `data-src="${src}"` : `src="${src}"`;
+  if (defer && !shownCovers.has(src)) return `data-src="${src}"${srcset ? ` data-srcset="${srcset}" sizes="${CARD_SIZES}"` : ''}`;
+  return `src="${src}"${srcset ? ` srcset="${srcset}" sizes="${CARD_SIZES}"` : ''}`;
 }
+
+// Card covers show ~90-125px wide up to 1023px and ~160-180px above: phones get the 240px version (26 Nov 2026).
+const CARD_SIZES = '(max-width: 1023px) 124px, 180px';
+const cardSrcset = (p) => (p.thumbXs && p.thumb ? `${p.thumbXs} 240w, ${p.thumb} 480w` : '');
 
 function showCover(img) {
   const src = img.dataset.src;
   if (!src) return;
   shownCovers.add(src);
+  if (img.dataset.srcset) { img.srcset = img.dataset.srcset; img.removeAttribute('data-srcset'); }
   img.src = src;
   img.removeAttribute('data-src');
 }
@@ -234,7 +240,7 @@ export function renderProductCardHtml(p, appInstance, { deferCover = false, eage
   return `
     <div class="tamyiz-product-card flex flex-col h-full" id="card-${p.id}" data-product-card="${p.id}">
       <div class="tamyiz-product-thumb" data-nav="/edition/${slug}">
-        <img ${coverSrcAttrs(p.thumb || p.images[0], deferCover)} alt="${p.name}" class="tamyiz-img-primary" width="480" height="720" ${eager ? `loading="eager"${priority ? ' fetchpriority="high"' : ''}` : 'loading="lazy"'} decoding="async" />
+        <img ${coverSrcAttrs(p.thumb || p.images[0], deferCover, cardSrcset(p))} alt="${p.name}" class="tamyiz-img-primary" width="480" height="720" ${eager ? `loading="eager"${priority ? ' fetchpriority="high"' : ''}` : 'loading="lazy"'} decoding="async" />
         <img ${coverSrcAttrs(p.images[1] || p.thumb || p.images[0], deferCover)} alt="" aria-hidden="true" class="tamyiz-img-hover" width="480" height="720" loading="lazy" decoding="async" />
 
         ${isAvailable(p) ? '' : '<span class="tamyiz-badge-digital">COMING SOON</span>'}

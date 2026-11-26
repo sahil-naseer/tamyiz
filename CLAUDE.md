@@ -25,7 +25,11 @@ sold with Razorpay and delivered as private signed download links.
 - Every e-book is added on `/admin` (`src/scripts/pages/admin-page.js` + `src/styles/admin.css`, lazy-loaded via `admin.html` / `/admin`): title,
   one-line summary, price, pages, description, chapters, cover (shrunk to 1200 px in the browser), PDF (max 25 MB).
 - Small covers: /admin also makes a 720 px `thumb:<id>` (served at `/api/cover/<id>?s=sm`); cards and the bag use
-  `product.thumb` (falls back to the full cover). Opening /admin backfills thumbs for books that lack one.
+  `product.thumb` (falls back to the full cover). Extra-small (27 Nov 2026): /admin also makes a 240 px wide `xs:<id>`
+  (`?s=xs`, falls back to sm, then full; `product.thumbXs`, null when missing); cards use
+  `srcset="xs 240w, sm 480w" sizes="(max-width: 1023px) 124px, 180px"` (home-page.js `cardSrcset`), and the /editions
+  function's preload matches. Opening /admin makes the xs cover for books that lack one (`backfillSmallCovers()`,
+  2 KV writes per book, once). Same upload route as thumbs: `POST /api/admin/products/<id>/thumb` with `xs`.
 - Storage: Cloudflare KV, binding `TAMYIZ_STORE` (free; 1 GB, 25 MiB per value, 1,000 writes/day). Keys: `products`
   (JSON list), `cover:<id>`, `file:<id>`. See `server/catalog.js`. Locally: `.local-store/` (`server/dev-kv.js`).
 - Status per e-book: `draft` (admin only) · `soon` (shop, "Pre-order on WhatsApp") · `on-sale` (buyable; needs the PDF).

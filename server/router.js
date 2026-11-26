@@ -18,8 +18,11 @@ const COUPON_RATE_WINDOW_MS = 10 * 60 * 1000;
 async function cover(env, id, request) {
   if (!env.TAMYIZ_STORE) return new Response('Not found', { status: 404 });
   const params = new URL(request.url).searchParams;
-  // ?s=sm asks for the small version (cards, bag); fall back to the full cover if a book has none yet.
-  let found = params.get('s') === 'sm' ? await env.TAMYIZ_STORE.getWithMetadata(`thumb:${id}`, 'arrayBuffer') : null;
+  // ?s=sm asks for the small version (cards, bag), ?s=xs the extra-small one (cards on phones); each falls back to the
+  // next bigger version if a book has none yet.
+  const size = params.get('s');
+  let found = size === 'xs' ? await env.TAMYIZ_STORE.getWithMetadata(`xs:${id}`, 'arrayBuffer') : null;
+  if ((!found || !found.value) && (size === 'sm' || size === 'xs')) found = await env.TAMYIZ_STORE.getWithMetadata(`thumb:${id}`, 'arrayBuffer');
   if (!found || !found.value) found = await env.TAMYIZ_STORE.getWithMetadata(`cover:${id}`, 'arrayBuffer');
   if (!found || !found.value) return new Response('Not found', { status: 404 });
   const { value, metadata } = found;
