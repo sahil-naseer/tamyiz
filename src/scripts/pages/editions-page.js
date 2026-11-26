@@ -4,11 +4,15 @@
  */
 
 import { products } from '../../data/products.js';
-import { renderProductCardHtml, emptyShopBlock } from './home-page.js';
+import { renderProductCardHtml, emptyShopBlock, watchDeferredCovers } from './home-page.js';
 import { siteConfig } from '../../data/site-config.js';
 
 export function renderEditionsPage(appInstance) {
   const filteredList = appInstance.getFilteredAndSortedProducts();
+  // The first two covers (a phone's first row) load at once, the first before anything else; the third (rest of a
+  // laptop's first row) loads natively; the rest wait until scrolled near (26 Nov 2026: lazy first-row covers made
+  // Lighthouse's LCP wait ~1.8 s).
+  queueMicrotask(watchDeferredCovers);
 
   return `
     <div class="tamyiz-page-editions">
@@ -88,7 +92,7 @@ export function renderEditionsPage(appInstance) {
                   Show all e-books
                 </button>
               </div>
-            ` : filteredList.map(p => renderProductCardHtml(p, appInstance)).join('')}
+            ` : filteredList.map((p, i) => renderProductCardHtml(p, appInstance, i < 2 ? { eager: true, priority: i === 0 } : i === 2 ? {} : { deferCover: true })).join('')}
           </div>
         </div>
       </section>

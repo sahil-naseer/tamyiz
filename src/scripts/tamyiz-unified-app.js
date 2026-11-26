@@ -17,7 +17,7 @@ import { foundersData, brandInfo, policies } from '../data/content.js';
 import { siteConfig, preorderWhatsAppUrl } from '../data/site-config.js';
 import { store, hasCoupons } from './store.js';
 
-import { renderHomePage } from './pages/home-page.js';
+import { renderHomePage, watchDeferredCovers } from './pages/home-page.js';
 import { renderEditionsPage } from './pages/editions-page.js';
 import { renderProductDetailPage } from './pages/product-detail-page.js';
 import { renderPhilosophyPage } from './pages/philosophy-page.js';
@@ -66,17 +66,21 @@ class TamyizUnifiedApp {
     // On home the e-books are below the first screen, so the list is asked for only after that screen has painted
     // (26 Nov 2026): when it arrived before the paint, Lighthouse made the first paint wait for it (LCP ~2.2 s vs ~2.8 s).
     // Home's HTML has no preload for it for the same reason (scripts/build-pages.js). Every other page fetches at once.
-    const productsReady = location.pathname === '/'
+    const productsReady = this.keepPrerendered
       ? new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0))).then(() => loadProducts())
       : loadProducts();
 
-    // Home's first screen comes ready-made in index.html (scripts/build-pages.js, prerenderHomeHtml) so it paints before
-    // any script runs. Keep it: the frame is rebuilt around it and <main> is left alone (26 Nov 2026).
-    this.keepPrerendered = location.pathname === '/' && document.documentElement.classList.contains('pre')
-      && !!document.querySelector('#main-content .tamyiz-page-home');
+    // Ready-made pages (26 Nov 2026): home comes drawn in index.html (scripts/build-pages.js), /editions and book pages
+    // are drawn by their Pages Functions (server/prerender.js). <main data-pre="/path"> + html.pre mark them. They
+    // paint before any script runs; the app keeps them (no redraw of <main>) and only reacts to the e-book list.
+    const preMain = document.querySelector('#main-content[data-pre]');
+    this.keepPrerendered = !!preMain && document.documentElement.classList.contains('pre')
+      && preMain.dataset.pre === location.pathname && !location.search;
+    if (!this.keepPrerendered && preMain) this.leavePrerendered('');
 
     // 1. Initial shell render (Header, Drawer, Shell, Footer, Modals)
-    this.renderShell({ keepMain: this.keepPrerendered });
+    // A ready-made page already has its frame: reuse it as is (only wire up the drawers and the banner).
+    this.renderShell({ reuse: this.keepPrerendered });
 
     // 2. Parse initial route from URL
     this.handleLocationChange(false);
@@ -86,7 +90,18 @@ class TamyizUnifiedApp {
     productsReady.then(() => {
       if (!loadState.failed) store.pruneUnavailable(); // a failed load must not empty the bag
       const y = window.scrollY;
-      if (this.currentPage === 'home' && document.querySelector('#main-content .tamyiz-page-home')) {
+      const keptPage = !loadState.failed && document.querySelector('#main-content[data-pre]')?.dataset.pre === location.pathname
+        && (this.currentPage === 'editions' || this.currentPage === 'edition');
+      if (keptPage) {
+        // Drawn by the server from the same catalogue: rebuild the frame around it (header bag, footer count),
+        // show this visitor's wishlist, and leave the page itself alone.
+        this.renderShell({ keepMain: true });
+        this.syncWishlistHearts();
+        this.updateCartBadge();
+        this.applyPageMeta();
+        this.updateActiveNavIndicators();
+        this.renderDrawerItems();
+      } else if (this.currentPage === 'home' && document.querySelector('#main-content .tamyiz-page-home')) {
         this.renderShell({ keepMain: true });
         this.refreshHomeInPlace();
         this.updateCartBadge();
@@ -268,7 +283,7 @@ class TamyizUnifiedApp {
     this.currentPage = route.page;
     this.currentSlug = route.slug;
     this.activePdpImageIndex = 0;
-    if (route.page !== 'home') document.documentElement.classList.remove('pre'); // see keepPrerendered
+    this.leavePrerendered(window.location.pathname); // see keepPrerendered
 
     const anchor = route.anchor ? route.anchor.replace(/^#/, '') : null;
 
@@ -338,7 +353,7 @@ class TamyizUnifiedApp {
     this.currentPage = route.page;
     this.currentSlug = route.slug;
     this.activePdpImageIndex = 0;
-    if (route.page !== 'home') document.documentElement.classList.remove('pre'); // see keepPrerendered
+    this.leavePrerendered(window.location.pathname); // see keepPrerendered
 
     // Only auto-scroll to top if not navigating to a specific hash anchor
     if (!anchor) {
@@ -915,14 +930,16 @@ class TamyizUnifiedApp {
     `;
   }
 
-  renderShell({ keepMain = false } = {}) {
+  renderShell({ keepMain = false, reuse = false } = {}) {
     const app = document.getElementById('app');
     if (!app) return;
 
-    const html = this.shellHtml();
+    const html = reuse ? '' : this.shellHtml();
 
     const oldMain = keepMain ? document.getElementById('main-content') : null;
-    if (oldMain && oldMain.parentElement === app) {
+    if (reuse) {
+      // nothing to draw: the page arrived with its frame (ready-made page)
+    } else if (oldMain && oldMain.parentElement === app) {
       const tpl = document.createElement('template');
       tpl.innerHTML = html;
       const kids = [...tpl.content.childNodes];
@@ -970,6 +987,19 @@ class TamyizUnifiedApp {
       header.classList.toggle('is-home-page', this.currentPage === 'home');
     }
 
+    // A ready-made page (keepPrerendered) is already on screen with its own <head>: don't draw it again.
+    const kept = this.keepPrerendered && ['home', 'editions', 'edition'].includes(this.currentPage);
+    this.keepPrerendered = false;
+    if (kept) {
+      watchDeferredCovers(); // covers past the first screen wait until scrolled near
+      if (this.currentPage === 'edition') {
+        const prod = findProductBySlugOrId(this.currentSlug);
+        this.loadProductReviews(prod ? prod.id : this.currentSlug);
+      }
+      this.updateActiveNavIndicators();
+      return;
+    }
+
     // An e-book page or checkout needs the e-book list; until it arrives show a short placeholder, not "not found".
     if (loadState.loading && (this.currentPage === 'edition' || this.currentPage === 'checkout')) {
       mainEl.innerHTML = `
@@ -986,8 +1016,7 @@ class TamyizUnifiedApp {
     // Render corresponding page
     switch (this.currentPage) {
       case 'home':
-        if (this.keepPrerendered) this.keepPrerendered = false; // already on screen, drawn by the build
-        else mainEl.innerHTML = renderHomePage(this);
+        mainEl.innerHTML = renderHomePage(this);
         break;
 
       case 'editions':
@@ -1412,6 +1441,24 @@ class TamyizUnifiedApp {
     const hasVariants = product.variants && product.variants.options && product.variants.options.length > 0;
     const variant = this.selectedSizes[product.id] || (hasVariants ? product.variants.options[0] : '');
     window.open(preorderWhatsAppUrl(product.name, variant), '_blank', 'noopener');
+  }
+
+  /** The visitor's wishlist (browser storage) on every heart on the page; ready-made pages arrive with none set. */
+  syncWishlistHearts() {
+    document.querySelectorAll('.tamyiz-btn-wishlist[data-id]').forEach((btn) => {
+      const inWish = store.isInWishlist(btn.dataset.id);
+      btn.classList.toggle('active', inWish);
+      const svg = btn.querySelector('svg');
+      if (svg) svg.setAttribute('fill', inWish ? 'var(--color-red)' : 'none');
+    });
+  }
+
+  /** Leaving a ready-made page (or arriving with an address it was not made for): back to normal drawing. */
+  leavePrerendered(path) {
+    const main = document.getElementById('main-content');
+    if (!main || !main.dataset.pre || main.dataset.pre === path) return;
+    delete main.dataset.pre;
+    document.documentElement.classList.remove('pre');
   }
 
   toggleWishlist(id) {
@@ -3503,16 +3550,31 @@ function startApp() {
   try { initMotion(); } catch (err) { console.warn('Motion layer off:', err); document.documentElement.classList.remove('mo'); }
 }
 /**
- * Build time only (scripts/build-pages.js, in Node): home's first draw as HTML, exactly what the app draws while the
- * e-book list is still loading. index.html carries it so the first screen paints before any script (26 Nov 2026).
+ * Not in the browser: a page as ready-made HTML (shell + page), exactly what the app draws for it. Used at build time
+ * for home (scripts/build-pages.js, list still loading) and by the Pages Functions for /editions and book pages
+ * (server/prerender.js, with the live catalogue). The browser keeps it (keepPrerendered).
  */
-export function prerenderHomeHtml() {
+export function prerenderPageHtml({ page = 'home', slug = null, path = '/', catalog = null } = {}) {
+  if (catalog) {
+    products.splice(0, products.length, ...catalog);
+    loadState.loading = false;
+  } else {
+    products.splice(0, products.length);
+    loadState.loading = true;
+  }
+  loadState.failed = false;
   const app = Object.create(TamyizUnifiedApp.prototype);
-  Object.assign(app, { currentPage: 'home', currentSlug: null, searchQuery: '', sortBy: 'featured', selectedSizes: {}, activeCategory: 'all' });
+  Object.assign(app, { currentPage: page, currentSlug: slug, searchQuery: '', sortBy: 'featured', selectedSizes: {}, activeCategory: 'all', activePdpImageIndex: 0 });
+  const body = page === 'home' ? renderHomePage(app)
+    : page === 'editions' ? renderEditionsPage(app)
+    : page === 'edition' ? renderProductDetailPage(slug, app)
+    : null;
+  if (body === null) throw new Error(`prerenderPageHtml: no ready-made version of "${page}"`);
   const main = '<main id="main-content" class="tamyiz-main-content"></main>';
   const shell = app.shellHtml();
-  if (!shell.includes(main)) throw new Error('prerenderHomeHtml: <main> not found in the shell');
-  return shell.replace(main, `<main id="main-content" class="tamyiz-main-content">${renderHomePage(app)}</main>`);
+  if (!shell.includes(main)) throw new Error('prerenderPageHtml: <main> not found in the shell');
+  const safePath = String(path).replace(/[^a-zA-Z0-9/_.-]/g, '');
+  return shell.replace(main, `<main id="main-content" class="tamyiz-main-content" data-pre="${safePath}">${body}</main>`);
 }
 
 if (!globalThis.__TAMYIZ_BUILD__) {

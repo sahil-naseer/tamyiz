@@ -4,7 +4,7 @@
  */
 
 import { findProductBySlugOrId, getRelatedProducts, isAvailable, buyLabel } from '../../data/products.js';
-import { renderProductCardHtml } from './home-page.js';
+import { renderProductCardHtml, watchDeferredCovers } from './home-page.js';
 
 export function renderProductDetailPage(slug, appInstance) {
   const product = findProductBySlugOrId(slug);
@@ -32,6 +32,10 @@ export function renderProductDetailPage(slug, appInstance) {
   const activeImgIndex = appInstance.activePdpImageIndex || 0;
   const currentImg = product.images[activeImgIndex] || product.images[0];
   const hasSample = Boolean(product.sampleExcerpt);
+  // Phones and tablets show the cover at ~170-240px: the 480px version is enough there (26 Nov 2026).
+  const coverSet = activeImgIndex === 0 && product.thumb && product.thumb !== currentImg
+    ? ` srcset="${product.thumb} 480w, ${currentImg} 800w" sizes="(max-width: 1023px) 240px, 480px"` : '';
+  queueMicrotask(watchDeferredCovers); // related books' covers wait until scrolled near
 
   return `
     <div class="tamyiz-page-pdp">
@@ -63,7 +67,7 @@ export function renderProductDetailPage(slug, appInstance) {
               <div class="tamyiz-pdp-main-img-wrap">
                 <img
                   id="pdp-main-image"
-                  src="${currentImg}"
+                  src="${currentImg}"${coverSet}
                   alt="${product.name}"
                   class="tamyiz-pdp-main-img"
                   loading="eager"
@@ -457,7 +461,7 @@ export function renderProductDetailPage(slug, appInstance) {
             </div>
 
             <div class="tamyiz-product-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
-              ${related.map(r => renderProductCardHtml(r, appInstance)).join('')}
+              ${related.map(r => renderProductCardHtml(r, appInstance, { deferCover: true })).join('')}
             </div>
           </div>` : ''}
         </div>

@@ -2424,9 +2424,10 @@ if (!customElements.get('khala-support-widget')) {
     document.body.append(el);
   };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mount, { once: true });
-  } else {
-    mount();
-  }
+  // TAMYIZ copy (26 Nov 2026): mount once the page has loaded and the browser is idle. Mounting fetches this
+  // client's config from another site, and doing that during the first screen's downloads cost Lighthouse's LCP.
+  // Re-apply this if widget.js is copied again from khala-ai-agents.
+  const later = () => ('requestIdleCallback' in window ? requestIdleCallback(mount, { timeout: 2000 }) : setTimeout(mount, 200));
+  if (document.readyState === 'complete') later();
+  else window.addEventListener('load', later, { once: true });
 })();

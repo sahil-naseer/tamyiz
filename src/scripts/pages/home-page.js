@@ -79,10 +79,18 @@ function showCard(img) {
   thumb.querySelectorAll('img[data-src]').forEach((i) => { coverIo?.unobserve(i); showCover(i); });
 }
 
-/** Called after home is drawn: swaps in each waiting cover once it comes within ~600px of the screen. */
-function watchDeferredCovers() {
+/**
+ * Called after a page with cards is drawn (home, /editions, a book page's related books, or a ready-made page kept by
+ * the app): swaps in each waiting cover once it comes within ~600px of the screen.
+ */
+export function watchDeferredCovers() {
   if (globalThis.__TAMYIZ_BUILD__) return;
-  const imgs = document.querySelectorAll('#editions img.tamyiz-img-primary[data-src]');
+  // Not before the page has loaded: these covers must never compete with the first screen's downloads.
+  if (document.readyState !== 'complete') {
+    window.addEventListener('load', () => watchDeferredCovers(), { once: true });
+    return;
+  }
+  const imgs = document.querySelectorAll('#main-content img.tamyiz-img-primary[data-src]');
   if (!imgs.length) return;
   if (!('IntersectionObserver' in window)) { imgs.forEach(showCard); return; }
   if (!coverIo) {
@@ -206,7 +214,11 @@ export function renderHomePage(appInstance) {
 /**
  * Reusable Equal-Height Product Card Renderer (Rule 4)
  */
-export function renderProductCardHtml(p, appInstance, { deferCover = false } = {}) {
+/**
+ * deferCover: the cover waits until scrolled near (see watchDeferredCovers).
+ * eager: the cover is on the first screen (first row of /editions): load it at once; priority: and before other images.
+ */
+export function renderProductCardHtml(p, appInstance, { deferCover = false, eager = false, priority = false } = {}) {
   const slug = p.slug || p.id;
   const hasVariants = p.variants && p.variants.options && p.variants.options.length > 0;
   const currentSelectedOption = appInstance.selectedSizes[p.id] || (hasVariants ? p.variants.options[0] : "Standard");
@@ -222,7 +234,7 @@ export function renderProductCardHtml(p, appInstance, { deferCover = false } = {
   return `
     <div class="tamyiz-product-card flex flex-col h-full" id="card-${p.id}" data-product-card="${p.id}">
       <div class="tamyiz-product-thumb" data-nav="/edition/${slug}">
-        <img ${coverSrcAttrs(p.thumb || p.images[0], deferCover)} alt="${p.name}" class="tamyiz-img-primary" width="480" height="720" loading="lazy" decoding="async" />
+        <img ${coverSrcAttrs(p.thumb || p.images[0], deferCover)} alt="${p.name}" class="tamyiz-img-primary" width="480" height="720" ${eager ? `loading="eager"${priority ? ' fetchpriority="high"' : ''}` : 'loading="lazy"'} decoding="async" />
         <img ${coverSrcAttrs(p.images[1] || p.thumb || p.images[0], deferCover)} alt="" aria-hidden="true" class="tamyiz-img-hover" width="480" height="720" loading="lazy" decoding="async" />
 
         ${isAvailable(p) ? '' : '<span class="tamyiz-badge-digital">COMING SOON</span>'}

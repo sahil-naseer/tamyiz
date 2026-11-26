@@ -377,6 +377,20 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
   /editions, not /. index.html preloads Space Grotesk's latin-ext file (holds ₹). Anything that changes the shell or
   home's first draw flows into the build automatically, but must keep working in Node at import (no DOM at module
   load; the build sets `globalThis.__TAMYIZ_BUILD__`). Do not go back to a full redraw on home.
+- Ready-made /editions and book pages (26 Nov 2026, same idea): `functions/editions.js` (new) and
+  `functions/edition/[slug].js` draw the page with the live catalogue through `server/prerender.js`
+  (`withReadyMadePage()` = `prerenderPageHtml()` + `<html class="mo pre">`, `<main data-pre="/path">`; stand-ins for
+  window/document/localStorage in `server/ssr-env.js`). If drawing fails they send the plain page and the app draws it
+  as before. The app keeps the page and, when the list arrives, only rebuilds the frame around it
+  (`renderShell({ keepMain: true })`) and syncs wishlist hearts (`syncWishlistHearts()`). Addresses with a query
+  string are drawn by the app as before. Covers: /editions loads the first two at once (the first preloaded by the
+  function, high priority), the third natively, the rest only when scrolled near; book pages use the 480px cover on
+  screens up to 1023px (`srcset`, same in the function's preload) and the related books' covers wait;
+  `watchDeferredCovers()` starts only after the load event. All functions are one Worker, so the app's drawing code
+  is bundled with /api (check `npx wrangler pages functions build` after big changes; local test:
+  `wrangler pages dev dist --kv TAMYIZ_STORE` with a local `products` key).
+- Vee widget (public/vee/widget.js, our copy) mounts after the load event when the browser is idle: mounting fetches
+  its config from khala-ai-agents.pages.dev, which cost LCP. Re-apply that if widget.js is copied again.
 - Hero: one column: meaning line, headline, the plain line "Short, practical e-books for beginners...", ONE black button
   (Browse the e-books) + a text link (How we write), one quiet fact line (`heroProof()`: count, authors, download), then
   the drawing. No canvas, no count-up, no boxes.
