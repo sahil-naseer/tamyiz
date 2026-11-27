@@ -419,14 +419,12 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
 - About us: one WhatsApp button (the form); policy pages on phones: the five tabs are one swipeable row, current tab first.
 - Hero dot grid back (27 Nov 2026, Sahil asked): the hero's mouse-following dots are back
   (`<canvas class="tmz-dots">` in home-page.js, `dotGrid()` in motion.js, the same code as 14 Nov: mouse screens only,
-  draws only while the mouse moves, off under "reduce motion"). The hero uses the same box as `.container`
-  (max 1360px; side padding 1rem / 1.5rem from 640px / 3rem from 1024px), so its text lines up with the e-books
-  section, and its yellow highlight hangs 0.22em left so "the difference." starts under "Learn to tell".
-  Only the hero changed: the header, About us and /atelier keep their earlier spacing (a first version moved them
-  too; Sahil asked for everything except the hero to stay as before). All in the "HERO 27 Nov 2026" block at the
-  very end of tamyiz-unified.css.
-  On laptops (1024px+) the hero no longer has a minimum height of a whole screen: it hugs its content with 4.5rem
-  above and below (the old minimum left ~140px of empty dotted band under the words at 1440x900).
+  draws only while the mouse moves, off under "reduce motion"). The hero's words line up with "About us" below it
+  (Sahil's choice; same box as `.tmz-founders-inner`), its yellow highlight hangs 0.22em left so "the difference."
+  starts under "Learn to tell", and on laptops (1024px+) it no longer fills a whole screen: it hugs its content with
+  4.5rem above and below (the old minimum left ~140px of empty dotted band under the words at 1440x900). The header
+  and other sections were not changed (an earlier version moved them to one shared edge; Sahil asked to undo that).
+  All in the "HERO 27 Nov 2026" block at the very end of tamyiz-unified.css.
 - Motion now: the hero's staggered entrance (CSS), the hero drawing drawing itself (on arrival), scroll fade-ins, the progress line, the cover glide
   to the book page, the bag bump. All off under "reduce motion"; nothing loops.
   Scroll fade-ins skip anything already on the first screen when the page opens (26 Nov 2026, `showNow()` in motion.js):
