@@ -425,6 +425,10 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
   4.5rem above and below (the old minimum left ~140px of empty dotted band under the words at 1440x900). The header
   and other sections were not changed (an earlier version moved them to one shared edge; Sahil asked to undo that).
   All in the "HERO 27 Nov 2026" block at the very end of tamyiz-unified.css.
+  Later the same day Sahil asked for the hero to use the full width: from 1024px it now uses the header's box
+  (1360px + 1.5rem side padding), so its words start under the logo and the drawing ends at the Bag button.
+  It is also exactly one screen tall there (`min-height: calc(100svh - 4rem)`, words and drawing centred; Sahil: "in
+  length too"), which replaces the "hugs its content" height above. Below 1024px it still lines up with About us.
 - Motion now: the hero's staggered entrance (CSS), the hero drawing drawing itself (on arrival), scroll fade-ins, the progress line, the cover glide
   to the book page, the bag bump. All off under "reduce motion"; nothing loops.
   Scroll fade-ins skip anything already on the first screen when the page opens (26 Nov 2026, `showNow()` in motion.js):
