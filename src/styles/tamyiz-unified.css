@@ -8485,10 +8485,9 @@ html.pre #main-content > * {
 }
 
 /* ==========================================================================
-   HERO 27 Nov 2026: the hero's dot effect is back and the hero lines up with the e-books section.
-   Only the hero changed: the header, About us and the /atelier page keep their earlier spacing (Sahil's call,
-   27 Nov 2026: a first version moved them too and was undone). The hero uses the same box as `.container`
-   (max 1360px; side padding 1rem / 1.5rem from 640px / 3rem from 1024px).
+   HERO 27 Nov 2026: the hero's dot effect is back. The hero's words line up with "About us" just below it
+   (same box as `.tmz-founders-inner`: max 80rem, side padding 3.5rem / 2rem up to 1099px / 1rem on phones);
+   Sahil chose that edge on 27 Nov 2026. The header and the other sections were not changed.
    ========================================================================== */
 .tmz-dots {
   position: absolute;
@@ -8502,26 +8501,6 @@ html.pre #main-content > * {
 @media print {
   .tmz-dots {
     display: none;
-  }
-}
-
-.tmz-hero-inner {
-  max-width: 1360px;
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-
-@media (min-width: 640px) {
-  .tmz-hero-inner {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .tmz-hero-inner {
-    padding-left: 3rem;
-    padding-right: 3rem;
   }
 }
 
