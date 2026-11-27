@@ -230,10 +230,14 @@ export function initMotion() {
       }
       if (now.length) showNow(now);
       if (later.length) reveal(later);
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    // Starts 160px BEFORE the element reaches the screen, so it is finished by the time it is seen
+    // (27 Nov 2026, Sahil: sections showed half-faded while only partly on screen).
+    }, { rootMargin: '0px 0px 160px 0px', threshold: 0 });
     drawIo = new IntersectionObserver((entries) => {
-      for (const e of entries) if (e.isIntersecting) { drawIo.unobserve(e.target); e.target.classList.add('is-drawn'); }
-    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.15 });
+      for (const e of entries) if (e.isIntersecting) { drawIo.unobserve(e.target); e.target.classList.add('is-drawn', 'is-instant'); }
+    // Line drawings outside the home hero appear complete just before they scroll in (they took ~1.7 s to draw
+    // themselves and were seen half-drawn). Only the hero's drawing still draws itself.
+    }, { rootMargin: '0px 0px 120px 0px', threshold: 0 });
     document.documentElement.classList.add('mo');
   } else {
     document.documentElement.classList.remove('mo'); // home's index.html arrives with it
