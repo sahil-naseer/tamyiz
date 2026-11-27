@@ -8520,12 +8520,15 @@ html.pre #main-content > * {
   }
 }
 
-/* Laptops: the hero uses the full width (Sahil, 27 Nov 2026: "filled wholly"). Same box as the header
+/* Laptops: the hero fills the first screen, full width and full height (Sahil, 27 Nov 2026: "filled wholly",
+   "in length too"). This replaces the "hugs its content" rule just above for height. Same box as the header
    (1360px + its 1.5rem side padding), so the words start under the logo and the drawing ends at the Bag button. */
 @media (min-width: 1024px) {
   .tmz-hero-inner {
     max-width: calc(1360px + 3rem);
     padding-left: 1.5rem;
     padding-right: 1.5rem;
+    /* ...and the full height: exactly one screen under the header, words and drawing centred in it. */
+    min-height: calc(100svh - 4rem);
   }
 }
