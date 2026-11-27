@@ -8532,3 +8532,14 @@ html.pre #main-content > * {
     min-height: calc(100svh - 4rem);
   }
 }
+
+/* Header, 900–1023px (27 Nov 2026): the menu links show from 900px, but the logo was still centred there (that
+   centring is for phones, where the Menu button sits on the left), so it covered the links. Logo back on the left. */
+@media (min-width: 900px) and (max-width: 1023px) {
+  header.tamyiz-header a.tamyiz-header-brand.tamyiz-header-brand-desktop {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+  }
+}
