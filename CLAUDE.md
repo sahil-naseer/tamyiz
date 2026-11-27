@@ -429,6 +429,10 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
   (1360px + 1.5rem side padding), so its words start under the logo and the drawing ends at the Bag button.
   It is also exactly one screen tall there (`min-height: calc(100svh - 4rem)`, words and drawing centred; Sahil: "in
   length too"), which replaces the "hugs its content" height above. Below 1024px it still lines up with About us.
+- No half-visible animations (27 Nov 2026, Sahil): scroll fade-ins now start 160px BEFORE an element reaches the
+  screen (`rootMargin: '0px 0px 160px 0px'` in motion.js), and line drawings outside the home hero appear complete
+  (`is-drawn is-instant`) 120px before they scroll in. Before, they waited until well inside the screen, so cards and
+  drawings were seen half-faded or half-drawn. Only the home hero's drawing still draws itself.
 - Motion now: the hero's staggered entrance (CSS), the hero drawing drawing itself (on arrival), scroll fade-ins, the progress line, the cover glide
   to the book page, the bag bump. All off under "reduce motion"; nothing loops.
   Scroll fade-ins skip anything already on the first screen when the page opens (26 Nov 2026, `showNow()` in motion.js):
