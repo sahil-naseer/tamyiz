@@ -8530,3 +8530,13 @@ html.pre #main-content > * {
 .tmz-hero .tmz-mark {
   margin-left: -0.22em;
 }
+
+/* Laptops: the hero hugs its content. Its minimum height (a whole first screen) left ~140px of empty dotted band
+   under the words at 1440x900, which read as a gap before About us (Sahil, 27 Nov 2026). */
+@media (min-width: 1024px) {
+  .tmz-hero-inner {
+    min-height: 0;
+    padding-top: 4.5rem;
+    padding-bottom: 4.5rem;
+  }
+}

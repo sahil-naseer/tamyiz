@@ -425,6 +425,8 @@ Rule: one message and one main action per screen, fewer boxes, one accent (yello
   Only the hero changed: the header, About us and /atelier keep their earlier spacing (a first version moved them
   too; Sahil asked for everything except the hero to stay as before). All in the "HERO 27 Nov 2026" block at the
   very end of tamyiz-unified.css.
+  On laptops (1024px+) the hero no longer has a minimum height of a whole screen: it hugs its content with 4.5rem
+  above and below (the old minimum left ~140px of empty dotted band under the words at 1440x900).
 - Motion now: the hero's staggered entrance (CSS), the hero drawing drawing itself (on arrival), scroll fade-ins, the progress line, the cover glide
   to the book page, the bag bump. All off under "reduce motion"; nothing loops.
   Scroll fade-ins skip anything already on the first screen when the page opens (26 Nov 2026, `showNow()` in motion.js):
